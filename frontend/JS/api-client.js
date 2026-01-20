@@ -232,10 +232,31 @@ class APIClient {
     // ==================== STOCKS ====================
 
     /**
-     * Récupérer toutes les informations de stock
+     * Récupérer tous les stocks
      */
-    async getStockInfo() {
-        return this.request('/Api/Stocks/list.php');
+    async getAllStocks(limit = 50, offset = 0) {
+        return this.request(`/Api/Stocks/list.php?limit=${limit}&offset=${offset}&type=all`);
+    }
+
+    /**
+     * Récupérer les stocks critiques
+     */
+    async getCriticalStocks() {
+        return this.request('/Api/Stocks/list.php?type=critiques');
+    }
+
+    /**
+     * Récupérer la valeur totale du stock
+     */
+    async getStockValue() {
+        return this.request('/Api/Stocks/list.php?type=value');
+    }
+
+    /**
+     * Récupérer les alertes stock
+     */
+    async getStockAlerts() {
+        return this.request('/Api/Stocks/alerts.php');
     }
 
     /**
@@ -246,6 +267,36 @@ class APIClient {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    }
+
+    /**
+     * Récupérer l'historique des mouvements
+     */
+    async getMovementHistory(produit_id = null, limit = 50) {
+        let url = '/Api/Stocks/history.php?limit=' + limit;
+        if (produit_id) {
+            url += '&produit_id=' + produit_id;
+        }
+        return this.request(url);
+    }
+
+    /**
+     * Récupérer les statistiques des stocks
+     */
+    async getStockStats(date_debut = null, date_fin = null) {
+        let url = '/Api/Stocks/stats.php';
+        const params = [];
+        if (date_debut) params.push('date_debut=' + date_debut);
+        if (date_fin) params.push('date_fin=' + date_fin);
+        if (params.length > 0) url += '?' + params.join('&');
+        return this.request(url);
+    }
+
+    /**
+     * Récupérer toutes les informations de stock (ancien nom, pour compatibilité)
+     */
+    async getStockInfo() {
+        return this.getAllStocks();
     }
 }
 

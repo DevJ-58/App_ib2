@@ -23,29 +23,29 @@ function determinerEtatStock(quantite, seuil) {
    ==================================================================== */
 
 function afficherNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    
+    // create a dedicated toast element to avoid conflicts with .notification CSS
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
     const icon = type === 'success' ? 'check-circle' : 
                  type === 'error' ? 'exclamation-circle' : 
                  type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-    
-    notification.innerHTML = `
-        <i class="fa-solid fa-${icon}"></i>
-        <span>${message}</span>
+
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fa-solid fa-${icon}"></i>
+            <span class="toast-message">${message}</span>
+        </div>
     `;
-    
-    document.body.appendChild(notification);
-    
+
+    const container = document.getElementById('notificationsContainer') || document.body;
+    container.appendChild(toast);
+
+    // show then auto-remove
+    requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 250);
     }, 3000);
 }
 

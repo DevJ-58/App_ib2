@@ -22,11 +22,7 @@
             </div>
         </div>
         <div class="elements-entete">
-            <!-- Icône de notification -->
-            <div class="notification" title="5 alertes" onclick="afficherAlertes()">
-                <i class="fa-regular fa-bell"></i>
-                <span class="nombre-notifications">5</span>
-            </div>
+            <!-- Icône de notification supprimée -->
             <!-- Photo de profil -->
             <div class="profil" onclick="ouvrirModalProfil()" style="cursor: pointer;">
                 <img id="photoProfilHeader" src="https://via.placeholder.com/40" alt="Photo de profil">
@@ -239,51 +235,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tableau-ventes-recentes">
-                                <tr>
-                                    <td><strong>#V-001</strong></td>
-                                    <td>Riz 25kg, Huile 5L</td>
-                                    <td>Jean Kouassi</td>
-                                    <td><strong>23 500 FCFA</strong></td>
-                                    <td><span class="badge paye">Comptant</span></td>
-                                    <td>14/12/2025 14:35</td>
-                                    <td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente('V-001')"></i></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#V-002</strong></td>
-                                    <td>Coca-Cola 50cl x3</td>
-                                    <td>Marie Bamba</td>
-                                    <td><strong>1 500 FCFA</strong></td>
-                                    <td><span class="badge paye">Comptant</span></td>
-                                    <td>14/12/2025 13:20</td>
-                                    <td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente('V-002')"></i></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#V-003</strong></td>
-                                    <td>Pain, Lait en poudre</td>
-                                    <td>Koné Abou (Étudiant)</td>
-                                    <td><strong>4 500 FCFA</strong></td>
-                                    <td><span class="badge credit">Crédit</span></td>
-                                    <td>14/12/2025 12:45</td>
-                                    <td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente('V-003')"></i></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#V-004</strong></td>
-                                    <td>Jus Youki x2, Biscuits</td>
-                                    <td>Fofana Ali</td>
-                                    <td><strong>2 800 FCFA</strong></td>
-                                    <td><span class="badge paye">Comptant</span></td>
-                                    <td>14/12/2025 11:15</td>
-                                    <td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente('V-004')"></i></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#V-005</strong></td>
-                                    <td>Sucre 1kg x2, Café</td>
-                                    <td>Personnel UIYA</td>
-                                    <td><strong>6 200 FCFA</strong></td>
-                                    <td><span class="badge credit">Crédit</span></td>
-                                    <td>14/12/2025 10:30</td>
-                                    <td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente('V-005')"></i></td>
-                                </tr>
+                                <!-- Rempli dynamiquement par JavaScript -->
                             </tbody>
                         </table>
                     </div>
@@ -295,9 +247,7 @@
                             <a href="#" class="btn-voir-plus" onclick="afficherSection('stocks')">Voir tout <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
                         <ul class="liste-produits-stock" id="liste-stocks-critiques">
-                            <li style="text-align: center; color: #999; padding: 1rem;">
-                                <i class="fa-solid fa-check-circle"></i> Aucun stock critique
-                            </li>
+                            <!-- Rempli dynamiquement par JavaScript -->
                         </ul>
                         <button class="btn-action primaire btn-fullwidth" onclick="afficherSection('stocks')">
                             <i class="fa-solid fa-truck"></i> Commander
@@ -309,31 +259,8 @@
                         <div class="entete-carte">
                             <h2><i class="fa-solid fa-history"></i> Activités récentes</h2>
                         </div>
-                        <ul class="liste-activites">
-                            <li>
-                                <strong>Nouvelle vente enregistrée (#V-001)</strong>
-                                <span class="heure">
-                                    <i class="fa-regular fa-clock"></i> Il y a 5 minutes
-                                </span>
-                            </li>
-                            <li>
-                                <strong>Crédit remboursé par Yao Marc</strong>
-                                <span class="heure">
-                                    <i class="fa-regular fa-clock"></i> Il y a 45 minutes
-                                </span>
-                            </li>
-                            <li>
-                                <strong>Stock mis à jour - Riz 25kg</strong>
-                                <span class="heure">
-                                    <i class="fa-regular fa-clock"></i> Il y a 2 heures
-                                </span>
-                            </li>
-                            <li>
-                                <strong>Nouveau produit ajouté</strong>
-                                <span class="heure">
-                                    <i class="fa-regular fa-clock"></i> Il y a 3 heures
-                                </span>
-                            </li>
+                        <ul class="liste-activites" id="liste-activites">
+                            <!-- Rempli dynamiquement par JavaScript -->
                         </ul>
                     </div>
                 </section>
@@ -2037,6 +1964,7 @@
     <script src="../JS/utils.js"></script>
     <script src="../JS/api-client.js"></script>
     <script src="../JS/auth-api.js"></script>
+    <script src="../JS/stocks-api.js"></script>
     <script src="../JS/main.js"></script>
 </body>
 </html>

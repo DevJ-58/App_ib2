@@ -2639,7 +2639,7 @@ table tbody tr:only-child td[colspan] {
    NOTIFICATIONS TOAST (NOUVEAU)
    ==================================================================== */
 
-.notification {
+.notification-toast {
     position: fixed;
     top: 90px;
     right: 20px;
@@ -3578,24 +3578,27 @@ button:focus-visible {
    NOTIFICATIONS
    ==================================================================== */
 
-.notification {
+.notification-toast {
     position: fixed;
-    bottom: -100px;
-    right: 20px;
+    bottom: 18px;
+    right: 18px;
     background-color: white;
-    padding: 15px 20px;
-    border-radius: var(--rayon-md);
+    padding: 8px 10px;
+    border-radius: 8px;
     box-shadow: var(--ombre-moyenne);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     z-index: 2000;
-    transition: bottom 0.3s ease;
-    min-width: 250px;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    max-width: 360px;
+    width: auto;
+    overflow: hidden;
 }
 
-.notification.show {
-    bottom: 20px;
+.notification-toast.show {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 .notification-success {
@@ -3619,11 +3622,30 @@ button:focus-visible {
 }
 
 .notification i {
-    font-size: 20px;
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
 .notification span {
-    flex: 1;
+    display: block;
+    max-width: calc(360px - 90px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Classe compacte pour notifications générées par main.js */
+.notification-compact {
+    max-width: 360px !important;
+    padding: 8px 10px !important;
+}
+
+.notification-compact span {
+    max-width: 260px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 /* ====================================================================
@@ -3675,13 +3697,13 @@ button:focus-visible {
 
 .notifications-container {
     position: fixed;
-    top: 20px;
+    top: 120px;
     right: 20px;
     z-index: 9999;
     max-width: 400px;
 }
 
-.notification-toast {
+.notification {
     margin-bottom: 12px;
     border-radius: 8px;
     overflow: hidden;
@@ -3700,74 +3722,111 @@ button:focus-visible {
     }
 }
 
-.notification-toast.notification-success {
-    background-color: #d4edda;
-    border-left: 4px solid #28a745;
+/* Styles dédiés aux toasts (petites notifications latérales) */
+.toast {
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    overflow: hidden;
+    max-width: 340px;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+    transform: translateX(20px);
+    font-size: 0.92rem;
 }
 
-.notification-toast.notification-error {
-    background-color: #f8d7da;
-    border-left: 4px solid #dc3545;
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
 }
 
-.notification-toast.notification-warning {
-    background-color: #fff3cd;
-    border-left: 4px solid #ffc107;
-}
-
-.notification-toast.notification-info {
-    background-color: #d1ecf1;
-    border-left: 4px solid #17a2b8;
-}
-
-.notification-contenu {
+.toast-content {
     display: flex;
+    gap: 10px;
     align-items: center;
-    padding: 14px 16px;
-    gap: 12px;
+    padding: 10px 12px;
 }
 
-.notification-icone {
-    font-size: 1.2rem;
-    flex-shrink: 0;
+.toast-message {
+    display: inline-block;
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333 !important;
 }
 
-.notification-toast.notification-success .notification-icone {
-    color: #28a745;
+.toast-success {
+    border-left: 4px solid #28a745;
+    background-color: #d4edda;
+    color: #155724 !important;
 }
 
-.notification-toast.notification-error .notification-icone {
-    color: #dc3545;
+.toast-success .toast-content {
+    color: #155724 !important;
 }
 
-.notification-toast.notification-warning .notification-icone {
-    color: #ffc107;
+.toast-success .toast-message {
+    color: #155724 !important;
 }
 
-.notification-toast.notification-info .notification-icone {
-    color: #17a2b8;
+.toast-success i {
+    color: #28a745 !important;
 }
 
-.notification-message {
-    flex: 1;
-    font-size: 0.95rem;
-    color: #333;
-    font-weight: 500;
+.toast-error {
+    border-left: 4px solid #dc3545;
+    background-color: #f8d7da;
+    color: #721c24 !important;
 }
 
-.notification-close {
-    background: none;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0;
-    flex-shrink: 0;
-    transition: color 0.2s;
+.toast-error .toast-content {
+    color: #721c24 !important;
 }
 
-.notification-close:hover {
-    color: #333;
+.toast-error .toast-message {
+    color: #721c24 !important;
+}
+
+.toast-error i {
+    color: #dc3545 !important;
+}
+
+.toast-warning {
+    border-left: 4px solid #ffc107;
+    background-color: #fff3cd;
+    color: #856404 !important;
+}
+
+.toast-warning .toast-content {
+    color: #856404 !important;
+}
+
+.toast-warning .toast-message {
+    color: #856404 !important;
+}
+
+.toast-warning i {
+    color: #ffc107 !important;
+}
+
+.toast-info {
+    border-left: 4px solid #17a2b8;
+    background-color: #d1ecf1;
+    color: #0c5460 !important;
+}
+
+.toast-info .toast-content {
+    color: #0c5460 !important;
+}
+
+.toast-info .toast-message {
+    color: #0c5460 !important;
+}
+
+.toast-info i {
+    color: #17a2b8 !important;
 }
 
 /* ============================================================================

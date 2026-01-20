@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     await chargerProduits();
     await chargerCategories();
     
+    // Charger les stocks depuis l'API et synchroniser
+    await chargerStocksAPI();
+    
     // Charger les données du dashboard (ventes récentes, crédits, etc.)
     await chargerDonneesDashboard();
 
@@ -577,7 +580,10 @@ async function chargerStocksCritiques() {
     
     let html = '';
     stocksCritiques.forEach(p => {
-        html += '<li><span class="nom-produit">' + p.nom + '</span><span class="quantite">' + p.stock + ' restants</span></li>';
+        html += '<li>';
+        html += '<span class="nom-produit">' + p.nom + '</span>';
+        html += '<span class="quantite">' + p.stock + ' restants (seuil: ' + p.seuilAlerte + ')</span>';
+        html += '</li>';
     });
     
     liste.innerHTML = html;
@@ -612,7 +618,8 @@ async function chargerVentesRecentes() {
                 const montant = parseFloat(v.montant_total) || 0;
                 const type = v.type === 'credit' ? 'Crédit' : 'Comptant';
                 const badge = v.type === 'credit' ? 'credit' : 'paye';
-                const date = new Date(v.date_vente).toLocaleDateString('fr-FR') + ' ' + new Date(v.date_vente).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                const dateObj = new Date(v.date_vente);
+                const date = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
                 
                 totalVentes += montant;
                 nbProduits += parseInt(v.quantite_totale) || 1;
@@ -624,7 +631,7 @@ async function chargerVentesRecentes() {
                 html += '<td><strong>' + montant.toLocaleString('fr-FR') + ' FCFA</strong></td>';
                 html += '<td><span class="badge ' + badge + '">' + type + '</span></td>';
                 html += '<td>' + date + '</td>';
-                html += '<td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente(' + v.id + ')"></i></td>';
+                html += '<td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente(' + v.id + ')" title="Voir détails"></i></td>';
                 html += '</tr>';
             });
             
@@ -666,6 +673,62 @@ async function chargerCreditsImpayés() {
 }
 
 /**
+ * Charger les activités récentes
+ */
+async function chargerActivitesRecentes() {
+    const liste = document.getElementById('liste-activites');
+    if (!liste) return;
+    
+    try {
+        const response = await api.getAllSales();
+        
+        if (!response.success || !Array.isArray(response.data) || response.data.length === 0) {
+            liste.innerHTML = '<li style="text-align: center; color: #999; padding: 1rem;">Aucune activité récente</li>';
+            return;
+        }
+        
+        let html = '';
+        // Prendre les 4 dernières ventes
+        const ventes = response.data.slice(0, 4);
+        
+        ventes.forEach((v, index) => {
+            const dateVente = new Date(v.date_vente);
+            const maintenant = new Date();
+            const diffMinutes = Math.floor((maintenant - dateVente) / 60000);
+            
+            let tempsTexte = 'À l\'instant';
+            if (diffMinutes < 60) {
+                tempsTexte = 'Il y a ' + diffMinutes + ' min';
+            } else if (diffMinutes < 1440) {
+                const heures = Math.floor(diffMinutes / 60);
+                tempsTexte = 'Il y a ' + heures + ' h' + (heures > 1 ? '' : '');
+            } else {
+                const jours = Math.floor(diffMinutes / 1440);
+                tempsTexte = 'Il y a ' + jours + ' j' + (jours > 1 ? '' : '');
+            }
+            
+            const typeVente = v.type === 'credit' ? 'crédit' : 'comptant';
+            const montant = parseFloat(v.montant_total) || 0;
+            
+            html += '<li>';
+            html += '<strong>Vente ' + typeVente + ' de ' + montant.toLocaleString('fr-FR') + ' FCFA - ' + (v.client_nom || 'Client') + '</strong>';
+            html += '<span class="heure"><i class="fa-regular fa-clock"></i> ' + tempsTexte + '</span>';
+            html += '</li>';
+        });
+        
+        if (html === '') {
+            liste.innerHTML = '<li style="text-align: center; color: #999; padding: 1rem;">Aucune activité récente</li>';
+        } else {
+            liste.innerHTML = html;
+        }
+        
+    } catch (error) {
+        console.error('Erreur chargement activités:', error);
+        liste.innerHTML = '<li style="text-align: center; color: red;">Erreur lors du chargement</li>';
+    }
+}
+
+/**
  * Charger toutes les données du dashboard
  */
 async function chargerDonneesDashboard() {
@@ -673,6 +736,7 @@ async function chargerDonneesDashboard() {
     mettreAJourStatistiques();
     await chargerVentesRecentes();
     await chargerCreditsImpayés();
+    await chargerActivitesRecentes();
     console.log('✅ Dashboard mis à jour');
 }
 
@@ -1680,11 +1744,39 @@ function activerScanner() {
 // GESTION DES STOCKS
 // ====================================================================
 
-function chargerStocks() {
-    console.log('📊 Chargement des stocks');
-    afficherTableauStock();
-    afficherMouvementsRecents();
-    afficherAlertesStock();
+async function chargerStocks() {
+    console.log('📊 Chargement des stocks depuis l\'API');
+    try {
+        // Charger les stocks
+        const responseStocks = await api.getAllStocks();
+        if (responseStocks.success) {
+            stockData = responseStocks.data;
+            console.log('✅ Stocks chargés:', stockData.length);
+        }
+        
+        // Charger les mouvements
+        const responseMouvements = await api.getMovementHistory(null, 10);
+        if (responseMouvements.success) {
+            mouvementsData = responseMouvements.data;
+            console.log('✅ Mouvements chargés:', mouvementsData.length);
+        }
+        
+        // Charger les alertes
+        const responseAlertes = await api.getStockAlerts();
+        if (responseAlertes.success) {
+            alertesData = responseAlertes.data;
+            console.log('✅ Alertes chargées:', alertesData.length);
+        }
+        
+        // Afficher les données
+        afficherTableauStock();
+        afficherMouvementsRecents();
+        afficherAlertesStock();
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement stocks:', error);
+        afficherNotification('Erreur lors du chargement des stocks', 'error');
+    }
 }
 
 function afficherTableauStock() {
@@ -1883,23 +1975,88 @@ function ajusterStock(produitId) {
     ouvrirModalMouvementStock('entree', produitId);
 }
 
-function voirHistoriqueStock(produitId) {
-    const produit = produitsData.find(p => p.id === produitId);
-    if (!produit) return;
-    
-    const historique = mouvementsData.filter(m => m.produitId === produitId);
-    
-    let message = `Historique des mouvements pour ${produit.nom}:\n\n`;
-    
-    if (historique.length === 0) {
-        message += 'Aucun mouvement enregistré';
-    } else {
-        historique.forEach(m => {
-            message += `${m.date} - ${m.type === 'entree' ? 'Entrée' : m.type === 'sortie' ? 'Sortie' : 'Perte'}: ${m.quantite} unités (${m.motif})\n`;
-        });
+async function voirHistoriqueStock(produitId) {
+    const produit = produitsData.find(p => p.id == produitId);
+    if (!produit) {
+        afficherNotification('Produit introuvable', 'error');
+        return;
     }
     
-    alert(message);
+    console.log('📜 Chargement historique pour', produit.nom);
+    afficherNotification('Chargement de l\'historique...', 'info');
+    
+    try {
+        // Charger l'historique depuis l'API
+        const historique = await chargerHistoriqueProduitAPI(produitId);
+        
+        // Créer une modale pour afficher l'historique
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'modalHistorique';
+        
+        let contenuHTML = '<div class="modal-container">';
+        contenuHTML += '<div class="modal-header">';
+        contenuHTML += '<h2><i class="fa-solid fa-history"></i> Historique: ' + produit.nom + '</h2>';
+        contenuHTML += '<button class="btn-fermer-modal" onclick="fermerModalHistorique()"><i class="fa-solid fa-times"></i></button>';
+        contenuHTML += '</div>';
+        contenuHTML += '<div class="modal-body">';
+        
+        if (historique.length === 0) {
+            contenuHTML += '<p style="text-align: center; color: #6c757d; padding: 2rem;">Aucun mouvement enregistré</p>';
+        } else {
+            contenuHTML += '<table class="tableau-historique">';
+            contenuHTML += '<thead><tr>';
+            contenuHTML += '<th>Date</th>';
+            contenuHTML += '<th>Type</th>';
+            contenuHTML += '<th>Quantité</th>';
+            contenuHTML += '<th>Motif</th>';
+            contenuHTML += '<th>Commentaire</th>';
+            contenuHTML += '</tr></thead>';
+            contenuHTML += '<tbody>';
+            
+            historique.forEach(m => {
+                const typeLibelle = m.type === 'entree' ? 'Entrée' : m.type === 'sortie' ? 'Sortie' : 'Ajustement';
+                const typeBadge = m.type === 'entree' ? 'badge-entree' : m.type === 'sortie' ? 'badge-vente' : 'badge-perte';
+                const dateFormattee = new Date(m.date).toLocaleString('fr-FR');
+                
+                contenuHTML += '<tr>';
+                contenuHTML += '<td>' + dateFormattee + '</td>';
+                contenuHTML += '<td><span class="badge-etat ' + typeBadge + '">' + typeLibelle + '</span></td>';
+                contenuHTML += '<td><strong>' + (m.type === 'entree' ? '+' : '-') + m.quantite + '</strong></td>';
+                contenuHTML += '<td>' + (m.motif || '-') + '</td>';
+                contenuHTML += '<td>' + (m.commentaire || '-') + '</td>';
+                contenuHTML += '</tr>';
+            });
+            
+            contenuHTML += '</tbody>';
+            contenuHTML += '</table>';
+        }
+        
+        contenuHTML += '</div>';
+        contenuHTML += '<div class="modal-actions">';
+        contenuHTML += '<button class="btn-action primaire" onclick="fermerModalHistorique()">Fermer</button>';
+        contenuHTML += '</div>';
+        contenuHTML += '</div>';
+        
+        modal.innerHTML = contenuHTML;
+        document.body.appendChild(modal);
+        
+        // Fermeture au clic sur l'overlay
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.remove();
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        afficherNotification('Erreur lors du chargement de l\'historique', 'error');
+    }
+}
+
+function fermerModalHistorique() {
+    const modal = document.getElementById('modalHistorique');
+    if (modal) modal.remove();
 }
 
 function filtrerParEtatStock() {
@@ -2427,56 +2584,63 @@ function enregistrerProduit() {
     fermerModalProduit();
 }
 
-function enregistrerMouvementStock() {
+async function enregistrerMouvementStock() {
     const type = document.getElementById('typeMouvementStock').value;
     const produitId = document.getElementById('produitMouvement').value;
     const quantite = parseInt(document.getElementById('quantiteMouvement').value);
     const commentaire = document.getElementById('commentaireMouvement')?.value || '';
     
+    // Validation
     if (!produitId || !quantite || quantite <= 0) {
         afficherNotification('Veuillez remplir tous les champs correctement', 'error');
         return;
     }
     
-    const produit = produitsData.find(p => p.id === produitId);
+    const produit = produitsData.find(p => p.id == produitId);
     if (!produit) {
         afficherNotification('Produit introuvable', 'error');
         return;
     }
     
+    // Validation du stock pour les sorties
     if (type === 'sortie' && quantite > produit.stock) {
         afficherNotification('Stock insuffisant', 'error');
         return;
     }
     
-    // Mettre à jour le stock
+    // Déterminer le motif
+    let motif = '';
     if (type === 'entree') {
-        produit.stock += quantite;
+        motif = 'Approvisionnement';
+    } else if (type === 'sortie') {
+        motif = document.getElementById('motifSortie')?.value || 'vente';
     } else {
-        produit.stock -= quantite;
+        motif = 'Ajustement';
     }
     
-    // Ajouter le mouvement
-    const motif = type === 'entree' ? 'Approvisionnement' : 
-                  document.getElementById('motifSortie')?.value || 'Sortie manuelle';
-    
-    mouvementsData.unshift({
-        id: mouvementsData.length + 1,
-        type: type,
-        produitId: produitId,
-        produitNom: produit.nom,
-        quantite: quantite,
-        motif: motif,
-        date: new Date().toLocaleString('fr-FR'),
-        commentaire: commentaire
-    });
-    
-    afficherTableauStock();
-    afficherMouvementsRecents();
-    afficherAlertesStock();
-    mettreAJourStatistiques();
-    fermerModalMouvementStock();
-    afficherNotification(`${type === 'entree' ? 'Entrée' : 'Sortie'} de stock enregistrée avec succès`, 'success');
+    try {
+        // Enregistrer le mouvement via l'API
+        const success = await enregistrerMouvementAPI(produitId, type, quantite, motif, commentaire);
+        
+        if (success) {
+            // Recharger les données
+            await chargerStocksAPI();
+            const mouvementsReponse = await chargerMouvementsAPI(10);
+            mouvementsData = mouvementsReponse;
+            
+            // Rafraîchir l'affichage
+            afficherTableauStock();
+            afficherMouvementsRecents();
+            afficherAlertesStock();
+            mettreAJourStatistiques();
+            
+            // Fermer le modal
+            fermerModalMouvementStock();
+        }
+    } catch (error) {
+        console.error('❌ Erreur enregistrement mouvement:', error);
+        afficherNotification('Erreur lors de l\'enregistrement', 'error');
+    }
 }
 
 function enregistrerPerte() {
@@ -2591,35 +2755,31 @@ function determinerEtatStock(stock, seuilAlerte) {
 }
 
 function afficherNotification(message, type = 'info') {
-    // Créer l'élément de notification
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type} show`;
-    
+    // create a dedicated toast element to avoid conflicts with .notification CSS
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
     const icones = {
         success: 'fa-check-circle',
         error: 'fa-times-circle',
         warning: 'fa-exclamation-triangle',
         info: 'fa-info-circle'
     };
-    
-    notification.innerHTML = `
-        <i class="fa-solid ${icones[type] || icones.info}"></i>
-        <span>${message}</span>
+
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fa-solid ${icones[type] || icones.info}"></i>
+            <span class="toast-message">${message}</span>
+        </div>
     `;
-    
-    document.body.appendChild(notification);
-    
-    // Afficher la notification
+
+    const container = document.getElementById('notificationsContainer') || document.body;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    // Masquer et supprimer après 3 secondes
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 250);
     }, 3000);
 }
 

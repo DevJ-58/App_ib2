@@ -1,0 +1,84 @@
+backend/
+├─ Api/
+│  ├─ Auth/
+│  │  ├─ change-password.php
+│  │  ├─ check.php
+│  │  ├─ login.php
+│  │  ├─ logout.php
+│  │  ├─ register.php
+│  │  ├─ reset-password.php
+│  │  ├─ test-input.php
+│  │  └─ upload-photo.php
+│  ├─ Categories/
+│  │  ├─ check-deps.php
+│  │  ├─ create.php
+│  │  ├─ delete.php
+│  │  ├─ list.php
+│  │  └─ update.php
+│  ├─ Credits/
+│  │  ├─ create.php
+│  │  ├─ list.php
+│  │  ├─ reimburse.php
+│  │  └─ stats.php
+│  ├─ dashbord.php/
+│  │  ├─ alerts.php
+│  │  ├─ recent-sales.php
+│  │  └─ stats.php
+│  ├─ Products/
+│  │  ├─ check-deps.php
+│  │  ├─ create.php
+│  │  ├─ delete.php
+│  │  ├─ details.php
+│  │  ├─ force-delete.php
+│  │  ├─ list.php
+│  │  └─ update.php
+│  ├─ Sales/
+│  │  ├─ create.php
+│  │  ├─ details.php
+│  │  ├─ list.php
+│  │  └─ stats.php
+│  ├─ Stocks/
+│  │  ├─ alerts.php
+│  │  ├─ history.php
+│  │  ├─ list.php
+│  │  └─ movement.php
+│  └─ authentification
+├─ configs/
+│  ├─ constants.php
+│  ├─ cors.php
+│  └─ database.php
+├─ controllers/
+│  ├─ AuthController.php
+│  ├─ CategoryController.php
+│  ├─ CreditController.php
+│  ├─ ProductController.php
+│  ├─ SaleController.php
+│  └─ StockController.php
+├─ logs/
+├─ models/
+│  ├─ Category.php
+│  ├─ Credit.php
+│  ├─ Database.php
+│  ├─ Movement.php
+│  ├─ Product.php
+│  ├─ sale.php
+│  ├─ Stock.php
+│  └─ User.php
+├─ uploads/
+│  ├─ user_5_1768882266.jfif
+│  ├─ user_5_1768882376.jfif
+│  ├─ user_5_1768883037.jpg
+│  ├─ user_5_1768883044.jpg
+│  ├─ user_5_1768883051.png
+│  ├─ user_6_1768925004.jfif
+│  ├─ user_7_1768925833.jpeg
+│  └─ user_8_1768935939.jpg
+├─ utils/
+│  ├─ JWT.php
+│  ├─ Response.php
+│  ├─ Security.php
+│  └─ Validator.php
+├─ bootstrap.php
+├─ config
+├─ test-auth.php
+└─ test-endpoints.php
