@@ -581,24 +581,24 @@ button:disabled,
     justify-content: center;
     border-radius: var(--rayon-md);
     font-size: 2rem;
-    color: white;
-    background: linear-gradient(135deg, var(--couleur-primaire) 0%, #0056b3 100%);
+    color: var(--couleur-primaire);
+    background-color: transparent;
 }
 
 .carte-stat.ventes .icone-stat {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #667eea;
 }
 
 .carte-stat.produits .icone-stat {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #f5576c;
 }
 
 .carte-stat.stock .icone-stat {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #00f2fe;
 }
 
 .carte-stat.credits .icone-stat {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: #fa709a;
 }
 
 /* ====================================================================
