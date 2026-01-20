@@ -5,18 +5,22 @@
  */
 
 header('Content-Type: application/json');
-require_once '../../configs/cors.php';
-require_once '../../configs/constants.php';
+require_once '../../configs/database.php';
 require_once '../../models/Database.php';
 require_once '../../models/Sale.php';
 
 use backend\models\Sale;
+use backend\models\Database;
 
 try {
     $sale = new Sale();
     
+    // Paramètres
+    $limit = $_GET['limit'] ?? 50;
+    $offset = $_GET['offset'] ?? 0;
+    
     // Récupérer les ventes avec détails
-    $ventes = $sale->getAllWithDetails(20);
+    $ventes = $sale->getAllWithDetails($limit, $offset);
     
     if ($ventes === false) {
         http_response_code(400);
@@ -33,7 +37,8 @@ try {
         'success' => true,
         'code' => 200,
         'message' => 'Ventes récupérées avec succès',
-        'data' => $ventes
+        'data' => $ventes,
+        'count' => count($ventes)
     ]);
     
 } catch (Exception $e) {
@@ -45,3 +50,4 @@ try {
     ]);
 }
 ?>
+

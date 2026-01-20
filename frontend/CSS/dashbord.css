@@ -1328,8 +1328,8 @@ table tbody tr:only-child td[colspan] {
 
 /* Panier */
 .list-panier {
-    min-height: 200px;
-    max-height: 400px;
+    min-height: 100px;
+    max-height: 120px;
     overflow-y: auto;
     margin-bottom: var(--espacement-lg);
 }

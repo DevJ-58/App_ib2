@@ -1596,28 +1596,13 @@ function annulerVente() {
     }
 }
 
-function validerVente() {
+async function validerVente() {
+    console.log('=== VALIDER VENTE DEBUT ===');
+    console.log('Type paiement actuel:', typePaiementActuel);
+    
     if (panier.length === 0) {
         afficherNotification('Le panier est vide', 'error');
         return;
-    }
-    
-    // Vérifier le type de paiement
-    if (typePaiementActuel === 'credit') {
-        const nomClient = document.getElementById('nomClient')?.value.trim();
-        if (!nomClient) {
-            afficherNotification('Veuillez saisir le nom du client pour un crédit', 'error');
-            return;
-        }
-    } else {
-        // Vérifier le montant reçu
-        const montantRecu = parseFloat(document.getElementById('montantRecu')?.value) || 0;
-        const total = panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-        
-        if (montantRecu < total) {
-            afficherNotification('Montant reçu insuffisant', 'error');
-            return;
-        }
     }
     
     // Calculer le total
@@ -1625,62 +1610,117 @@ function validerVente() {
     panier.forEach(item => {
         total += item.prix * item.quantite;
     });
+    console.log('Total calculé:', total);
+    // Vérifier le type de paiement et récupérer les montants
+    let montantRecu = 0;
+    let montantRendu = 0;
     
-    // Créer la vente
-    const vente = {
-        id: 'V-' + (Date.now() % 10000).toString().padStart(3, '0'),
-        produits: [...panier],
-        total: total,
-        type: typePaiementActuel === 'credit' ? 'À crédit' : 'Comptant',
-        date: new Date().toLocaleString('fr-FR'),
-        client: document.getElementById('nomClient')?.value || 'Client',
-        montantRecu: typePaiementActuel === 'comptant' ? parseFloat(document.getElementById('montantRecu')?.value) || 0 : 0
-    };
-    
-    // Mettre à jour les stocks
-    panier.forEach(item => {
-        const produit = produitsData.find(p => p.id === item.id);
-        if (produit) {
-            produit.stock -= item.quantite;
-            
-            // Ajouter un mouvement de stock
-            mouvementsData.unshift({
-                id: mouvementsData.length + 1,
-                type: 'sortie',
-                produitId: produit.id,
-                produitNom: produit.nom,
-                quantite: item.quantite,
-                motif: 'Vente',
-                date: vente.date,
-                commentaire: 'Vente ' + vente.id
-            });
-        }
-    });
-    
-    // Si c'est un crédit, l'ajouter à la liste des crédits
     if (typePaiementActuel === 'credit') {
-        creditData.push({
-            id: 'C-' + (Date.now() % 1000).toString().padStart(3, '0'),
-            client: vente.client,
-            montantInitial: total,
-            montantRestant: total,
-            dateCredit: new Date().toLocaleDateString('fr-FR'),
-            joursEcoules: 0,
-            etat: 'en-cours'
-        });
+        const nomClient = document.getElementById('nomClient')?.value.trim();
+        if (!nomClient) {
+            afficherNotification('Veuillez saisir le nom du client pour un crédit', 'error');
+            return;
+        }
+    } else {
+        // Comptant - récupérer le montant reçu
+        const inputMontantRecu = document.getElementById('montantRecu');
+        let valeur = inputMontantRecu?.value?.trim();
+        
+        console.log('💰 Input montantRecu valeur brute:', valeur);
+        
+        // Si l'input est vide, utiliser le total comme montant reçu
+        if (!valeur || valeur === '') {
+            console.warn('⚠️ Montant reçu non rempli, utilisation du total');
+            montantRecu = total;
+            montantRendu = 0;
+        } else {
+            montantRecu = parseFloat(valeur);
+            if (isNaN(montantRecu)) {
+                console.warn('⚠️ Montant reçu invalide:', valeur);
+                afficherNotification('Montant reçu invalide', 'error');
+                return;
+            }
+            
+            if (montantRecu < total) {
+                afficherNotification('Montant reçu insuffisant', 'error');
+                return;
+            }
+            
+            montantRendu = montantRecu - total;
+        }
+        
+        console.log('💰 FINAL - montantRecu:', montantRecu, 'montantRendu:', montantRendu);
+        
+        if (montantRecu < total) {
+            afficherNotification('Montant reçu insuffisant', 'error');
+            return;
+        }
+        
+        montantRendu = montantRecu - total;
     }
     
-    // Afficher le ticket
-    afficherTicket(vente);
+    // Préparer les items
+    const items = [];
+    panier.forEach(item => {
+        items.push({
+            produit_id: item.id,
+            quantite: item.quantite,
+            prix_vente: item.prix
+        });
+    });
     
-    // Réinitialiser le panier
-    panier = [];
-    afficherPanier();
-    document.getElementById('nomClient').value = '';
-    document.getElementById('montantRecu').value = '';
-    mettreAJourStatistiques();
-    
-    console.log('✅ Vente validée:', vente);
+    try {
+        // Enregistrer la vente via l'API
+        const result = await enregistrerVenteAPI(
+            document.getElementById('nomClient')?.value || 'Client',
+            total,
+            typePaiementActuel,
+            items,
+            montantRecu,
+            montantRendu
+        );
+        
+        if (!result) {
+            return; // Erreur déjà signalée
+        }
+        
+        // Créer l'objet vente pour l'affichage
+        const vente = {
+            id: result.vente_id,
+            numero: result.numero_vente,
+            produits: [...panier],
+            total: total,
+            type: typePaiementActuel === 'credit' ? 'À crédit' : 'Comptant',
+            date: new Date().toLocaleString('fr-FR'),
+            client: document.getElementById('nomClient')?.value || 'Client',
+            montantRecu: montantRecu,
+            montantRendu: montantRendu
+        };
+        
+        // Recharger les stocks
+        await chargerStocksAPI();
+        
+        // Recharger les mouvements
+        const mouvementsReponse = await chargerMouvementsAPI(10);
+        mouvementsData = mouvementsReponse;
+        
+        // Mettre à jour le dashboard ventes
+        await mettreAJourVentesDashboard();
+        
+        // Afficher le ticket
+        afficherTicket(vente);
+        
+        // Réinitialiser le panier
+        panier = [];
+        afficherPanier();
+        document.getElementById('nomClient').value = '';
+        document.getElementById('montantRecu').value = '';
+        
+        afficherNotification('Vente enregistrée et stocks mis à jour', 'success');
+    } catch (error) {
+        console.error('❌ Erreur validation vente:', error);
+        afficherNotification('Erreur lors de l\'enregistrement de la vente', 'error');
+    }
 }
 
 function afficherTicket(vente) {
@@ -1777,6 +1817,48 @@ async function chargerStocks() {
         console.error('❌ Erreur chargement stocks:', error);
         afficherNotification('Erreur lors du chargement des stocks', 'error');
     }
+}
+
+/**
+ * Rechercher des produits dans la section ventes
+ */
+function rechercherDansVentes(terme) {
+    const container = document.getElementById('produitsRapides');
+    if (!container) return;
+    
+    // Si terme vide, afficher les produits populaires
+    if (!terme || terme.length === 0) {
+        chargerProduitsPopulaires();
+        return;
+    }
+    
+    // Filtrer les produits
+    const terme_lower = terme.toLowerCase();
+    const produitsFiltres = produitsData.filter(p => 
+        (p.nom.toLowerCase().includes(terme_lower) || 
+         p.codeBarre.includes(terme)) &&
+        p.stock > 0
+    );
+    
+    // Afficher les résultats
+    container.innerHTML = '';
+    
+    if (produitsFiltres.length === 0) {
+        container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">Aucun produit trouvé</p>';
+        return;
+    }
+    
+    produitsFiltres.forEach(produit => {
+        const carte = document.createElement('div');
+        carte.className = 'produit-rapide';
+        carte.innerHTML = `
+            <i class="fa-solid ${produit.icone}"></i>
+            <h5>${produit.nom}</h5>
+            <p>${produit.prix.toLocaleString()} FCFA</p>
+        `;
+        carte.onclick = () => ajouterAuPanier(produit.id);
+        container.appendChild(carte);
+    });
 }
 
 /**
@@ -2637,15 +2719,7 @@ function initialiserEvenements() {
     const rechercheVente = document.getElementById('rechercheVente');
     if (rechercheVente) {
         rechercheVente.addEventListener('input', function(e) {
-            const terme = e.target.value.toLowerCase();
-            if (terme.length > 0) {
-                const resultats = produitsData.filter(p => 
-                    p.nom.toLowerCase().includes(terme) || 
-                    p.codeBarre.includes(terme)
-                );
-                // Afficher les résultats de recherche
-                console.log('Résultats de recherche:', resultats);
-            }
+            rechercherDansVentes(e.target.value);
         });
     }
     

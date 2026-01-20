@@ -298,6 +298,52 @@ class APIClient {
     async getStockInfo() {
         return this.getAllStocks();
     }
+
+    // ==================== VENTES ====================
+
+    /**
+     * Créer une nouvelle vente
+     */
+    async createSale(client_nom, total, type_paiement, items, montant_recu = 0, montant_rendu = 0) {
+        return this.request('/Api/Sales/create.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                client_nom: client_nom,
+                total: total,
+                type_paiement: type_paiement,
+                items: items,
+                montant_recu: montant_recu,
+                montant_rendu: montant_rendu,
+                utilisateur_id: utilisateurConnecte?.id || 1
+            })
+        });
+    }
+
+    /**
+     * Récupérer la liste des ventes
+     */
+    async getAllSales(limit = 50, offset = 0) {
+        return this.request(`/Api/Sales/list.php?limit=${limit}&offset=${offset}`);
+    }
+
+    /**
+     * Récupérer les détails d'une vente
+     */
+    async getSaleDetails(vente_id) {
+        return this.request(`/Api/Sales/details.php?id=${vente_id}`);
+    }
+
+    /**
+     * Récupérer les statistiques des ventes
+     */
+    async getSalesStats(date_debut = null, date_fin = null) {
+        let url = '/Api/Sales/stats.php';
+        const params = [];
+        if (date_debut) params.push('date_debut=' + date_debut);
+        if (date_fin) params.push('date_fin=' + date_fin);
+        if (params.length > 0) url += '?' + params.join('&');
+        return this.request(url);
+    }
 }
 
 // Instance globale du client API

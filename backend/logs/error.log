@@ -2624,3 +2624,125 @@ Stack trace:
 [20-Jan-2026 21:53:15 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
 [20-Jan-2026 21:53:21 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
 [20-Jan-2026 21:53:21 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 21:59:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 21:59:56 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 21:59:56 UTC] CHECK: Method=GET
+[20-Jan-2026 21:59:56 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 21:59:56 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 21:59:56 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 21:59:56 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 21:59:56 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768935939.jpg","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 21:59:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 21:59:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 21:59:56 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 21:59:56 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:00:24 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:00:24 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:00:24 UTC] CHECK: Method=GET
+[20-Jan-2026 22:00:24 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:00:24 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:00:24 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:00:24 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:00:24 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768935939.jpg","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:00:30 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: ===== UPLOAD PHOTO CALLED =====
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: user_id=8
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: File received - name=2025121721450005.png, type=image/png, size=203603
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: Fichier sauvegardé: /APP_IB/backend/uploads/user_8_1768946430.png
+[20-Jan-2026 22:00:30 UTC] UPLOAD_PHOTO: BD mise à jour pour user_id=8
+[20-Jan-2026 22:09:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:09:56 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:09:56 UTC] CHECK: Method=GET
+[20-Jan-2026 22:09:56 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:09:56 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:09:56 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:09:56 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:09:56 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:09:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:09:56 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:09:56 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:09:56 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:16:49 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:16:49 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:16:49 UTC] CHECK: Method=GET
+[20-Jan-2026 22:16:49 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:16:49 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:16:49 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:16:49 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:16:49 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:16:49 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:16:49 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:16:49 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:16:49 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:17:10 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:17:10 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:17:10 UTC] CHECK: Method=GET
+[20-Jan-2026 22:17:10 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:17:10 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:17:10 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:17:10 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:17:10 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:17:10 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:17:10 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:17:10 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:17:10 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:28:05 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:05 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:28:05 UTC] CHECK: Method=GET
+[20-Jan-2026 22:28:05 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:28:05 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:05 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:28:05 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:28:05 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:28:05 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:05 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:05 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:28:05 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:28:16 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:37 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Début traitement
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] REQUEST_METHOD: POST
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Raw input: {"nom":"byon","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":5,"actif":1}
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Decoded data: {"nom":"byon","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":5,"actif":1}
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Création du produit avec les données: {"nom":"byon","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":5,"actif":1}
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Produit créé avec ID: 39
+[20-Jan-2026 22:28:37 UTC] 📝 [CREATE] Produit récupéré: {"id":39,"code_barre":"EAN17689481174508","code_interne":null,"nom":"byon","categorie_id":3,"prix_achat":"0.00","prix_vente":"1200.00","stock":12,"seuil_alerte":5,"icone":"fa-box","photo":null,"actif":1,"created_at":"2026-01-20 22:28:37","categorie_nom":"Alimentaire"}
+[20-Jan-2026 22:28:37 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:32:37 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:32:37 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:32:37 UTC] CHECK: Method=GET
+[20-Jan-2026 22:32:37 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:32:37 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:32:37 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:32:37 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:32:37 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:32:38 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:32:38 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:32:38 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:32:38 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:45:22 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:45:22 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 22:45:22 UTC] CHECK: Method=GET
+[20-Jan-2026 22:45:22 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 22:45:22 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:45:22 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 22:45:22 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 22:45:22 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 22:45:22 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:45:22 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 22:45:22 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 22:45:22 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 22:51:59 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 23:08:23 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 23:08:23 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 23:08:23 UTC] CHECK: Method=GET
+[20-Jan-2026 23:08:23 UTC] CHECK: PHPSESSID=misb4orli021kg26ius84e54bo
+[20-Jan-2026 23:08:23 UTC] CHECK: $_SESSION={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 23:08:23 UTC] CHECK: $_COOKIE={"PHPSESSID":"misb4orli021kg26ius84e54bo"}
+[20-Jan-2026 23:08:23 UTC] CHECK: Récupération user_id=8
+[20-Jan-2026 23:08:23 UTC] CHECK: User trouvé: {"id":8,"nom":"tonety","prenom":"ruben","telephone":"1111111111","email":"tonety@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_8_1768946430.png","created_at":"2026-01-20 19:05:22"}
+[20-Jan-2026 23:08:23 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 23:08:23 UTC] SESSION: Session started. ID=misb4orli021kg26ius84e54bo, Session data={"user_id":8,"user_role":"vendeur","user_telephone":"1111111111","logged_in_at":1768935922}
+[20-Jan-2026 23:08:23 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 23:08:23 UTC] GET Categories/list: 6 catégories trouvées
