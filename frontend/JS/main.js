@@ -1779,6 +1779,95 @@ async function chargerStocks() {
     }
 }
 
+/**
+ * Rechercher et filtrer les produits dans le tableau stocks
+ */
+function rechercherDansStocks(terme) {
+    const tbody = document.getElementById('tableauStockBody');
+    if (!tbody) return;
+    
+    // Si terme vide, afficher tous les stocks
+    if (!terme || terme.length === 0) {
+        afficherTableauStock();
+        return;
+    }
+    
+    // Filtrer les produits
+    const produitsFiltres = stockData.filter(produit => {
+        return (
+            produit.nom.toLowerCase().includes(terme) ||
+            (produit.code_barre && produit.code_barre.includes(terme)) ||
+            (produit.categorie_nom && produit.categorie_nom.toLowerCase().includes(terme))
+        );
+    });
+    
+    // Afficher les résultats
+    tbody.innerHTML = '';
+    
+    if (produitsFiltres.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: #6c757d;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+                    Aucun produit trouvé pour "<strong>${terme}</strong>"
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Afficher les produits filtrés
+    produitsFiltres.forEach(produit => {
+        // Déterminer l'état du stock
+        let etat = {classe: 'bon', libelle: 'Bon stock'};
+        if (produit.stock === 0) {
+            etat = {classe: 'rupture', libelle: 'Rupture'};
+        } else if (produit.stock <= produit.seuil_alerte / 2) {
+            etat = {classe: 'critique', libelle: 'Critique'};
+        } else if (produit.stock < produit.seuil_alerte) {
+            etat = {classe: 'alerte', libelle: 'Alerte'};
+        }
+        
+        const valeur = produit.stock * produit.prix_vente;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="info-produit">
+                    <div class="icone-produit">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                    <div class="details-produit">
+                        <h4>${produit.nom}</h4>
+                        <span class="code-barre">${produit.code_barre || 'N/A'}</span>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge-categorie">${produit.categorie_nom || 'N/A'}</span></td>
+            <td><strong class="qte-stock">${produit.stock}</strong></td>
+            <td>${produit.seuil_alerte}</td>
+            <td>${valeur.toLocaleString()} FCFA</td>
+            <td><span class="badge-etat etat-${etat.classe}">${etat.libelle}</span></td>
+            <td>${produit.etat_message || '-'}</td>
+            <td>
+                <div class="actions-stock">
+                    <button class="btn-icone btn-voir" title="Historique" onclick="voirHistoriqueStock(${produit.id})">
+                        <i class="fa-solid fa-history"></i>
+                    </button>
+                    <button class="btn-icone btn-modifier" title="Ajouter stock" onclick="ouvrirModalMouvementStock('entree', ${produit.id})">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+    
+    // Afficher un message de comptage
+    console.log(`🔍 Recherche: ${produitsFiltres.length} produit(s) trouvé(s) pour "${terme}"`);
+
+
 function afficherTableauStock() {
     const tbody = document.getElementById('tableauStockBody');
     if (!tbody) return;
@@ -2557,6 +2646,15 @@ function initialiserEvenements() {
                 // Afficher les résultats de recherche
                 console.log('Résultats de recherche:', resultats);
             }
+        });
+    }
+    
+    // Gestion de la recherche dans la section stocks
+    const rechercheStock = document.getElementById('rechercheStock');
+    if (rechercheStock) {
+        rechercheStock.addEventListener('input', function(e) {
+            const terme = e.target.value.toLowerCase().trim();
+            rechercherDansStocks(terme);
         });
     }
     
