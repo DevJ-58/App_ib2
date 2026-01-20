@@ -2643,18 +2643,19 @@ async function enregistrerMouvementStock() {
     }
 }
 
-function enregistrerPerte() {
+async function enregistrerPerte() {
     const produitId = document.getElementById('produitPerte').value;
     const quantite = parseInt(document.getElementById('quantitePerte').value);
     const raison = document.getElementById('raisonPerte').value;
     const justification = document.getElementById('justificationPerte').value.trim();
     
+    // Validation
     if (!produitId || !quantite || quantite <= 0 || !raison || !justification) {
         afficherNotification('Veuillez remplir tous les champs correctement', 'error');
         return;
     }
     
-    const produit = produitsData.find(p => p.id === produitId);
+    const produit = produitsData.find(p => p.id == produitId);
     if (!produit) {
         afficherNotification('Produit introuvable', 'error');
         return;
@@ -2665,25 +2666,29 @@ function enregistrerPerte() {
         return;
     }
     
-    produit.stock -= quantite;
-    
-    mouvementsData.unshift({
-        id: mouvementsData.length + 1,
-        type: 'perte',
-        produitId: produitId,
-        produitNom: produit.nom,
-        quantite: quantite,
-        motif: raison,
-        date: new Date().toLocaleString('fr-FR'),
-        commentaire: justification
-    });
-    
-    afficherTableauStock();
-    afficherMouvementsRecents();
-    afficherAlertesStock();
-    mettreAJourStatistiques();
-    fermerModalPerte();
-    afficherNotification('Perte enregistrée avec succès', 'success');
+    try {
+        // Enregistrer comme mouvement de type 'perte'
+        const success = await enregistrerMouvementAPI(produitId, 'perte', quantite, raison, justification);
+        
+        if (success) {
+            // Recharger les données
+            await chargerStocksAPI();
+            const mouvementsReponse = await chargerMouvementsAPI(10);
+            mouvementsData = mouvementsReponse;
+            
+            // Rafraîchir l'affichage
+            afficherTableauStock();
+            afficherMouvementsRecents();
+            afficherAlertesStock();
+            mettreAJourStatistiques();
+            
+            // Fermer le modal
+            fermerModalPerte();
+        }
+    } catch (error) {
+        console.error('❌ Erreur enregistrement perte:', error);
+        afficherNotification('Erreur lors de l\'enregistrement', 'error');
+    }
 }
 
 function enregistrerRemboursement() {
