@@ -21,6 +21,57 @@ let currentPage = 1;
 const perPageProducts = 10;
 
 // ====================================================================
+// SYSTÈME DE NOTIFICATIONS (Toasts)
+// ====================================================================
+
+/**
+ * Afficher une notification temporaire
+ * @param {string} message - Le message à afficher
+ * @param {string} type - 'success', 'error', 'warning', 'info' (défaut: 'info')
+ * @param {number} duration - Durée en ms avant fermeture (0 = pas de fermeture auto)
+ */
+function afficherNotification(message, type = 'info', duration = 4000) {
+    const container = document.getElementById('notificationsContainer');
+    if (!container) return;
+
+    const notification = document.createElement('div');
+    notification.className = 'notification-toast notification-' + type;
+    notification.innerHTML = `
+        <div class="notification-contenu">
+            <i class="notification-icone fa-solid ${getIconeNotification(type)}"></i>
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    container.appendChild(notification);
+
+    // Auto-fermeture si duration > 0
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, duration);
+    }
+}
+
+/**
+ * Obtenir l'icône selon le type de notification
+ */
+function getIconeNotification(type) {
+    const icones = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    return icones[type] || icones['info'];
+}
+
+// ====================================================================
 // INITIALISATION AU CHARGEMENT
 // ====================================================================
 
@@ -38,6 +89,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Charger les données initiales depuis l'API (pas de données locales)
     await chargerProduits();
+    await chargerCategories();
+    
+    // Charger les données du dashboard (ventes récentes, crédits, etc.)
+    await chargerDonneesDashboard();
 
     // Initialiser les événements
     initialiserEvenements();
@@ -48,6 +103,77 @@ document.addEventListener('DOMContentLoaded', async function() {
         formProduit.addEventListener('submit', function(e) {
             e.preventDefault();
             soumettreFormulaireProduit();
+        });
+    }
+    
+    // ==================== GESTIONNAIRE FORMULAIRE CATÉGORIE ====================
+    const formCategorie = document.getElementById('formCategorie');
+    if (formCategorie) {
+        console.log('📂 Gestionnaire formulaire catégorie attaché');
+        formCategorie.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const mode = this.dataset.mode || 'ajouter';
+            const categorieId = this.dataset.categorieId;
+            const nom = document.getElementById('nomCategorie')?.value;
+
+            if (!nom) {
+                afficherNotification('Le nom de la catégorie est obligatoire', 'warning');
+                return;
+            }
+
+            try {
+                let url, method, body;
+
+                if (mode === 'modifier' && categorieId) {
+                    // Modification
+                    url = '/APP_IB/backend/Api/Categories/update.php';
+                    method = 'POST';
+                    body = new FormData();
+                    body.append('id', categorieId);
+                    body.append('nom', nom);
+                } else {
+                    // Création
+                    url = '/APP_IB/backend/Api/Categories/create.php';
+                    method = 'POST';
+                    body = JSON.stringify({ nom: nom });
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: method === 'POST' && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : {},
+                    body: body
+                });
+
+                const json = await response.json();
+
+                if (json.success) {
+                    afficherNotification(mode === 'modifier' ? 'Catégorie modifiée avec succès' : 'Catégorie créée avec succès', 'success');
+                    formCategorie.reset();
+                    formCategorie.dataset.mode = 'ajouter';
+                    formCategorie.dataset.categorieId = '';
+                    chargerListeCategories();
+                    
+                    // Recharger les catégories dans le sélecteur produits
+                    chargerCategories();
+                } else {
+                    afficherNotification('Erreur: ' + json.message, 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                afficherNotification('Erreur lors de la sauvegarde', 'error');
+            }
+        });
+    } else {
+        console.warn('⚠️  formCategorie non trouvé');
+    }
+    
+    // ==================== GESTIONNAIRE FERMETURE MODALE CATÉGORIE ====================
+    const modalCategorie = document.getElementById('modalCategorie');
+    if (modalCategorie) {
+        modalCategorie.addEventListener('click', function(e) {
+            if (e.target === modalCategorie) {
+                fermerModalCategorie();
+            }
         });
     }
     
@@ -323,7 +449,7 @@ function deconnecter() {
 
 function chargerDashboard() {
     console.log('📊 Chargement du dashboard');
-    mettreAJourStatistiques();
+    chargerDonneesDashboard();
     
     // Charger le graphique si Chart.js est disponible
     if (typeof Chart !== 'undefined') {
@@ -384,8 +510,6 @@ function initialiserChartDashboard() {
 }
 
 function mettreAJourStatistiques() {
-    let ventesJour = 125000;
-    let produitsVendus = 48;
     let valeurStock = 0;
     let creditsEnCours = 0;
     
@@ -399,21 +523,20 @@ function mettreAJourStatistiques() {
         }
     });
     
-    // Mettre à jour les affichages
-    const elementsStatistiques = {
-        ventesJour: document.querySelectorAll('.carte-stat.ventes p'),
-        produitsVendus: document.querySelectorAll('.carte-stat.produits p'),
-        valeurStock: document.querySelectorAll('.carte-stat.stock p'),
-        creditsEnCours: document.querySelectorAll('.carte-stat.credits p')
-    };
-    
-    // Mise à jour sécurisée
-    if (elementsStatistiques.valeurStock.length > 0) {
-        elementsStatistiques.valeurStock[0].textContent = valeurStock.toLocaleString() + ' FCFA';
+    // Mettre à jour les affichages des cartes stats
+    const elemValeurStock = document.getElementById('stat-valeur-stock');
+    if (elemValeurStock) {
+        elemValeurStock.textContent = valeurStock.toLocaleString('fr-FR') + ' FCFA';
     }
     
-    if (elementsStatistiques.creditsEnCours.length > 0) {
-        elementsStatistiques.creditsEnCours[0].textContent = creditsEnCours.toLocaleString() + ' FCFA';
+    const elemCreditsEnCours = document.getElementById('stat-credits-montant');
+    if (elemCreditsEnCours) {
+        elemCreditsEnCours.textContent = creditsEnCours.toLocaleString('fr-FR') + ' FCFA';
+    }
+    
+    const elemProduitCount = document.getElementById('stat-produits-count');
+    if (elemProduitCount) {
+        elemProduitCount.innerHTML = '<i class="fa-solid fa-box"></i><span>' + produitsData.length + ' produits</span>';
     }
     
     // Mettre à jour les totaux dans le panneau de filtres (produits)
@@ -430,8 +553,127 @@ function mettreAJourStatistiques() {
     
     const valeurTotale = document.getElementById('valeurTotale');
     if (valeurTotale) {
-        valeurTotale.textContent = valeurStock.toLocaleString() + ' FCFA';
+        valeurTotale.textContent = valeurStock.toLocaleString('fr-FR') + ' FCFA';
     }
+    
+    // Charger les stocks critiques
+    chargerStocksCritiques();
+}
+
+/**
+ * Charger et afficher les stocks critiques
+ */
+async function chargerStocksCritiques() {
+    const stocksCritiques = produitsData.filter(p => p.stock < p.seuilAlerte);
+    const liste = document.getElementById('liste-stocks-critiques');
+    
+    if (!liste) return;
+    
+    if (stocksCritiques.length === 0) {
+        liste.innerHTML = '<li style="text-align: center; color: #999; padding: 1rem;"><i class="fa-solid fa-check-circle"></i> Aucun stock critique</li>';
+        document.getElementById('alerte-stock-critique').textContent = '0 produits en quantité critique';
+        return;
+    }
+    
+    let html = '';
+    stocksCritiques.forEach(p => {
+        html += '<li><span class="nom-produit">' + p.nom + '</span><span class="quantite">' + p.stock + ' restants</span></li>';
+    });
+    
+    liste.innerHTML = html;
+    document.getElementById('alerte-stock-critique').textContent = stocksCritiques.length + ' produits en quantité critique (< seuil d\'alerte)';
+}
+
+/**
+ * Charger et afficher les ventes récentes depuis l'API
+ */
+async function chargerVentesRecentes() {
+    const tbody = document.getElementById('tableau-ventes-recentes');
+    if (!tbody) return;
+    
+    try {
+        const response = await api.getAllSales();
+        
+        if (!response.success || !Array.isArray(response.data)) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #999;">Aucune vente enregistrée</td></tr>';
+            return;
+        }
+        
+        // Prendre les 5 dernières ventes
+        const ventesRecentes = response.data.slice(0, 5);
+        let totalVentes = 0;
+        let nbProduits = 0;
+        
+        if (ventesRecentes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #999;">Aucune vente enregistrée</td></tr>';
+        } else {
+            let html = '';
+            ventesRecentes.forEach(v => {
+                const montant = parseFloat(v.montant_total) || 0;
+                const type = v.type === 'credit' ? 'Crédit' : 'Comptant';
+                const badge = v.type === 'credit' ? 'credit' : 'paye';
+                const date = new Date(v.date_vente).toLocaleDateString('fr-FR') + ' ' + new Date(v.date_vente).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                
+                totalVentes += montant;
+                nbProduits += parseInt(v.quantite_totale) || 1;
+                
+                html += '<tr>';
+                html += '<td><strong>#V-' + String(v.id).padStart(3, '0') + '</strong></td>';
+                html += '<td>' + (v.descriptions || 'Produit(s)') + '</td>';
+                html += '<td>' + (v.client_nom || 'Client') + '</td>';
+                html += '<td><strong>' + montant.toLocaleString('fr-FR') + ' FCFA</strong></td>';
+                html += '<td><span class="badge ' + badge + '">' + type + '</span></td>';
+                html += '<td>' + date + '</td>';
+                html += '<td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente(' + v.id + ')"></i></td>';
+                html += '</tr>';
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // Mettre à jour les stats de ventes
+        document.getElementById('stat-ventes-jour').textContent = totalVentes.toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('stat-produits-vendus').textContent = nbProduits;
+        
+    } catch (error) {
+        console.error('Erreur chargement ventes:', error);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: red;">Erreur lors du chargement</td></tr>';
+    }
+}
+
+/**
+ * Charger et afficher les crédits impayés
+ */
+async function chargerCreditsImpayés() {
+    try {
+        const response = await api.getAllCredits();
+        
+        if (!response.success || !Array.isArray(response.data)) {
+            document.getElementById('stat-credits-count').innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i><span>0 crédits actifs</span>';
+            return;
+        }
+        
+        const creditsImpayés = response.data.filter(c => c.etat !== 'rembourse');
+        const totalCredits = creditsImpayés.reduce((sum, c) => sum + (parseFloat(c.montant_restant) || 0), 0);
+        
+        document.getElementById('stat-credits-montant').textContent = totalCredits.toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('stat-credits-count').innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i><span>' + creditsImpayés.length + ' crédits actifs</span>';
+        document.getElementById('alerte-credits-impaye').textContent = creditsImpayés.length + ' crédits non remboursés - Total: ' + totalCredits.toLocaleString('fr-FR') + ' FCFA';
+        
+    } catch (error) {
+        console.error('Erreur chargement crédits:', error);
+    }
+}
+
+/**
+ * Charger toutes les données du dashboard
+ */
+async function chargerDonneesDashboard() {
+    console.log('📊 Chargement des données du dashboard');
+    mettreAJourStatistiques();
+    await chargerVentesRecentes();
+    await chargerCreditsImpayés();
+    console.log('✅ Dashboard mis à jour');
 }
 
 function telechargerRapportJournalier() {
@@ -579,6 +821,65 @@ function goToPage(page) {
     afficherProduits(produitsData, page);
 }
 
+/**
+ * Charger les catégories depuis l'API et mettre à jour les sélecteurs
+ */
+async function chargerCategories() {
+    console.log('📂 Chargement des catégories depuis API');
+    try {
+        const response = await fetch('/APP_IB/backend/Api/Categories/list.php');
+        const json = await response.json();
+
+        if (json.success && Array.isArray(json.data)) {
+            const select = document.getElementById('categorieProduit');
+            const filtreSelect = document.getElementById('filtreCategorie');
+            
+            if (select) {
+                // Conserver l'option vide
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Sélectionner une catégorie</option>';
+                
+                // Ajouter les catégories de l'API
+                json.data.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.nom;
+                    select.appendChild(option);
+                });
+                
+                // Restaurer la sélection si elle existe
+                if (currentValue && select.querySelector('option[value="' + currentValue + '"]')) {
+                    select.value = currentValue;
+                }
+                
+                console.log('✅ Catégories chargées dans sélecteur produit:', json.data.length);
+            }
+            
+            // Mettre à jour le filtre par catégorie
+            if (filtreSelect) {
+                const currentFilterValue = filtreSelect.value;
+                filtreSelect.innerHTML = '<option value="">Toutes les catégories</option>';
+                
+                json.data.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.nom;
+                    filtreSelect.appendChild(option);
+                });
+                
+                // Restaurer la sélection du filtre
+                if (currentFilterValue && filtreSelect.querySelector('option[value="' + currentFilterValue + '"]')) {
+                    filtreSelect.value = currentFilterValue;
+                }
+                
+                console.log('✅ Catégories chargées dans filtre:', json.data.length);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erreur chargement catégories:', error);
+    }
+}
+
 function ouvrirModalProduit(mode = 'ajouter', produitId = null) {
     const modal = document.getElementById('modalProduit');
     const titre = document.getElementById('titreProduit');
@@ -620,6 +921,19 @@ function fermerModalProduit() {
 function ouvrirModalProfil() {
     const modal = document.getElementById('modalProfil');
     if (modal) {
+        // Remplir les champs avec les données de l'utilisateur connecté
+        api.checkSession().then(user => {
+            if (user) {
+                document.getElementById('profilPrenom').value = user.prenom || '';
+                document.getElementById('profilNom').value = user.nom || '';
+                document.getElementById('profilTelephone').value = user.telephone || '';
+                document.getElementById('profilEmail').value = user.email || '';
+            }
+            // Vider les champs de mot de passe
+            document.getElementById('profilMotDePasseActuel').value = '';
+            document.getElementById('profilNouveauMotDePasse').value = '';
+            document.getElementById('profilConfirmMotDePasse').value = '';
+        });
         modal.classList.add('show');
     }
 }
@@ -628,6 +942,182 @@ function fermerModalProfil() {
     const modal = document.getElementById('modalProfil');
     if (modal) {
         modal.classList.remove('show');
+    }
+}
+
+/**
+ * Ouvrir la modale pour ajouter/modifier une catégorie
+ */
+function ouvrirModalCategorie(mode = 'ajouter', categorieId = null) {
+    const modal = document.getElementById('modalCategorie');
+    if (!modal) {
+        console.error('Modal catégorie non trouvée');
+        return;
+    }
+
+    // Réinitialiser le formulaire
+    const form = document.getElementById('formCategorie');
+    if (form) {
+        form.reset();
+        form.dataset.mode = mode;
+        form.dataset.categorieId = categorieId || '';
+    }
+
+    // Mettre à jour le titre
+    const titre = document.getElementById('titreCategorie');
+    if (titre) {
+        if (mode === 'modifier') {
+            titre.innerHTML = '<i class="fa-solid fa-edit"></i> Modifier la Catégorie';
+        } else {
+            titre.innerHTML = '<i class="fa-solid fa-box-open"></i> Ajouter une Catégorie';
+        }
+    }
+
+    // Charger la liste des catégories dans l'onglet Gérer
+    chargerListeCategories();
+
+    // Afficher le premier onglet
+    basculerTabCategorie('ajouter');
+
+    // Afficher la modale
+    modal.classList.add('active');
+}
+
+/**
+ * Fermer la modale des catégories
+ */
+function fermerModalCategorie() {
+    const modal = document.getElementById('modalCategorie');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+/**
+ * Basculer entre les onglets de la modale catégorie
+ */
+function basculerTabCategorie(tabName) {
+    // Masquer tous les onglets
+    const tabs = document.querySelectorAll('.categorie-tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    // Désactiver tous les boutons de tab
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('tab-active'));
+
+    // Afficher l'onglet sélectionné
+    const tab = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    if (tab) {
+        tab.classList.add('active');
+    }
+
+    // Activer le bouton correspondant
+    const btn = document.querySelector('.tab-btn[onclick*="' + tabName + '"]');
+    if (btn) {
+        btn.classList.add('tab-active');
+    }
+}
+
+/**
+ * Charger et afficher la liste des catégories
+ */
+async function chargerListeCategories() {
+    const liste = document.getElementById('listeCategories');
+    if (!liste) return;
+
+    try {
+        const response = await fetch('/APP_IB/backend/Api/Categories/list.php');
+        const json = await response.json();
+
+        if (json.success && Array.isArray(json.data)) {
+            if (json.data.length === 0) {
+                liste.innerHTML = '<p style="text-align: center; color: #999;">Aucune catégorie pour le moment</p>';
+                return;
+            }
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">';
+            html += '<th style="text-align: left; padding: 10px;">Nom</th>';
+            html += '<th style="text-align: center; padding: 10px;">Actions</th>';
+            html += '</tr>';
+
+            json.data.forEach(cat => {
+                html += '<tr style="border-bottom: 1px solid #ddd;">';
+                html += '<td style="padding: 10px;">' + cat.nom + '</td>';
+                html += '<td style="text-align: center; padding: 10px;">';
+                html += '<button class="btn-mini" onclick="modifierCategorie(' + cat.id + ')" title="Modifier"><i class="fa-solid fa-edit"></i></button>';
+                html += '<button class="btn-mini danger" onclick="supprimerCategorie(' + cat.id + ', \'' + cat.nom.replace(/'/g, "\\'") + '\')" title="Supprimer"><i class="fa-solid fa-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            liste.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error);
+        liste.innerHTML = '<p style="color: red;">Erreur lors du chargement</p>';
+    }
+}
+
+/**
+ * Modifier une catégorie
+ */
+async function modifierCategorie(categorieId) {
+    try {
+        const response = await fetch('/APP_IB/backend/Api/Categories/list.php');
+        const json = await response.json();
+
+        if (json.success && Array.isArray(json.data)) {
+            const cat = json.data.find(c => c.id == categorieId);
+            if (cat) {
+                document.getElementById('nomCategorie').value = cat.nom;
+
+                const form = document.getElementById('formCategorie');
+                if (form) {
+                    form.dataset.mode = 'modifier';
+                    form.dataset.categorieId = categorieId;
+                }
+
+                // Changer le titre
+                const titre = document.getElementById('titreCategorie');
+                if (titre) {
+                    titre.innerHTML = '<i class="fa-solid fa-edit"></i> Modifier la Catégorie';
+                }
+
+                // Aller à l'onglet Ajouter pour éditer
+                basculerTabCategorie('ajouter');
+            }
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+/**
+ * Supprimer une catégorie
+ */
+async function supprimerCategorie(categorieId, nomCategorie) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer la catégorie "' + nomCategorie + '" et tous ses produits dépendants?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/APP_IB/backend/Api/Categories/delete.php?id=' + categorieId, {
+            method: 'DELETE'
+        });
+        const json = await response.json();
+
+        if (json.success) {
+            afficherNotification('Catégorie supprimée avec succès', 'success');
+            chargerListeCategories();
+            chargerCategories();
+        } else {
+            afficherNotification('Erreur: ' + json.message, 'error');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        afficherNotification('Erreur lors de la suppression', 'error');
     }
 }
 
@@ -802,7 +1292,8 @@ function filtrerProduits() {
     let resultats = produitsData;
     
     if (categorie) {
-        resultats = resultats.filter(p => p.categorie === categorie);
+        // Comparer par categorie_id (ID numérique)
+        resultats = resultats.filter(p => String(p.categorie_id) === categorie);
     }
     
     if (etatStock) {
@@ -2266,6 +2757,82 @@ async function soumettreFormulaireProduit() {
     } catch (error) {
         console.log('❌ Erreur:', error.message || error);
         afficherNotification(error.message || 'Erreur lors de l\'opération', 'error');
+    }
+}
+
+// ====================================================================
+// GESTION DU PROFIL UTILISATEUR
+// ====================================================================
+
+
+
+async function sauvegarderProfil() {
+    console.log('💾 Sauvegarde du profil...');
+    
+    const ancienMotDePasse = document.getElementById('profilMotDePasseActuel')?.value;
+    const nouveauMotDePasse = document.getElementById('profilNouveauMotDePasse')?.value;
+    const confirmMotDePasse = document.getElementById('profilConfirmMotDePasse')?.value;
+    
+    // Vérifier si l'utilisateur veut changer son mot de passe
+    if (nouveauMotDePasse || confirmMotDePasse) {
+        console.log('💾 Tentative de changement de mot de passe');
+        
+        if (!ancienMotDePasse) {
+            afficherNotification('Veuillez entrer votre mot de passe actuel', 'error');
+            return;
+        }
+        
+        if (!nouveauMotDePasse) {
+            afficherNotification('Veuillez entrer un nouveau mot de passe', 'error');
+            return;
+        }
+        
+        if (nouveauMotDePasse !== confirmMotDePasse) {
+            afficherNotification('Les mots de passe ne correspondent pas', 'error');
+            return;
+        }
+        
+        if (nouveauMotDePasse.length < 6) {
+            afficherNotification('Le nouveau mot de passe doit contenir au moins 6 caractères', 'error');
+            return;
+        }
+        
+        try {
+            console.log('💾 Appel changerMotDePasse...');
+            const result = await changerMotDePasse(ancienMotDePasse, nouveauMotDePasse, confirmMotDePasse);
+            
+            if (result.success) {
+                afficherNotification('Mot de passe changé avec succès', 'success');
+                setTimeout(() => {
+                    fermerModalProfil();
+                }, 1000);
+            } else {
+                afficherNotification(result.message || 'Erreur lors du changement de mot de passe', 'error');
+            }
+        } catch (error) {
+            console.error('💾 Erreur changement mot de passe:', error);
+            afficherNotification(error.message || 'Erreur lors du changement de mot de passe', 'error');
+        }
+    } else {
+        console.log('💾 Aucune modification de mot de passe');
+        afficherNotification('Aucune modification à enregistrer', 'info');
+        setTimeout(() => {
+            fermerModalProfil();
+        }, 1000);
+    }
+}
+
+function togglePasswordVisibility(fieldId, button) {
+    console.log('👁️ Toggle visibilité mot de passe:', fieldId);
+    const field = document.getElementById(fieldId);
+    if (field) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            button.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+        } else {
+            field.type = 'password';
+            button.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        }
     }
 }
 

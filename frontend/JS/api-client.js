@@ -173,6 +173,80 @@ class APIClient {
             method: 'DELETE'
         });
     }
+
+    // ==================== VENTES ====================
+
+    /**
+     * Récupérer toutes les ventes
+     */
+    async getAllSales() {
+        return this.request('/Api/Sales/list.php');
+    }
+
+    /**
+     * Récupérer les détails d'une vente
+     */
+    async getSaleDetails(id) {
+        return this.request(`/Api/Sales/details.php?id=${id}`);
+    }
+
+    /**
+     * Créer une vente
+     */
+    async createSale(data) {
+        return this.request('/Api/Sales/create.php', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    // ==================== CRÉDITS ====================
+
+    /**
+     * Récupérer tous les crédits
+     */
+    async getAllCredits() {
+        return this.request('/Api/Credits/list.php');
+    }
+
+    /**
+     * Créer un crédit
+     */
+    async createCredit(data) {
+        return this.request('/Api/Credits/create.php', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    /**
+     * Rembourser un crédit
+     */
+    async reimbourseCredit(id) {
+        return this.request(`/Api/Credits/reimburse.php?id=${id}`, {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+    }
+
+    // ==================== STOCKS ====================
+
+    /**
+     * Récupérer toutes les informations de stock
+     */
+    async getStockInfo() {
+        return this.request('/Api/Stocks/list.php');
+    }
+
+    /**
+     * Enregistrer un mouvement de stock
+     */
+    async recordMovement(data) {
+        return this.request('/Api/Stocks/movement.php', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
 }
 
 // Instance globale du client API

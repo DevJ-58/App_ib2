@@ -66,6 +66,14 @@ class Database
     }
 
     /**
+     * Prépare une requête (wrapper pour PDO::prepare)
+     */
+    public function prepare($query)
+    {
+        return $this->connection->prepare($query);
+    }
+
+    /**
      * Exécute une requête SELECT
      */
     public function select($query, $params = [])

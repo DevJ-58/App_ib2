@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Conteneur des notifications (toasts) -->
+    <div id="notificationsContainer" class="notifications-container"></div>
+    
     <!-- En-tête de navigation -->
     <header class="zone-navigation">
         <div class="logo-navigation">
@@ -142,7 +145,7 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Ventes du jour</h3>
-                                <p>125 000 FCFA</p>
+                                <p id="stat-ventes-jour">125 000 FCFA</p>
                                 <div class="variation positive">
                                     <i class="fa-solid fa-arrow-up"></i>
                                     <span>+12% vs hier</span>
@@ -156,7 +159,7 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Produits vendus</h3>
-                                <p>48</p>
+                                <p id="stat-produits-vendus">48</p>
                                 <div class="variation positive">
                                     <i class="fa-solid fa-arrow-up"></i>
                                     <span>+8 vs hier</span>
@@ -170,10 +173,10 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Valeur du stock</h3>
-                                <p>842 000 FCFA</p>
+                                <p id="stat-valeur-stock">842 000 FCFA</p>
                                 <div class="variation negative">
                                     <i class="fa-solid fa-arrow-down"></i>
-                                    <span>342 produits</span>
+                                    <span id="stat-produits-count">342 produits</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-cubes icone-stat"></i>
@@ -184,10 +187,10 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Crédits en cours</h3>
-                                <p>75 000 FCFA</p>
+                                <p id="stat-credits-montant">75 000 FCFA</p>
                                 <div class="variation negative">
                                     <i class="fa-solid fa-exclamation-triangle"></i>
-                                    <span>8 crédits actifs</span>
+                                    <span id="stat-credits-count">8 crédits actifs</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-credit-card icone-stat"></i>
@@ -201,7 +204,7 @@
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <div class="contenu-alerte">
                             <h4>Stock critique</h4>
-                            <p>3 produits sont en quantité critique (< seuil d'alerte)</p>
+                            <p id="alerte-stock-critique">3 produits sont en quantité critique (< seuil d'alerte)</p>
                         </div>
                         <button class="btn-alerte" onclick="afficherSection('stocks')">Voir détails</button>
                     </div>
@@ -209,7 +212,7 @@
                         <i class="fa-solid fa-clock"></i>
                         <div class="contenu-alerte">
                             <h4>Crédits impayés</h4>
-                            <p>8 crédits non remboursés depuis plus de 7 jours - Total: 47 500 FCFA</p>
+                            <p id="alerte-credits-impaye">8 crédits non remboursés depuis plus de 7 jours - Total: 47 500 FCFA</p>
                         </div>
                         <button class="btn-alerte" onclick="afficherSection('credits')">Relancer</button>
                     </div>
@@ -235,7 +238,7 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tableau-ventes-recentes">
                                 <tr>
                                     <td><strong>#V-001</strong></td>
                                     <td>Riz 25kg, Huile 5L</td>
@@ -291,18 +294,9 @@
                             <h2><i class="fa-solid fa-triangle-exclamation"></i> Stock Critique</h2>
                             <a href="#" class="btn-voir-plus" onclick="afficherSection('stocks')">Voir tout <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
-                        <ul class="liste-produits-stock">
-                            <li>
-                                <span class="nom-produit">Coca-Cola 50cl</span>
-                                <span class="quantite">5 restants</span>
-                            </li>
-                            <li>
-                                <span class="nom-produit">Pain</span>
-                                <span class="quantite">8 restants</span>
-                            </li>
-                            <li>
-                                <span class="nom-produit">Lait Nido</span>
-                                <span class="quantite">3 restants</span>
+                        <ul class="liste-produits-stock" id="liste-stocks-critiques">
+                            <li style="text-align: center; color: #999; padding: 1rem;">
+                                <i class="fa-solid fa-check-circle"></i> Aucun stock critique
                             </li>
                         </ul>
                         <button class="btn-action primaire btn-fullwidth" onclick="afficherSection('stocks')">
@@ -474,7 +468,7 @@
                         <h3><i class="fa-solid fa-filter"></i> Filtres</h3>
                         <div class="groupe-filtre">
                             <label>Catégorie</label>
-                            <button class="btn-action btn-primaire" onclick="ouvrirModalCategorie()">ajouter une categorie</button>
+                            <button class="btn-action btn-primaire" onclick="ouvrirModalCategorie()">Gerer categorie</button>
                             <br>
                             <select id="filtreCategorie" onchange="filtrerProduits()">
                                 <option value="">Toutes les catégories</option>

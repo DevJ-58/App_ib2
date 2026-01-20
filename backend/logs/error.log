@@ -1762,3 +1762,499 @@ Stack trace:
 [20-Jan-2026 16:03:24 UTC] UPLOAD_PHOTO: File received - name=34ea9da4-2b14-47fc-9594-032910747c44.jfif, type=image/jpeg, size=68145
 [20-Jan-2026 16:03:24 UTC] UPLOAD_PHOTO: Fichier sauvegardé: /APP_IB/backend/uploads/user_6_1768925004.jfif
 [20-Jan-2026 16:03:24 UTC] UPLOAD_PHOTO: BD mise à jour pour user_id=6
+[20-Jan-2026 16:05:27 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:05:27 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:05:27 UTC] CHECK: Method=GET
+[20-Jan-2026 16:05:27 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:05:27 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:05:27 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:05:27 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:05:27 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:05:27 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:05:35 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:07:26 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:07:26 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:07:26 UTC] CHECK: Method=GET
+[20-Jan-2026 16:07:26 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:07:26 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:07:26 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:07:26 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:07:26 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:07:26 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:12:02 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:12:02 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:12:02 UTC] CHECK: Method=GET
+[20-Jan-2026 16:12:02 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:12:02 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:12:02 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:12:02 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:12:02 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:12:02 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:12:17 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:13:05 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:13:05 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:13:05 UTC] CHECK: Method=GET
+[20-Jan-2026 16:13:05 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:13:05 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:13:05 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:13:05 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:13:05 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:13:05 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:37 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:37 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:15:37 UTC] CHECK: Method=GET
+[20-Jan-2026 16:15:37 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:15:37 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:37 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:15:37 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:15:37 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:15:37 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:39 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:39 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:15:39 UTC] CHECK: Method=GET
+[20-Jan-2026 16:15:39 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:15:39 UTC] CHECK: $_SESSION={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:15:39 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:15:39 UTC] CHECK: Récupération user_id=6
+[20-Jan-2026 16:15:39 UTC] CHECK: User trouvé: {"id":6,"nom":"flan","prenom":"ben","telephone":"1231231231","email":"flan@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_6_1768925004.jfif","created_at":"2026-01-20 15:58:35"}
+[20-Jan-2026 16:16:30 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:16:32 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:17:03 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":6,"user_role":"vendeur","user_telephone":"1231231231","logged_in_at":1768924715}
+[20-Jan-2026 16:17:03 UTC] REGISTER: Données reçues: {"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","mot_de_passe":"1234567a","confirm_mot_de_passe":"1234567a"}
+[20-Jan-2026 16:17:03 UTC] REGISTER: Méthode HTTP: POST
+[20-Jan-2026 16:17:03 UTC] REGISTER: Content-Type: application/json
+[20-Jan-2026 16:17:03 UTC] User::getByTelephone SQL: SELECT id, nom, prenom, telephone, email, role, photo, mot_de_passe, created_at 
+                      FROM utilisateurs WHERE telephone = :telephone -- param: 1212121212 -- result: false
+[20-Jan-2026 16:17:03 UTC] User::telephoneExists: 1212121212 => false
+[20-Jan-2026 16:17:03 UTC] User::emailExists: abou@gmail.com => false
+[20-Jan-2026 16:17:05 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:05 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:17:05 UTC] CHECK: Method=GET
+[20-Jan-2026 16:17:05 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:17:05 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:05 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:17:05 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:17:05 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":null,"created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:17:05 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:09 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:09 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:17:09 UTC] CHECK: Method=GET
+[20-Jan-2026 16:17:09 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:17:09 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:09 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:17:09 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:17:09 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":null,"created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:17:13 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: ===== UPLOAD PHOTO CALLED =====
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: user_id=7
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: File received - name=1583866559632.jpeg, type=image/jpeg, size=5211
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: Fichier sauvegardé: /APP_IB/backend/uploads/user_7_1768925833.jpeg
+[20-Jan-2026 16:17:13 UTC] UPLOAD_PHOTO: BD mise à jour pour user_id=7
+[20-Jan-2026 16:17:35 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:35 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:17:35 UTC] CHECK: Method=GET
+[20-Jan-2026 16:17:35 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:17:35 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:35 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:17:35 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:17:35 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:17:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:17:53 UTC] User::getByTelephone SQL: SELECT id, nom, prenom, telephone, email, role, photo, mot_de_passe, created_at 
+                      FROM utilisateurs WHERE telephone = :telephone -- param: 1212121212 -- result: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","mot_de_passe":"$2y$10$NA\/Wcq1M256vlWL1g75FfeD6FSyO.IEMcAulnRrjlk2wtUOdayk9i","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:18:07 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:18:19 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925823}
+[20-Jan-2026 16:18:19 UTC] User::getByTelephone SQL: SELECT id, nom, prenom, telephone, email, role, photo, mot_de_passe, created_at 
+                      FROM utilisateurs WHERE telephone = :telephone -- param: 1212121212 -- result: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","mot_de_passe":"$2y$10$O6Ijxgtdimay867QuAM.2ueMt\/ABpKL91LiUrsxo1P07Zqa6IueGK","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:18:19 UTC] LOGIN: ===== SESSION CRÉÉE =====
+[20-Jan-2026 16:18:19 UTC] LOGIN: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:18:19 UTC] LOGIN: user_id=7
+[20-Jan-2026 16:18:19 UTC] LOGIN: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:19 UTC] LOGIN: Headers envoyés: Set-Cookie should follow
+[20-Jan-2026 16:18:20 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:20 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:18:20 UTC] CHECK: Method=GET
+[20-Jan-2026 16:18:20 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:18:20 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:20 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:18:20 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:18:20 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:18:20 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:28 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:33 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:40 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:18:40 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"9","mode":"hard"}
+[20-Jan-2026 16:18:40 UTC] DELETE API: ID récupéré = 9
+[20-Jan-2026 16:18:40 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:18:40 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=9, RowCount=1
+[20-Jan-2026 16:18:40 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=9
+[20-Jan-2026 16:18:40 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:19:04 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:19:07 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:19:07 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"27","mode":"hard"}
+[20-Jan-2026 16:19:07 UTC] DELETE API: ID récupéré = 27
+[20-Jan-2026 16:19:07 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:19:08 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=27, RowCount=1
+[20-Jan-2026 16:19:08 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=27
+[20-Jan-2026 16:19:08 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:19:56 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:20:00 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:20:00 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"21","mode":"hard"}
+[20-Jan-2026 16:20:00 UTC] DELETE API: ID récupéré = 21
+[20-Jan-2026 16:20:00 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:20:00 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=21, RowCount=1
+[20-Jan-2026 16:20:00 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=21
+[20-Jan-2026 16:20:00 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:20:55 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:20:58 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:20:58 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"10","mode":"hard"}
+[20-Jan-2026 16:20:58 UTC] DELETE API: ID récupéré = 10
+[20-Jan-2026 16:20:58 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:20:58 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=10, RowCount=1
+[20-Jan-2026 16:20:58 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=10
+[20-Jan-2026 16:20:58 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:26 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:30 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:30 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"17","mode":"hard"}
+[20-Jan-2026 16:21:30 UTC] DELETE API: ID récupéré = 17
+[20-Jan-2026 16:21:30 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:21:30 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=17, RowCount=1
+[20-Jan-2026 16:21:30 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=17
+[20-Jan-2026 16:21:30 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:35 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:37 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:37 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"12","mode":"hard"}
+[20-Jan-2026 16:21:37 UTC] DELETE API: ID récupéré = 12
+[20-Jan-2026 16:21:37 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:21:37 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=12, RowCount=1
+[20-Jan-2026 16:21:37 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=12
+[20-Jan-2026 16:21:37 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:42 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:45 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:45 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"4","mode":"hard_cleanup"}
+[20-Jan-2026 16:21:45 UTC] DELETE API: ID récupéré = 4
+[20-Jan-2026 16:21:45 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:21:45 UTC] FORCE_DELETE_WITH_DEPS: Deleted rows for ID=4 totals: 2
+[20-Jan-2026 16:21:45 UTC] DELETE API: forceDeleteWithDeps() retourné 2 lignes modifiées pour ID=4
+[20-Jan-2026 16:21:45 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:51 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:54 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:54 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"7","mode":"hard_cleanup"}
+[20-Jan-2026 16:21:54 UTC] DELETE API: ID récupéré = 7
+[20-Jan-2026 16:21:54 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:21:54 UTC] FORCE_DELETE_WITH_DEPS: Deleted rows for ID=7 totals: 2
+[20-Jan-2026 16:21:54 UTC] DELETE API: forceDeleteWithDeps() retourné 2 lignes modifiées pour ID=7
+[20-Jan-2026 16:21:54 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:21:58 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:01 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:01 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"6","mode":"hard_cleanup"}
+[20-Jan-2026 16:22:01 UTC] DELETE API: ID récupéré = 6
+[20-Jan-2026 16:22:01 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:22:01 UTC] FORCE_DELETE_WITH_DEPS: Deleted rows for ID=6 totals: 2
+[20-Jan-2026 16:22:01 UTC] DELETE API: forceDeleteWithDeps() retourné 2 lignes modifiées pour ID=6
+[20-Jan-2026 16:22:01 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:08 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:11 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:11 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"11","mode":"hard"}
+[20-Jan-2026 16:22:11 UTC] DELETE API: ID récupéré = 11
+[20-Jan-2026 16:22:11 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:22:11 UTC] FORCE_DELETE: Query=DELETE FROM produits WHERE id = :id, ID=11, RowCount=1
+[20-Jan-2026 16:22:11 UTC] DELETE API: forceDelete() retourné 1 lignes modifiées pour ID=11
+[20-Jan-2026 16:22:11 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:16 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:19 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:22:19 UTC] DELETE API: REQUEST_METHOD=POST, GET=[], POST={"id":"8","mode":"hard_cleanup"}
+[20-Jan-2026 16:22:19 UTC] DELETE API: ID récupéré = 8
+[20-Jan-2026 16:22:19 UTC] DELETE API: Produit existe? OUI
+[20-Jan-2026 16:22:19 UTC] FORCE_DELETE_WITH_DEPS: Deleted rows for ID=8 totals: 2
+[20-Jan-2026 16:22:19 UTC] DELETE API: forceDeleteWithDeps() retourné 2 lignes modifiées pour ID=8
+[20-Jan-2026 16:22:19 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:26:25 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Début traitement
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] REQUEST_METHOD: POST
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Raw input: {"nom":"banane","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":4,"actif":1}
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Decoded data: {"nom":"banane","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":4,"actif":1}
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Création du produit avec les données: {"nom":"banane","code_barre":"","categorie_id":"3","prix_vente":1200,"stock":12,"seuil_alerte":4,"actif":1}
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Produit créé avec ID: 28
+[20-Jan-2026 16:26:25 UTC] 📝 [CREATE] Produit récupéré: {"id":28,"code_barre":"EAN17689263858393","code_interne":null,"nom":"banane","categorie_id":3,"prix_achat":"0.00","prix_vente":"1200.00","stock":12,"seuil_alerte":4,"icone":"fa-box","photo":null,"actif":1,"created_at":"2026-01-20 16:26:25","categorie_nom":"Alimentaire"}
+[20-Jan-2026 16:26:25 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:26:51 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:27:02 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:27:23 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:27:23 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:30:26 UTC] SESSION: Session started. ID=lucps3kg7nctstnnm6qn37bcjf, Session data=[]
+[20-Jan-2026 16:30:26 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:30:26 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method backend\models\Database::prepare() in C:\wamp64\www\APP_IB\backend\models\Category.php:36
+Stack trace:
+#0 C:\wamp64\www\APP_IB\backend\Api\Categories\list.php(20): backend\models\Category->getAll(false)
+#1 {main}
+  thrown in C:\wamp64\www\APP_IB\backend\models\Category.php on line 36
+[20-Jan-2026 16:31:22 UTC] SESSION: Session started. ID=61cd8b842683f6f7db357c4991d4ebf3, Session data=[]
+[20-Jan-2026 16:31:22 UTC] PHP Warning:  Undefined array key "REQUEST_METHOD" in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 34
+[20-Jan-2026 16:31:22 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method backend\models\Database::prepare() in C:\wamp64\www\APP_IB\backend\models\Category.php:36
+Stack trace:
+#0 C:\wamp64\www\APP_IB\test-category.php(8): backend\models\Category->getAll()
+#1 {main}
+  thrown in C:\wamp64\www\APP_IB\backend\models\Category.php on line 36
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 28
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 29
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 30
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 31
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 32
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 33
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 36
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Undefined global variable $_SESSION in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 37
+[20-Jan-2026 16:31:54 UTC] SESSION: Session started. ID=, Session data=null
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 25
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 28
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 29
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 30
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 31
+[20-Jan-2026 16:31:54 UTC] PHP Warning:  Undefined array key "REQUEST_METHOD" in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 34
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 28
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 29
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 30
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 31
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 32
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  ini_set(): Session ini settings cannot be changed after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 33
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 36
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Undefined global variable $_SESSION in C:\wamp64\www\APP_IB\backend\bootstrap.php on line 37
+[20-Jan-2026 16:32:07 UTC] SESSION: Session started. ID=, Session data=null
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 25
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 28
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 29
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 30
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\wamp64\www\APP_IB\test-category.php:5) in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 31
+[20-Jan-2026 16:32:07 UTC] PHP Warning:  Undefined array key "REQUEST_METHOD" in C:\wamp64\www\APP_IB\backend\configs\cors.php on line 34
+[20-Jan-2026 16:32:11 UTC] SESSION: Session started. ID=8269j9qhvpnmef2pfeko393hce, Session data=[]
+[20-Jan-2026 16:32:12 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:32:12 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:32:22 UTC] SESSION: Session started. ID=7regbcvfs6its6i2p4cfha8g93, Session data=[]
+[20-Jan-2026 16:32:22 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:32:22 UTC] POST Categories/create: nom=TestCat
+[20-Jan-2026 16:32:22 UTC] POST Categories/create: Catégorie créée avec ID=5
+[20-Jan-2026 16:32:27 UTC] SESSION: Session started. ID=rgj3ioc5se4841jmc10oraknot, Session data=[]
+[20-Jan-2026 16:32:27 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:32:27 UTC] UPDATE Categories/update: id=5, nom=TestCatUpdated
+[20-Jan-2026 16:32:27 UTC] UPDATE Categories/update: Catégorie ID=5 mise à jour
+[20-Jan-2026 16:32:32 UTC] SESSION: Session started. ID=onrgf3hkskkf0hj5ff509qt0eb, Session data=[]
+[20-Jan-2026 16:32:32 UTC] DELETE Categories/delete: REQUEST_METHOD=DELETE, GET={"id":"5"}, POST=[]
+[20-Jan-2026 16:32:32 UTC] DELETE Categories/delete: ID récupéré = 5
+[20-Jan-2026 16:32:32 UTC] DELETE Categories/delete: Catégorie existe? OUI
+[20-Jan-2026 16:32:32 UTC] DELETE Categories/delete: Mode = hard_cleanup
+[20-Jan-2026 16:32:32 UTC] DELETE Categories/delete: forceDeleteWithDeps() retourné 1 lignes modifiées pour ID=5
+[20-Jan-2026 16:32:37 UTC] SESSION: Session started. ID=82ja6i232onp0jfe3qhnnn4nh9, Session data=[]
+[20-Jan-2026 16:32:37 UTC] GET Categories/check-deps: requête reçue
+[20-Jan-2026 16:32:37 UTC] GET Categories/check-deps: Catégorie ID=1 a 0 produits dépendants
+[20-Jan-2026 16:33:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:33:53 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:33:53 UTC] CHECK: Method=GET
+[20-Jan-2026 16:33:53 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:33:53 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:33:53 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:33:53 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:33:53 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:33:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:33:55 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:34:11 UTC] SESSION: Session started. ID=que8qt8sssidqg93rgik3crjhe, Session data=[]
+[20-Jan-2026 16:34:11 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:34:11 UTC] POST Categories/create: nom=Testage BD
+[20-Jan-2026 16:34:11 UTC] POST Categories/create: Catégorie créée avec ID=6
+[20-Jan-2026 16:34:25 UTC] SESSION: Session started. ID=qhec2fie8dhbq64abisf040s7o, Session data=[]
+[20-Jan-2026 16:34:25 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:34:25 UTC] UPDATE Categories/update: id=6, nom=NULL
+[20-Jan-2026 16:34:43 UTC] SESSION: Session started. ID=0ik02hhaguhfpc69eoj91c8tru, Session data=[]
+[20-Jan-2026 16:34:43 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:34:43 UTC] UPDATE Categories/update: id=6, nom=NULL
+[20-Jan-2026 16:34:57 UTC] SESSION: Session started. ID=ftfk4d2349u1qfgksn15nviiva, Session data=[]
+[20-Jan-2026 16:34:57 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:34:57 UTC] UPDATE Categories/update: id=6, nom=NULL
+[20-Jan-2026 16:35:30 UTC] SESSION: Session started. ID=453ad9a3lcrrc0him59c1901rk, Session data=[]
+[20-Jan-2026 16:35:30 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:35:30 UTC] UPDATE Categories/update: id=6, nom=NULL, POST=[]
+[20-Jan-2026 16:36:06 UTC] SESSION: Session started. ID=tmqofi6fulke813taqj1rrdka5, Session data=[]
+[20-Jan-2026 16:36:06 UTC] UPDATE Categories/update: REQUEST_METHOD=POST
+[20-Jan-2026 16:36:06 UTC] UPDATE Categories/update: raw input=id=6&nom=BD+Modifi%C3%A9e+par+Form
+[20-Jan-2026 16:36:06 UTC] UPDATE Categories/update: id=6, nom=BD Modifiée par Form, POST={"id":"6","nom":"BD Modifi\u00e9e par Form"}
+[20-Jan-2026 16:36:06 UTC] UPDATE Categories/update: Catégorie ID=6 mise à jour
+[20-Jan-2026 16:36:22 UTC] SESSION: Session started. ID=oiqmvvqjma68gdmg0nn1vpguvo, Session data=[]
+[20-Jan-2026 16:36:22 UTC] DELETE Categories/delete: REQUEST_METHOD=DELETE, GET={"id":"6"}, POST=[]
+[20-Jan-2026 16:36:22 UTC] DELETE Categories/delete: ID récupéré = 6
+[20-Jan-2026 16:36:22 UTC] DELETE Categories/delete: Catégorie existe? OUI
+[20-Jan-2026 16:36:22 UTC] DELETE Categories/delete: Mode = hard_cleanup
+[20-Jan-2026 16:36:22 UTC] DELETE Categories/delete: forceDeleteWithDeps() retourné 1 lignes modifiées pour ID=6
+[20-Jan-2026 16:37:22 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:37:22 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:37:22 UTC] CHECK: Method=GET
+[20-Jan-2026 16:37:22 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:37:22 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:37:22 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:37:22 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:37:22 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:41:31 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:31 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:41:31 UTC] CHECK: Method=GET
+[20-Jan-2026 16:41:31 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:41:31 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:31 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:41:31 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:41:31 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:41:31 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:31 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:31 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:41:31 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:41:34 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:36 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:36 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:41:36 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:41:41 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:41 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:41:41 UTC] POST Categories/create: nom=shuits
+[20-Jan-2026 16:41:41 UTC] POST Categories/create: Catégorie créée avec ID=7
+[20-Jan-2026 16:41:44 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:44 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:41:44 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:41:44 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:41:44 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:41:44 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:42:32 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:42:32 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:42:32 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:45:54 UTC] SESSION: Session started. ID=5gjlf7c75o1iul2arvr59g1gfn, Session data=[]
+[20-Jan-2026 16:45:54 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:45:54 UTC] POST Categories/create: nom=Test Toast
+[20-Jan-2026 16:45:54 UTC] POST Categories/create: Catégorie créée avec ID=8
+[20-Jan-2026 16:46:15 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:15 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:46:15 UTC] CHECK: Method=GET
+[20-Jan-2026 16:46:15 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:46:15 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:15 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:46:15 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:46:15 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:46:15 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:15 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:15 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:15 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:46:21 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:22 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:22 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:22 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:46:34 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:34 UTC] DELETE Categories/delete: REQUEST_METHOD=DELETE, GET={"id":"7"}, POST=[]
+[20-Jan-2026 16:46:34 UTC] DELETE Categories/delete: ID récupéré = 7
+[20-Jan-2026 16:46:34 UTC] DELETE Categories/delete: Catégorie existe? OUI
+[20-Jan-2026 16:46:34 UTC] DELETE Categories/delete: Mode = hard_cleanup
+[20-Jan-2026 16:46:34 UTC] DELETE Categories/delete: forceDeleteWithDeps() retourné 1 lignes modifiées pour ID=7
+[20-Jan-2026 16:46:34 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:34 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:34 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:46:34 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:34 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:34 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:46:49 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:49 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:49 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 16:46:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:53 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:46:53 UTC] POST Categories/create: nom=bonito
+[20-Jan-2026 16:46:53 UTC] POST Categories/create: Catégorie créée avec ID=9
+[20-Jan-2026 16:46:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:53 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:53 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:46:53 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:46:53 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:46:53 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 16:49:11 UTC] SESSION: Session started. ID=j7gu9p8gi8ftmh0ihttvk6v8e7, Session data=[]
+[20-Jan-2026 16:49:11 UTC] POST Categories/create: REQUEST_METHOD=POST
+[20-Jan-2026 16:49:11 UTC] POST Categories/create: nom=Fruits et Légumes
+[20-Jan-2026 16:49:11 UTC] POST Categories/create: Catégorie créée avec ID=10
+[20-Jan-2026 16:51:04 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:04 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:51:04 UTC] CHECK: Method=GET
+[20-Jan-2026 16:51:04 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:51:04 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:04 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:51:04 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:51:04 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:51:04 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:04 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:04 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:51:04 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 16:51:06 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:20 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:51:20 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:51:20 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 16:52:50 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:50 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 16:52:50 UTC] CHECK: Method=GET
+[20-Jan-2026 16:52:50 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 16:52:50 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:50 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 16:52:50 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 16:52:50 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 16:52:50 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:50 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:50 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:52:50 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 16:52:52 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:54 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 16:52:54 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 16:52:54 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 17:08:41 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:08:41 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 17:08:41 UTC] CHECK: Method=GET
+[20-Jan-2026 17:08:41 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 17:08:41 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:08:41 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 17:08:41 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 17:08:41 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 17:08:41 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:08:41 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:08:41 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:08:41 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 17:08:54 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:09:29 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:27 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:27 UTC] CHECK: ===== CHECK.PHP CALLED =====
+[20-Jan-2026 17:11:27 UTC] CHECK: Method=GET
+[20-Jan-2026 17:11:27 UTC] CHECK: PHPSESSID=e5h6v81m92npudleo5e87nkvcl
+[20-Jan-2026 17:11:27 UTC] CHECK: $_SESSION={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:27 UTC] CHECK: $_COOKIE={"PHPSESSID":"e5h6v81m92npudleo5e87nkvcl"}
+[20-Jan-2026 17:11:27 UTC] CHECK: Récupération user_id=7
+[20-Jan-2026 17:11:27 UTC] CHECK: User trouvé: {"id":7,"nom":"aboou","prenom":"nidal","telephone":"1212121212","email":"abou@gmail.com","role":"vendeur","photo":"\/APP_IB\/backend\/uploads\/user_7_1768925833.jpeg","created_at":"2026-01-20 16:17:03"}
+[20-Jan-2026 17:11:27 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:27 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:27 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:11:27 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 17:11:31 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:11:42 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:02 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:09 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:09 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:13:09 UTC] GET Categories/list: 6 catégories trouvées
+[20-Jan-2026 17:13:18 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:18 UTC] DELETE Categories/delete: REQUEST_METHOD=DELETE, GET={"id":"9"}, POST=[]
+[20-Jan-2026 17:13:18 UTC] DELETE Categories/delete: ID récupéré = 9
+[20-Jan-2026 17:13:18 UTC] DELETE Categories/delete: Catégorie existe? OUI
+[20-Jan-2026 17:13:18 UTC] DELETE Categories/delete: Mode = hard_cleanup
+[20-Jan-2026 17:13:18 UTC] DELETE Categories/delete: forceDeleteWithDeps() retourné 1 lignes modifiées pour ID=9
+[20-Jan-2026 17:13:18 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:18 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:13:18 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 17:13:18 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:18 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:13:18 UTC] GET Categories/list: 5 catégories trouvées
+[20-Jan-2026 17:13:36 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:36 UTC] DELETE Categories/delete: REQUEST_METHOD=DELETE, GET={"id":"2"}, POST=[]
+[20-Jan-2026 17:13:36 UTC] DELETE Categories/delete: ID récupéré = 2
+[20-Jan-2026 17:13:36 UTC] DELETE Categories/delete: Catégorie existe? OUI
+[20-Jan-2026 17:13:36 UTC] DELETE Categories/delete: Mode = hard_cleanup
+[20-Jan-2026 17:13:36 UTC] DELETE Categories/delete: forceDeleteWithDeps() retourné 1 lignes modifiées pour ID=2
+[20-Jan-2026 17:13:36 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:36 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:13:36 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 17:13:36 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
+[20-Jan-2026 17:13:36 UTC] GET Categories/list: requête reçue
+[20-Jan-2026 17:13:36 UTC] GET Categories/list: 4 catégories trouvées
+[20-Jan-2026 17:14:20 UTC] SESSION: Session started. ID=e5h6v81m92npudleo5e87nkvcl, Session data={"user_id":7,"user_role":"vendeur","user_telephone":"1212121212","logged_in_at":1768925899}
