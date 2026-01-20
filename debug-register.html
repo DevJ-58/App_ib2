@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Register API</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        textarea { width: 100%; height: 300px; font-family: monospace; }
+        button { padding: 10px 20px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Debug Register API - Voir l'erreur PHP</h1>
+    
+    <button onclick="testRegister()">Tester et voir l'erreur</button>
+    
+    <h2>Réponse brute du serveur:</h2>
+    <textarea id="responseText" readonly></textarea>
+
+    <script>
+    async function testRegister() {
+        const textarea = document.getElementById('responseText');
+        textarea.value = '⏳ Test en cours...';
+        
+        const data = {
+            nom: 'TestUser',
+            prenom: 'Jean',
+            telephone: '0112345678',
+            email: 'test@example.com',
+            mot_de_passe: 'Test1234',
+            confirm_mot_de_passe: 'Test1234'
+        };
+        
+        try {
+            const response = await fetch('/APP_IB/backend/Api/Auth/register.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+            
+            const text = await response.text();
+            
+            textarea.value = 'STATUS: ' + response.status + '\n\n';
+            textarea.value += '=== RÉPONSE DU SERVEUR ===\n';
+            textarea.value += text;
+            
+        } catch (error) {
+            textarea.value = '❌ ERREUR:\n' + error.message;
+        }
+    }
+    </script>
+</body>
+</html>

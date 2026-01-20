@@ -26,7 +26,7 @@
             </div>
             <!-- Photo de profil -->
             <div class="profil" onclick="ouvrirModalProfil()" style="cursor: pointer;">
-                <img src="https://via.placeholder.com/40" alt="Photo de profil">
+                <img id="photoProfilHeader" src="https://via.placeholder.com/40" alt="Photo de profil">
                 <span class="nom-utilisateur">Mr IB</span>
             </div>
             <!-- Menu burger pour mobile -->
@@ -455,7 +455,7 @@
                         <input type="text" id="champRecherche" placeholder="Rechercher par nom, code-barre ou catégorie...">
                     </div>
                     <div class="groupe-boutons-actions">
-                        <button class="btn-action btn-primaire" onclick="ouvrirModalProduit()">
+                        <button class="btn-action btn-primaire" onclick="afficherModalProduit()">
                             <i class="fa-solid fa-plus"></i> Ajouter Produit
                         </button>
                         <button class="btn-action btn-secondaire">
@@ -1555,8 +1555,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Code-barre *</label>
-                        <input type="text" id="codeBarreProduit" required>
+                        <label>Code-barre <span class="text-muted">(optionnel - auto-généré si vide)</span></label>
+                        <input type="text" id="codeBarreProduit">
                         <button type="button" class="btn-scanner-inline" onclick="scannerCodeBarre()">
                             <i class="fa-solid fa-barcode"></i> Scanner
                         </button>
@@ -1566,11 +1566,11 @@
                         <label>Catégorie *</label>
                         <select id="categorieProduit" required>
                             <option value="">Sélectionner une catégorie</option>
-                            <option value="boissons">Boissons</option>
-                            <option value="snacks">Snacks</option>
-                            <option value="alimentaire">Alimentaire</option>
-                            <option value="hygiene">Hygiène</option>
-                            <option value="autre">Autre</option>
+                            <option value="1">Boissons</option>
+                            <option value="2">Snacks</option>
+                            <option value="3">Alimentaire</option>
+                            <option value="4">Hygiène</option>
+                            <option value="5">Autre</option>
                         </select>
                     </div>
 
@@ -1598,6 +1598,23 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Détails Produit -->
+    <div class="modal-overlay" id="modalDetailProduit">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Détails du Produit</h2>
+                <button class="btn-fermer-modal" onclick="fermerModalDetailProduit()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="detailsProduitContent" style="line-height: 1.8;">
+                    <!-- Contenu rempli dynamiquement -->
+                </div>
             </div>
         </div>
     </div>
@@ -1984,18 +2001,33 @@
                     <div class="profil-info-groupe">
                         <div class="profil-info-champ">
                             <label>Mot de passe actuel</label>
-                            <input type="password" id="profilMotDePasseActuel" placeholder="Mot de passe actuel">
+                            <div class="profil-password-container">
+                                <input type="password" id="profilMotDePasseActuel" placeholder="Mot de passe actuel">
+                                <button type="button" class="profil-password-toggle" onclick="togglePasswordVisibility('profilMotDePasseActuel', this)">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="profil-info-groupe">
                         <div class="profil-info-champ">
                             <label>Nouveau mot de passe</label>
-                            <input type="password" id="profilNouveauMotDePasse" placeholder="Nouveau mot de passe" minlength="6">
+                            <div class="profil-password-container">
+                                <input type="password" id="profilNouveauMotDePasse" placeholder="Nouveau mot de passe" minlength="6">
+                                <button type="button" class="profil-password-toggle" onclick="togglePasswordVisibility('profilNouveauMotDePasse', this)">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="profil-info-champ">
                             <label>Confirmer le mot de passe</label>
-                            <input type="password" id="profilConfirmMotDePasse" placeholder="Confirmer le mot de passe" minlength="6">
+                            <div class="profil-password-container">
+                                <input type="password" id="profilConfirmMotDePasse" placeholder="Confirmer le mot de passe" minlength="6">
+                                <button type="button" class="profil-password-toggle" onclick="togglePasswordVisibility('profilConfirmMotDePasse', this)">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2008,7 +2040,9 @@
         </div>
     </div>
 
-    <script src="../JS/main.js"></script>
     <script src="../JS/utils.js"></script>
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/auth-api.js"></script>
+    <script src="../JS/main.js"></script>
 </body>
 </html>

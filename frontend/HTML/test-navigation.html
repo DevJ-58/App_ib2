@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Navigation</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        .message { margin: 20px 0; padding: 10px; background: #eee; }
+    </style>
+</head>
+<body>
+    <h1>Test Navigation Minimaliste</h1>
+    
+    <button onclick="alert('Clic détecté!')">Test onclick direct</button>
+    <button onclick="testFunction()">Appeler testFunction()</button>
+    <button id="btn-test">Bouton avec event listener</button>
+    
+    <div id="message" class="message"></div>
+    
+    <script>
+        console.log('Scripts chargés');
+        
+        function testFunction() {
+            document.getElementById('message').innerHTML = '<strong>testFunction() a été appelée!</strong>';
+            alert('testFunction() fonctionne!');
+        }
+        
+        document.getElementById('btn-test').addEventListener('click', function() {
+            document.getElementById('message').innerHTML += '<br/>Event listener fonctionne!';
+            alert('Event listener fonctionne!');
+        });
+        
+        console.log('Tous les événements sont attachés');
+    </script>
+</body>
+</html>

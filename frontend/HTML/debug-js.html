@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug JS</title>
+</head>
+<body>
+    <h1>Console des erreurs</h1>
+    <pre id="log"></pre>
+    
+    <script>
+        // Capturer toutes les erreurs
+        const logs = [];
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        window.addEventListener('error', function(e) {
+            logs.push('❌ ERREUR GLOBALE: ' + e.message + '\n   Fichier: ' + e.filename + ':' + e.lineno);
+        });
+        
+        console.log = function(...args) {
+            logs.push('📌 ' + args.join(' '));
+            originalConsoleLog(...args);
+        };
+        
+        console.error = function(...args) {
+            logs.push('❌ ' + args.join(' '));
+            originalConsoleError(...args);
+        };
+    </script>
+    
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/auth-api.js"></script>
+    <script src="../JS/main.js"></script>
+    
+    <script>
+        // Afficher tous les logs
+        document.getElementById('log').textContent = logs.join('\n');
+        
+        // Tester les fonctions
+        console.log('\n=== TEST DES FONCTIONS ===');
+        console.log('afficherSection existe?', typeof afficherSection);
+        console.log('chargerProduits existe?', typeof chargerProduits);
+        console.log('deconnecter existe?', typeof deconnecter);
+        console.log('api existe?', typeof api);
+        
+        // Mettre à jour l'affichage
+        document.getElementById('log').textContent = logs.join('\n');
+    </script>
+</body>
+</html>

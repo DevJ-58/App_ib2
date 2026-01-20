@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentification - APP IB</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        input {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #c8e6c9;
+            color: #2e7d32;
+            border: 1px solid #81c784;
+        }
+        .error {
+            background: #ffcdd2;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .info {
+            background: #bbdefb;
+            color: #0d47a1;
+            border: 1px solid #64b5f6;
+        }
+        .status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test du Système d'Authentification</h1>
+        
+        <div class="status" id="status">
+            ⏳ En attente...
+        </div>
+
+        <!-- Test 1: Configuration API -->
+        <div class="test-section">
+            <h2>1️⃣ Configuration de l'API Client</h2>
+            <button onclick="testConfigAPI()">Vérifier Configuration</button>
+            <div id="configResult" class="result"></div>
+        </div>
+
+        <!-- Test 2: Connexion à l'API -->
+        <div class="test-section">
+            <h2>2️⃣ Vérifier la Connexion au Backend</h2>
+            <button onclick="testConnexionAPI()">Tester Connexion</button>
+            <div id="connexionResult" class="result"></div>
+        </div>
+
+        <!-- Test 3: Inscription -->
+        <div class="test-section">
+            <h2>3️⃣ Tester l'Inscription</h2>
+            <input type="text" id="nom" placeholder="Nom" value="Dupont">
+            <input type="text" id="prenom" placeholder="Prénom" value="Jean">
+            <input type="tel" id="telephone" placeholder="Téléphone (10 chiffres)" value="0123456789">
+            <input type="email" id="email" placeholder="Email" value="test@example.com">
+            <input type="password" id="password" placeholder="Mot de passe" value="test1234">
+            <input type="password" id="confirmPassword" placeholder="Confirmer mot de passe" value="test1234">
+            <button onclick="testInscription()">Tester Inscription</button>
+            <div id="inscriptionResult" class="result"></div>
+        </div>
+
+        <!-- Test 4: Connexion -->
+        <div class="test-section">
+            <h2>4️⃣ Tester la Connexion</h2>
+            <input type="tel" id="loginTelephone" placeholder="Téléphone" value="0123456789">
+            <input type="password" id="loginPassword" placeholder="Mot de passe" value="test1234">
+            <button onclick="testLogin()">Tester Connexion</button>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <!-- Test 5: Vérifier Session -->
+        <div class="test-section">
+            <h2>5️⃣ Vérifier la Session</h2>
+            <button onclick="testCheckSession()">Vérifier Session</button>
+            <div id="sessionResult" class="result"></div>
+        </div>
+
+        <!-- Test 6: Déconnexion -->
+        <div class="test-section">
+            <h2>6️⃣ Tester la Déconnexion</h2>
+            <button onclick="testLogout()">Tester Déconnexion</button>
+            <div id="logoutResult" class="result"></div>
+        </div>
+    </div>
+
+    <script src="../frontend/JS/api-client.js"></script>
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function displayResult(elementId, data, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testConfigAPI() {
+            try {
+                if (typeof api === 'undefined') {
+                    throw new Error('API Client non disponible');
+                }
+                displayResult('configResult', {
+                    status: '✅ Succès',
+                    message: 'API Client configuré',
+                    baseURL: api.baseURL
+                }, 'success');
+            } catch (error) {
+                displayResult('configResult', {
+                    status: '❌ Erreur',
+                    message: error.message
+                }, 'error');
+            }
+        }
+
+        async function testConnexionAPI() {
+            try {
+                const response = await fetch('http://localhost/APP_IB/backend/Api/Auth/check.php');
+                const data = await response.json();
+                
+                displayResult('connexionResult', {
+                    status: '✅ Succès',
+                    message: 'Connexion établie avec le backend',
+                    response: data
+                }, response.ok ? 'info' : 'error');
+            } catch (error) {
+                displayResult('connexionResult', {
+                    status: '❌ Erreur',
+                    message: 'Impossible de se connecter au backend',
+                    error: error.message,
+                    url: 'http://localhost/APP_IB/backend/Api/Auth/check.php'
+                }, 'error');
+            }
+        }
+
+        async function testInscription() {
+            try {
+                const response = await api.register(
+                    document.getElementById('nom').value,
+                    document.getElementById('prenom').value,
+                    document.getElementById('telephone').value,
+                    document.getElementById('email').value,
+                    document.getElementById('password').value,
+                    document.getElementById('confirmPassword').value
+                );
+
+                if (response.success) {
+                    displayResult('inscriptionResult', response, 'success');
+                    updateStatus('✅ Inscription réussie !', 'success');
+                } else {
+                    displayResult('inscriptionResult', response, 'error');
+                    updateStatus('❌ Erreur lors de l\'inscription', 'error');
+                }
+            } catch (error) {
+                displayResult('inscriptionResult', {
+                    status: '❌ Erreur',
+                    message: error.message
+                }, 'error');
+                updateStatus('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await api.login(
+                    document.getElementById('loginTelephone').value,
+                    document.getElementById('loginPassword').value
+                );
+
+                if (response.success) {
+                    displayResult('loginResult', response, 'success');
+                    updateStatus('✅ Connexion réussie !', 'success');
+                } else {
+                    displayResult('loginResult', response, 'error');
+                    updateStatus('❌ Erreur lors de la connexion', 'error');
+                }
+            } catch (error) {
+                displayResult('loginResult', {
+                    status: '❌ Erreur',
+                    message: error.message
+                }, 'error');
+                updateStatus('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+
+        async function testCheckSession() {
+            try {
+                const response = await api.checkSession();
+                
+                if (response.success) {
+                    displayResult('sessionResult', response, 'success');
+                    updateStatus('✅ Session active', 'success');
+                } else {
+                    displayResult('sessionResult', response, 'info');
+                    updateStatus('⚠️ Pas de session active', 'info');
+                }
+            } catch (error) {
+                displayResult('sessionResult', {
+                    status: '❌ Erreur',
+                    message: error.message
+                }, 'error');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                const response = await api.logout();
+
+                if (response.success) {
+                    displayResult('logoutResult', response, 'success');
+                    updateStatus('✅ Déconnexion réussie !', 'success');
+                } else {
+                    displayResult('logoutResult', response, 'error');
+                    updateStatus('❌ Erreur lors de la déconnexion', 'error');
+                }
+            } catch (error) {
+                displayResult('logoutResult', {
+                    status: '❌ Erreur',
+                    message: error.message
+                }, 'error');
+            }
+        }
+
+        // Auto-test au chargement
+        window.addEventListener('load', function() {
+            testConfigAPI();
+        });
+    </script>
+</body>
+</html>

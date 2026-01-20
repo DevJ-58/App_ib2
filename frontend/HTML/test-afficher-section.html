@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test afficherSection Directement</title>
+</head>
+<body>
+    <h1>Test Direct</h1>
+    <button onclick="alert('onclick fonctionne!')">Test onclick pur</button>
+    <button onclick="testFunc()">Test fonction existante</button>
+    <button onclick="afficherSection('dashboard')">Test afficherSection</button>
+    
+    <script>
+        function testFunc() {
+            alert('testFunc fonctionne!');
+        }
+        
+        function afficherSection(section) {
+            alert('afficherSection appelée avec: ' + section);
+        }
+        
+        console.log('Scripts basiques loadés');
+    </script>
+</body>
+</html>

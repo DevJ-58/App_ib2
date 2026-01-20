@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test suppression API</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Test Suppression API Produit</h1>
+    
+    <div class="test">
+        <h3>Étape 1: Charger les produits</h3>
+        <button onclick="testerChargement()">Charger produits</button>
+        <div id="step1"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Étape 2: Supprimer un produit</h3>
+        <input type="number" id="produitId" placeholder="ID du produit à supprimer" value="1">
+        <button onclick="testerSuppression()">Supprimer</button>
+        <div id="step2"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Étape 3: Recharger les produits</h3>
+        <button onclick="testerChargement()">Recharger produits</button>
+        <div id="step3"></div>
+    </div>
+    
+    <script>
+        async function testerChargement() {
+            const res = await fetch('/APP_IB/backend/Api/Products/list.php', {
+                credentials: 'include'
+            });
+            const json = await res.json();
+            const output = document.getElementById('step1') || document.getElementById('step3');
+            if (json.success) {
+                output.innerHTML = `<span class="success">✅ ${json.data.length} produits chargés</span>`;
+                console.log(json.data);
+            } else {
+                output.innerHTML = `<span class="error">❌ Erreur: ${json.message}</span>`;
+            }
+        }
+        
+        async function testerSuppression() {
+            const id = document.getElementById('produitId').value;
+            const formData = new FormData();
+            formData.append('id', id);
+            
+            const res = await fetch('/APP_IB/backend/Api/Products/delete.php', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+            const json = await res.json();
+            const output = document.getElementById('step2');
+            if (json.success) {
+                output.innerHTML = `<span class="success">✅ ${json.message}</span>`;
+                console.log('Réponse:', json);
+            } else {
+                output.innerHTML = `<span class="error">❌ Erreur: ${json.message}</span>`;
+                console.log('Réponse:', json);
+            }
+        }
+    </script>
+</body>
+</html>

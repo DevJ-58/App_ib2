@@ -2644,7 +2644,7 @@ table tbody tr:only-child td[colspan] {
     top: 90px;
     right: 20px;
     background-color: white;
-    padding: var(--espacement-lg);
+    padding: var(--espacement-md);
     border-radius: var(--rayon-md);
     box-shadow: var(--ombre-forte);
     display: flex;
@@ -2653,7 +2653,9 @@ table tbody tr:only-child td[colspan] {
     z-index: 3000;
     transform: translateX(400px);
     transition: transform 0.3s;
-    min-width: 300px;
+    min-width: 250px;
+    max-width: 350px;
+    font-size: 0.9rem;
 }
 
 .notification.show {
@@ -2942,17 +2944,22 @@ button:focus-visible {
    ==================================================================== */
 
 .modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
+    display: none !important;
+    position: fixed !important;
+    z-index: 9999 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: auto !important;
+}
+
+.modal.show {
+    display: flex !important;
 }
 
 @keyframes fadeIn {
@@ -2974,6 +2981,111 @@ button:focus-visible {
     flex-direction: column;
     box-shadow: var(--ombre-forte);
     animation: slideIn 0.3s ease;
+}
+
+/* Alias pour la classe utilisée en JavaScript */
+.modal-content {
+    background-color: white !important;
+    border-radius: var(--rayon-lg) !important;
+    width: 90% !important;
+    max-width: 500px !important;
+    padding: 30px !important;
+    box-shadow: var(--ombre-forte) !important;
+    animation: slideIn 0.3s ease !important;
+    position: relative !important;
+    z-index: 10000 !important;
+}
+
+.modal-content .close {
+    color: #999;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-content .close:hover,
+.modal-content .close:focus {
+    color: #000;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: var(--couleur-texte);
+    border-bottom: 2px solid var(--couleur-primaire);
+    padding-bottom: 10px;
+}
+
+.modal-content .form-group {
+    margin-bottom: 15px;
+}
+
+.modal-content .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--couleur-texte);
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select,
+.modal-content .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--couleur-bordure);
+    border-radius: var(--rayon-sm);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus,
+.modal-content .form-group textarea:focus {
+    outline: none;
+    border-color: var(--couleur-primaire);
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+}
+
+.modal-content .form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+.modal-content .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+    justify-content: flex-end;
+}
+
+.modal-content .form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--rayon-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.modal-content .btn-primaire {
+    background-color: var(--couleur-primaire);
+    color: white;
+}
+
+.modal-content .btn-primaire:hover {
+    background-color: #a01533;
+}
+
+.modal-content .btn-secondaire {
+    background-color: #6c757d;
+    color: white;
+}
+
+.modal-content .btn-secondaire:hover {
+    background-color: #5a6268;
 }
 
 @keyframes slideIn {
@@ -3168,6 +3280,40 @@ button:focus-visible {
     color: var(--couleur-texte-clair);
     cursor: not-allowed;
 }
+
+/* Conteneur pour input password avec icône */
+.profil-password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.profil-password-container input {
+    flex: 1;
+    padding-right: 2.5rem;
+}
+
+.profil-password-toggle {
+    position: absolute;
+    right: 0.625rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--couleur-texte-clair);
+    font-size: 1rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 100%;
+    transition: var(--transition-rapide);
+}
+
+.profil-password-toggle:hover {
+    color: var(--couleur-primaire);
+}
+
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -3385,3 +3531,141 @@ button:focus-visible {
     }
 }
 
+/* ====================================================================
+   BADGES POUR LES STOCKS
+   ==================================================================== */
+
+.badge-stock {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-stock.stock-bon {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-stock.stock-moyen {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.badge-stock.stock-critique {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.badge-stock.stock-rupture {
+    background-color: #f5c6cb;
+    color: #721c24;
+}
+
+.badge-categorie {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #e7f3ff;
+    color: #004085;
+}
+
+/* ====================================================================
+   NOTIFICATIONS
+   ==================================================================== */
+
+.notification {
+    position: fixed;
+    bottom: -100px;
+    right: 20px;
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: var(--rayon-md);
+    box-shadow: var(--ombre-moyenne);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 2000;
+    transition: bottom 0.3s ease;
+    min-width: 250px;
+}
+
+.notification.show {
+    bottom: 20px;
+}
+
+.notification-success {
+    border-left: 4px solid var(--couleur-succes);
+    color: var(--couleur-succes);
+}
+
+.notification-error {
+    border-left: 4px solid var(--couleur-danger);
+    color: var(--couleur-danger);
+}
+
+.notification-warning {
+    border-left: 4px solid var(--couleur-warning);
+    color: var(--couleur-warning);
+}
+
+.notification-info {
+    border-left: 4px solid var(--couleur-info);
+    color: var(--couleur-info);
+}
+
+.notification i {
+    font-size: 20px;
+}
+
+.notification span {
+    flex: 1;
+}
+
+/* ====================================================================
+   BADGES DE STOCK
+   ==================================================================== */
+
+.badge-stock {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-bon {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.badge-moyen {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.badge-critique {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.badge-rupture {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.badge-stock:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}

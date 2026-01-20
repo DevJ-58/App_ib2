@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Inscription</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f0f0f0; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Inscription API</h1>
+    
+    <button onclick="testInscription()">Tester Inscription</button>
+    
+    <div id="result"></div>
+
+    <script>
+    async function testInscription() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '<p>⏳ Test en cours...</p>';
+        
+        const data = {
+            nom: 'TestUser',
+            prenom: 'Jean',
+            telephone: '0112345678',
+            email: 'test' + Date.now() + '@example.com',
+            mot_de_passe: 'Test1234',
+            confirm_mot_de_passe: 'Test1234'
+        };
+        
+        console.log('Données envoyées:', data);
+        
+        try {
+            const response = await fetch('/APP_IB/backend/Api/Auth/register.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            console.log('Réponse:', result);
+            
+            resultDiv.innerHTML = '<h2 class="' + (result.success ? 'success' : 'error') + '">Résultat:</h2>';
+            resultDiv.innerHTML += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            resultDiv.innerHTML = '<p class="error">Erreur: ' + error.message + '</p>';
+        }
+    }
+    </script>
+</body>
+</html>

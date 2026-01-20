@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Produits</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test-box { border: 1px solid #ddd; padding: 10px; margin: 10px 0; background: #f9f9f9; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Chargement Produits</h1>
+    
+    <div class="test-box">
+        <h2>État du chargement</h2>
+        <div id="status">Initialisation...</div>
+    </div>
+    
+    <div class="test-box">
+        <h2>Produits chargés</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Prix Vente</th>
+                    <th>Stock</th>
+                    <th>Catégorie</th>
+                </tr>
+            </thead>
+            <tbody id="produits-table">
+                <tr><td colspan="5" style="text-align: center;">Chargement...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Simple APIClient pour le test
+        class TestAPIClient {
+            constructor(baseURL = 'http://localhost/APP_IB/backend') {
+                this.baseURL = baseURL;
+            }
+
+            async request(endpoint) {
+                const url = `${this.baseURL}${endpoint}`;
+                console.log('Appel:', url);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                return await response.json();
+            }
+
+            async getAllProducts() {
+                return this.request('/Api/Products/list.php');
+            }
+        }
+
+        // Test
+        async function testChargement() {
+            const statusDiv = document.getElementById('status');
+            const tableBody = document.getElementById('produits-table');
+            
+            try {
+                statusDiv.innerHTML = '📦 Appel API en cours...';
+                const api = new TestAPIClient();
+                const response = await api.getAllProducts();
+                
+                console.log('Réponse API:', response);
+                
+                statusDiv.innerHTML = `
+                    <p class="success">✅ API appelée avec succès</p>
+                    <p>Success: ${response.success}</p>
+                    <p>Message: ${response.message}</p>
+                    <p>Données: ${response.data ? response.data.length + ' produits' : 'ERREUR'}</p>
+                `;
+                
+                if (response.success && Array.isArray(response.data)) {
+                    tableBody.innerHTML = '';
+                    response.data.forEach(produit => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${produit.id}</td>
+                            <td>${produit.nom}</td>
+                            <td>${produit.prix_vente}</td>
+                            <td>${produit.stock}</td>
+                            <td>${produit.categorie_nom}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    statusDiv.innerHTML += '<p class="error">❌ Structure réponse invalide</p>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                statusDiv.innerHTML = `<p class="error">❌ Erreur: ${error.message}</p>`;
+            }
+        }
+
+        // Lancer le test
+        testChargement();
+    </script>
+</body>
+</html>

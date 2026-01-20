@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Direct API Register</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        textarea { width: 100%; height: 200px; }
+        button { padding: 10px 20px; cursor: pointer; }
+        pre { background: #f0f0f0; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Test Direct API Register</h1>
+    
+    <button onclick="testRegister()">Tester Inscription Directe</button>
+    <button onclick="clearResult()">Effacer</button>
+    
+    <h2>Résultat:</h2>
+    <pre id="result">Aucun test exécuté</pre>
+
+    <script>
+    async function testRegister() {
+        const result = document.getElementById('result');
+        result.textContent = '⏳ Test en cours...';
+        
+        const timestamp = Date.now();
+        const data = {
+            nom: 'TestUser' + timestamp,
+            prenom: 'Jean',
+            telephone: '0' + Math.floor(Math.random() * 9000000000 + 1000000000),
+            email: 'test' + timestamp + '@example.com',
+            mot_de_passe: 'Test1234',
+            confirm_mot_de_passe: 'Test1234'
+        };
+        
+        console.log('📤 Envoi:', data);
+        
+        try {
+            const response = await fetch('/APP_IB/backend/Api/Auth/register.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+            
+            console.log('Status:', response.status);
+            
+            const json = await response.json();
+            console.log('📥 Réponse:', json);
+            
+            result.textContent = 'Status: ' + response.status + '\n\n' + JSON.stringify(json, null, 2);
+            
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            result.textContent = '❌ ERREUR:\n' + error.message;
+        }
+    }
+    
+    function clearResult() {
+        document.getElementById('result').textContent = '';
+    }
+    </script>
+</body>
+</html>

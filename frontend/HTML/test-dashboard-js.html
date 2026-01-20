@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashbord JS</title>
+    <style>
+        body { font-family: Arial; }
+        button { padding: 10px; margin: 10px 0; display: block; }
+        pre { background: #eee; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Dashboard JS Loading</h1>
+    <button onclick="alert('onclick fonctionne!')">Test onclick pur</button>
+    <button onclick="afficherSection('dashboard')">Test afficherSection</button>
+    <button onclick="testDebug()">Test Debug</button>
+    
+    <pre id="debug"></pre>
+    
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/auth-api.js"></script>
+    <script src="../JS/main.js"></script>
+    
+    <script>
+        function testDebug() {
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+afficherSection: ${typeof afficherSection}
+deconnecter: ${typeof deconnecter}
+chargerProduits: ${typeof chargerProduits}
+api: ${typeof api}
+produitsData length: ${produitsData.length}
+utilisateurConnecte: ${JSON.stringify(utilisateurConnecte)}
+            `;
+            alert('Debug affiché');
+        }
+        
+        // Log au chargement
+        console.log('Tous les scripts loadés');
+        console.log('afficherSection existe?', typeof afficherSection);
+        console.log('deconnecter existe?', typeof deconnecter);
+        console.log('api existe?', typeof api);
+        console.log('produitsData:', produitsData);
+    </script>
+</body>
+</html>
