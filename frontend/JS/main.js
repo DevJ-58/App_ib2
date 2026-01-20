@@ -1972,6 +1972,29 @@ function fermerModalPerte() {
 }
 
 function ajusterStock(produitId) {
+    // Pré-remplir la modale avec les données du produit
+    const produit = produitsData.find(p => p.id == produitId);
+    if (!produit) {
+        afficherNotification('Produit introuvable', 'error');
+        return;
+    }
+    
+    // Sélectionner le produit dans le select
+    setTimeout(() => {
+        const selectProduit = document.getElementById('produitMouvement');
+        if (selectProduit) {
+            selectProduit.value = produitId;
+            // Déclencher un événement change au besoin
+            selectProduit.dispatchEvent(new Event('change'));
+        }
+        
+        // Focus sur le champ quantité
+        const inputQuantite = document.getElementById('quantiteMouvement');
+        if (inputQuantite) {
+            inputQuantite.focus();
+        }
+    }, 100);
+    
     ouvrirModalMouvementStock('entree', produitId);
 }
 
@@ -1983,7 +2006,6 @@ async function voirHistoriqueStock(produitId) {
     }
     
     console.log('📜 Chargement historique pour', produit.nom);
-    afficherNotification('Chargement de l\'historique...', 'info');
     
     try {
         // Charger l'historique depuis l'API
@@ -1994,7 +2016,7 @@ async function voirHistoriqueStock(produitId) {
         modal.className = 'modal-overlay active';
         modal.id = 'modalHistorique';
         
-        let contenuHTML = '<div class="modal-container">';
+        let contenuHTML = '<div class="modal-container modal-lg">';
         contenuHTML += '<div class="modal-header">';
         contenuHTML += '<h2><i class="fa-solid fa-history"></i> Historique: ' + produit.nom + '</h2>';
         contenuHTML += '<button class="btn-fermer-modal" onclick="fermerModalHistorique()"><i class="fa-solid fa-times"></i></button>';
@@ -2002,11 +2024,12 @@ async function voirHistoriqueStock(produitId) {
         contenuHTML += '<div class="modal-body">';
         
         if (historique.length === 0) {
-            contenuHTML += '<p style="text-align: center; color: #6c757d; padding: 2rem;">Aucun mouvement enregistré</p>';
+            contenuHTML += '<div class="alerte-vide"><i class="fa-solid fa-inbox"></i><p>Aucun mouvement enregistré pour ce produit</p></div>';
         } else {
+            contenuHTML += '<div class="tableau-wrapper">';
             contenuHTML += '<table class="tableau-historique">';
             contenuHTML += '<thead><tr>';
-            contenuHTML += '<th>Date</th>';
+            contenuHTML += '<th>Date & Heure</th>';
             contenuHTML += '<th>Type</th>';
             contenuHTML += '<th>Quantité</th>';
             contenuHTML += '<th>Motif</th>';
@@ -2017,24 +2040,26 @@ async function voirHistoriqueStock(produitId) {
             historique.forEach(m => {
                 const typeLibelle = m.type === 'entree' ? 'Entrée' : m.type === 'sortie' ? 'Sortie' : 'Ajustement';
                 const typeBadge = m.type === 'entree' ? 'badge-entree' : m.type === 'sortie' ? 'badge-vente' : 'badge-perte';
-                const dateFormattee = new Date(m.date).toLocaleString('fr-FR');
+                const dateFormattee = new Date(m.date_mouvement).toLocaleString('fr-FR');
+                const signe = m.type === 'entree' ? '+' : '-';
                 
-                contenuHTML += '<tr>';
-                contenuHTML += '<td>' + dateFormattee + '</td>';
+                contenuHTML += '<tr class="historique-row">';
+                contenuHTML += '<td class="date-cell"><i class="fa-regular fa-calendar"></i> ' + dateFormattee + '</td>';
                 contenuHTML += '<td><span class="badge-etat ' + typeBadge + '">' + typeLibelle + '</span></td>';
-                contenuHTML += '<td><strong>' + (m.type === 'entree' ? '+' : '-') + m.quantite + '</strong></td>';
-                contenuHTML += '<td>' + (m.motif || '-') + '</td>';
-                contenuHTML += '<td>' + (m.commentaire || '-') + '</td>';
+                contenuHTML += '<td class="quantite-cell"><strong class="quantite-' + m.type + '">' + signe + m.quantite + '</strong></td>';
+                contenuHTML += '<td class="motif-cell">' + (m.motif || '—') + '</td>';
+                contenuHTML += '<td class="commentaire-cell">' + (m.commentaire || '—') + '</td>';
                 contenuHTML += '</tr>';
             });
             
             contenuHTML += '</tbody>';
             contenuHTML += '</table>';
+            contenuHTML += '</div>';
         }
         
         contenuHTML += '</div>';
         contenuHTML += '<div class="modal-actions">';
-        contenuHTML += '<button class="btn-action primaire" onclick="fermerModalHistorique()">Fermer</button>';
+        contenuHTML += '<button class="btn-action secondaire" onclick="fermerModalHistorique()"><i class="fa-solid fa-times"></i> Fermer</button>';
         contenuHTML += '</div>';
         contenuHTML += '</div>';
         
@@ -2047,6 +2072,15 @@ async function voirHistoriqueStock(produitId) {
                 this.remove();
             }
         });
+        
+        // Fermeture à l'Échap
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
         
     } catch (error) {
         console.error('❌ Erreur:', error);
