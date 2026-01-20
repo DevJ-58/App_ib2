@@ -1866,7 +1866,7 @@ function rechercherDansStocks(terme) {
     
     // Afficher un message de comptage
     console.log(`🔍 Recherche: ${produitsFiltres.length} produit(s) trouvé(s) pour "${terme}"`);
-
+}
 
 function afficherTableauStock() {
     const tbody = document.getElementById('tableauStockBody');
