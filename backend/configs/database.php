@@ -45,7 +45,7 @@ class DatabaseConfig {
 if (!defined('DB_HOST')) {
     define('DB_HOST', 'localhost');
     define('DB_PORT', 3306);
-    define('DB_NAME', 'app_ib');
+    define('DB_NAME', 'gestion_stock');
     define('DB_USER', 'root');
     define('DB_PASSWORD', '');
 }

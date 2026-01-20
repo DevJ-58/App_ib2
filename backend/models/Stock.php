@@ -2,6 +2,8 @@
 
 namespace backend\models;
 
+use backend\models\Database;
+
 class Stock {
     private $db;
     

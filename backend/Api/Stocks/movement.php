@@ -2,9 +2,11 @@
 
 header('Content-Type: application/json');
 require_once '../../configs/database.php';
+require_once '../../models/Database.php';
 require_once '../../models/Movement.php';
 
 use backend\models\Movement;
+use backend\models\Database;
 
 try {
     // Vérifier si c'est une requête POST

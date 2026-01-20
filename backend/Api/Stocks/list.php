@@ -2,9 +2,11 @@
 
 header('Content-Type: application/json');
 require_once '../../configs/database.php';
+require_once '../../models/Database.php';
 require_once '../../models/Stock.php';
 
 use backend\models\Stock;
+use backend\models\Database;
 
 try {
     $stock = new Stock();
