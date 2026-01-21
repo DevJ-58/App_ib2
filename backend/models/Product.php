@@ -34,6 +34,18 @@ class Product
     public function create($data)
     {
         try {
+            // ✅ VALIDATION: Vérifier que les valeurs de stock ne sont pas négatives
+            $stock = intval($data['stock'] ?? 0);
+            $seuil = intval($data['seuil_alerte'] ?? 5);
+            
+            if ($stock < 0) {
+                throw new \Exception("Le stock initial ne peut pas être négatif");
+            }
+            
+            if ($seuil < 0) {
+                throw new \Exception("Le seuil d'alerte ne peut pas être négatif");
+            }
+            
             // Si code_barre n'est pas fourni, le générer automatiquement
             if (empty($data['code_barre'])) {
                 // Générer un code-barre unique basé sur le timestamp et l'ID
@@ -56,8 +68,8 @@ class Product
                 ':categorie_id' => $data['categorie_id'],
                 ':prix_achat' => $data['prix_achat'] ?? 0,
                 ':prix_vente' => $data['prix_vente'] ?? null,
-                ':stock' => $data['stock'] ?? 0,
-                ':seuil_alerte' => $data['seuil_alerte'] ?? 5,
+                ':stock' => $stock,
+                ':seuil_alerte' => $seuil,
                 ':icone' => $data['icone'] ?? 'fa-box',
                 ':photo' => $data['photo'] ?? null,
                 ':actif' => $data['actif'] ?? true

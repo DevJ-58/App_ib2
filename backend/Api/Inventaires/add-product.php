@@ -16,11 +16,18 @@ try {
     
     $inventaire_id = $input['inventaire_id'] ?? null;
     $produit_id = $input['produit_id'] ?? null;
-    $stock_reel = $input['stock_reel'] ?? 0;
+    $stock_reel = intval($input['stock_reel'] ?? 0);
     
     if (!$inventaire_id || !$produit_id) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
+        exit;
+    }
+    
+    // ✅ VALIDATION: Le stock réel ne peut pas être négatif
+    if ($stock_reel < 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Le stock réel ne peut pas être négatif']);
         exit;
     }
     

@@ -16,6 +16,12 @@ class Movement {
      */
     public function create($produit_id, $type, $quantite, $motif = '', $commentaire = '', $utilisateur_id = 1) {
         try {
+            // ✅ VALIDATION: La quantité ne peut pas être négative
+            $quantite = intval($quantite);
+            if ($quantite < 0) {
+                return ['success' => false, 'message' => 'La quantité ne peut pas être négative'];
+            }
+            
             // Vérifier que le produit existe
             $sql_check = "SELECT stock FROM produits WHERE id = ?";
             $stmt_check = $this->db->prepare($sql_check);

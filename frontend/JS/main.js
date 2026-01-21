@@ -4765,6 +4765,12 @@ async function enregistrerMouvementStock() {
         return;
     }
     
+    // ✅ VALIDATION: Rejeter explicitement les quantités négatives
+    if (quantite < 0) {
+        afficherNotification('❌ La quantité ne peut pas être négative', 'error');
+        return;
+    }
+    
     const produit = produitsData.find(p => p.id == produitId);
     if (!produit) {
         afficherNotification('Produit introuvable', 'error');
@@ -4990,6 +4996,17 @@ async function soumettreFormulaireProduit() {
     
     if (prixProduit <= 0) {
         afficherNotification('Le prix doit être supérieur à 0', 'error');
+        return;
+    }
+    
+    // ✅ Validation du stock initial - Ne pas permettre les valeurs négatives
+    if (stockInitial < 0) {
+        afficherNotification('❌ Le stock initial ne peut pas être négatif', 'error');
+        return;
+    }
+    
+    if (seuilAlerte < 0) {
+        afficherNotification('❌ Le seuil d\'alerte ne peut pas être négatif', 'error');
         return;
     }
     

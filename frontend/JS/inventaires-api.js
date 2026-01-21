@@ -73,6 +73,15 @@ async function creerInventaireAPI() {
  */
 async function ajouterProduitInventaireAPI(inventaire_id, produit_id, stock_reel) {
     console.log('➕ Ajout produit inventaire:', {inventaire_id, produit_id, stock_reel});
+    
+    // ✅ VALIDATION: Le stock réel ne peut pas être négatif
+    stock_reel = parseInt(stock_reel);
+    if (stock_reel < 0) {
+        console.error('❌ Stock réel négatif rejeté:', stock_reel);
+        afficherNotification('❌ Le stock réel ne peut pas être négatif', 'error');
+        return null;
+    }
+    
     try {
         const response = await api.addProductToInventory(inventaire_id, produit_id, stock_reel);
         

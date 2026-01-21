@@ -50,6 +50,30 @@ try {
         echo json_encode(['success' => false, 'errors' => $validator->getErrors()]);
         exit;
     }
+    
+    // ✅ VALIDATION: Stock initial et seuil d'alerte ne peuvent pas être négatifs
+    $stock = intval($data['stock'] ?? 0);
+    $seuil = intval($data['seuil_alerte'] ?? 5);
+    
+    if ($stock < 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'code' => 400,
+            'message' => 'Le stock initial ne peut pas être négatif'
+        ]);
+        exit;
+    }
+    
+    if ($seuil < 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'code' => 400,
+            'message' => 'Le seuil d\'alerte ne peut pas être négatif'
+        ]);
+        exit;
+    }
 
     // Créer le produit
     error_log('📝 [CREATE] Création du produit avec les données: ' . json_encode($data));

@@ -44,6 +44,18 @@ try {
         exit;
     }
     
+    // ✅ VALIDATION: La quantité ne peut pas être négative
+    $quantite = intval($data['quantite']);
+    if ($quantite < 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'code' => 400,
+            'message' => 'La quantité ne peut pas être négative'
+        ]);
+        exit;
+    }
+    
     $movement = new Movement();
     
     // Créer le mouvement
