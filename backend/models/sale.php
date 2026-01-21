@@ -21,6 +21,29 @@ class Sale {
         try {
             $conn = $this->db->getConnection();
             
+            // ✅ VALIDATION: Vérifier que tous les produits ont un stock suffisant AVANT de commencer
+            foreach ($items as $item) {
+                $sql_check = "SELECT id, nom, stock FROM produits WHERE id = ?";
+                $stmt_check = $conn->prepare($sql_check);
+                $stmt_check->execute([$item['produit_id']]);
+                $produit = $stmt_check->fetch(\PDO::FETCH_ASSOC);
+                
+                if (!$produit) {
+                    return [
+                        'success' => false,
+                        'message' => 'Produit avec l\'ID ' . $item['produit_id'] . ' introuvable'
+                    ];
+                }
+                
+                // Vérifier que le stock est suffisant
+                if ($produit['stock'] < $item['quantite']) {
+                    return [
+                        'success' => false,
+                        'message' => 'Stock insuffisant pour le produit "' . $produit['nom'] . '". Stock disponible: ' . $produit['stock'] . ', Demandé: ' . $item['quantite']
+                    ];
+                }
+            }
+            
             // Début de transaction
             $conn->beginTransaction();
             

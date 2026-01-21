@@ -2,10 +2,12 @@
 
 header('Content-Type: application/json');
 
+// Chemin vers la racine du projet
+$projectRoot = dirname(dirname(__FILE__));
+
 // Inclure les fichiers nécessaires
-$basePath = dirname(dirname(dirname(__FILE__)));
-require_once $basePath . '/models/Database.php';
-require_once $basePath . '/models/Credit.php';
+require_once $projectRoot . '/backend/models/Database.php';
+require_once $projectRoot . '/backend/models/Credit.php';
 
 use backend\models\Credit;
 

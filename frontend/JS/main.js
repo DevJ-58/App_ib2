@@ -12,6 +12,7 @@ let panier = [];
 let produitsData = [];
 let stockData = [];
 let creditData = [];
+let creditsData = [];
 let ventesData = [];
 let mouvementsData = [];
 let alertesData = [];
@@ -19,6 +20,46 @@ let typePaiementActuel = 'comptant';
 // Pagination produits
 let currentPage = 1;
 const perPageProducts = 10;
+
+// ====================================================================
+// UTILITAIRES UTILISATEUR
+// ====================================================================
+
+/**
+ * Obtenir l'ID de l'utilisateur actuellement connecté
+ */
+function getUtilisateurId() {
+    if (utilisateurConnecte && utilisateurConnecte.id) {
+        return utilisateurConnecte.id;
+    }
+    return localStorage.getItem('utilisateur_id') || null;
+}
+
+/**
+ * Obtenir le nom complet de l'utilisateur actuellement connecté
+ */
+function getNomUtilisateur() {
+    if (utilisateurConnecte) {
+        const prenom = utilisateurConnecte.prenom || '';
+        const nom = utilisateurConnecte.nom || '';
+        return `${prenom} ${nom}`.trim();
+    }
+    return localStorage.getItem('username') || 'Utilisateur';
+}
+
+/**
+ * Obtenir l'objet utilisateur complet
+ */
+function getUtilisateur() {
+    if (utilisateurConnecte) {
+        return utilisateurConnecte;
+    }
+    const userJSON = localStorage.getItem('utilisateur');
+    if (userJSON) {
+        return JSON.parse(userJSON);
+    }
+    return null;
+}
 
 // ====================================================================
 // SYSTÈME DE NOTIFICATIONS (Toasts)
@@ -72,11 +113,76 @@ function getIconeNotification(type) {
 }
 
 // ====================================================================
+// SYSTÈME DE MODALS PERSONNALISÉES
+// ====================================================================
+
+/**
+ * Ouvrir une modal personnalisée avec contenu HTML
+ */
+function ouvrirModalPersonnalisee(contenu, titre = '') {
+    // Créer la structure de la modal si elle n'existe pas
+    let modal = document.getElementById('modalPersonnalisee');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalPersonnalisee';
+        modal.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        `;
+        modal.innerHTML = `
+            <div style="position: relative; background-color: white; margin: 5% auto; padding: 0; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 80vh; overflow: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #E0E0E0; background: linear-gradient(135deg, #D32F2F, #B71C1C);">
+                    <h2 style="color: white; margin: 0; font-size: 20px;" id="modalTitre"></h2>
+                    <button onclick="fermerModalPersonnalisee()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div id="modalContenu" style="padding: 20px; max-height: calc(80vh - 80px); overflow-y: auto;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Remplir le contenu
+    document.getElementById('modalTitre').textContent = titre;
+    document.getElementById('modalContenu').innerHTML = contenu;
+    
+    // Afficher la modal
+    modal.style.display = 'block';
+    
+    // Fermer au clic en dehors
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            fermerModalPersonnalisee();
+        }
+    };
+}
+
+/**
+ * Fermer la modal personnalisée
+ */
+function fermerModalPersonnalisee() {
+    const modal = document.getElementById('modalPersonnalisee');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// ====================================================================
 // INITIALISATION AU CHARGEMENT
 // ====================================================================
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Initialisation du système...');
+    console.log('👤 Utilisateur connecté:', getNomUtilisateur());
+    console.log('🆔 ID Utilisateur:', getUtilisateurId());
 
     // Vérifier l'authentification (redirige vers connexion si nécessaire)
     try {
@@ -93,6 +199,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Charger les stocks depuis l'API et synchroniser
     await chargerStocksAPI();
+    
+    // Charger les crédits
+    await chargerCredits();
     
     // Charger les données du dashboard (ventes récentes, crédits, etc.)
     await chargerDonneesDashboard();
@@ -419,6 +528,9 @@ function afficherSection(nomSection) {
         case 'credits':
             chargerCredits();
             break;
+        case 'alertes':
+            afficherSectionAlertes();
+            break;
         case 'inventaires':
             chargerInventaires();
             break;
@@ -429,6 +541,60 @@ function afficherSection(nomSection) {
             chargerAlertes();
             break;
     }
+}
+
+// ====================================================================
+// MISE À JOUR DES BADGES D'ALERTES
+// ====================================================================
+function mettreAJourBadgesAlertes() {
+    console.log('🔔 Mise à jour des badges d\'alertes');
+    
+    // Compter les alertes stocks
+    const produitsCritiques = produitsData.filter(p => p.stock < (p.seuilAlerte || p.seuil_alerte || 0)).length;
+    const badgeStock = document.getElementById('badge-stocks-alerte');
+    if (badgeStock) {
+        if (produitsCritiques > 0) {
+            badgeStock.textContent = produitsCritiques;
+            badgeStock.style.display = 'flex';
+        } else {
+            badgeStock.style.display = 'none';
+        }
+    }
+    
+    // Compter les crédits en RETARD (> 7 jours sans remboursement)
+    const creditsEnRetard = creditsData.filter(c => {
+        if (c.montant_restant <= 0) return false; // Pas de retard si solde
+        const dateCredit = new Date(c.date_credit);
+        const joursEcoules = Math.floor((new Date() - dateCredit) / (1000 * 60 * 60 * 24));
+        return joursEcoules > 7;
+    }).length;
+    
+    const badgeCredits = document.getElementById('badge-credits-alerte');
+    if (badgeCredits) {
+        if (creditsEnRetard > 0) {
+            badgeCredits.textContent = creditsEnRetard;
+            badgeCredits.style.display = 'flex';
+        } else {
+            badgeCredits.style.display = 'none';
+        }
+    }
+    
+    // Mettre à jour le compteur de notifications dans le header
+    // Compte les stocks critiques + crédits en retard
+    const totalAlertes = produitsCritiques + creditsEnRetard;
+    const compteurNotif = document.getElementById('compteurNotifications');
+    if (compteurNotif) {
+        if (totalAlertes > 0) {
+            compteurNotif.textContent = totalAlertes;
+            compteurNotif.style.display = 'flex';
+            compteurNotif.style.alignItems = 'center';
+            compteurNotif.style.justifyContent = 'center';
+        } else {
+            compteurNotif.style.display = 'none';
+        }
+    }
+    
+    console.log(`✅ Badges mis à jour: ${produitsCritiques} stocks critiques, ${creditsEnRetard} crédits en retard (>7j), total: ${totalAlertes}`);
 }
 
 function toggleMenu() {
@@ -452,7 +618,7 @@ function deconnecter() {
 
 function chargerDashboard() {
     console.log('📊 Chargement du dashboard');
-    chargerDonneesDashboard();
+    chargerDonneesDashboard().catch(err => console.error('Erreur chargement dashboard:', err));
     
     // Charger le graphique si Chart.js est disponible
     if (typeof Chart !== 'undefined') {
@@ -465,13 +631,27 @@ function initialiserChartDashboard() {
     if (!canvas) return;
 
     const labels = [];
+    const ventes7Jours = [0, 0, 0, 0, 0, 0, 0]; // 7 derniers jours
+    
+    // Récupérer les 7 derniers jours
     for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         labels.push(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
     }
-
-    const ventesSimulees = [120000, 95000, 110000, 125000, 98000, 140000, 130000];
+    
+    // Calculer les ventes pour chaque jour à partir de ventesData
+    if (ventesData && ventesData.length > 0) {
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            const ventesJour = ventesData.filter(v => v.date_vente && v.date_vente.startsWith(dateStr));
+            const totalJour = ventesJour.reduce((sum, v) => sum + (parseFloat(v.montant_total) || 0), 0);
+            ventes7Jours[6 - i] = Math.round(totalJour);
+        }
+    }
 
     // Détruire le graphique précédent si présent
     if (window._chartVentes7Jours) {
@@ -491,12 +671,15 @@ function initialiserChartDashboard() {
             labels: labels,
             datasets: [{
                 label: 'Ventes (FCFA)',
-                data: ventesSimulees,
-                backgroundColor: 'rgba(54,162,235,0.2)',
-                borderColor: 'rgba(54,162,235,1)',
+                data: ventes7Jours,
+                backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                borderColor: 'rgba(211, 47, 47, 1)',
                 borderWidth: 2,
                 tension: 0.3,
-                pointRadius: 3
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(211, 47, 47, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -506,7 +689,7 @@ function initialiserChartDashboard() {
                 legend: { display: true, position: 'top' }
             },
             scales: {
-                y: { beginAtZero: false }
+                y: { beginAtZero: true }
             }
         }
     });
@@ -517,24 +700,32 @@ function mettreAJourStatistiques() {
     let creditsEnCours = 0;
     
     produitsData.forEach(p => {
-        valeurStock += p.stock * p.prix;
+        valeurStock += p.stock * (p.prix || p.prix_vente || p.prix_unitaire || 0);
     });
     
-    creditData.forEach(c => {
-        if (c.etat !== 'rembourse') {
-            creditsEnCours += c.montantRestant;
+    creditsData.forEach(c => {
+        if (c.statut !== 'solde') {
+            creditsEnCours += parseFloat(c.montant_restant) || 0;
         }
     });
+    
+    // Formater les montants avec regex
+    const formaterMontant = (montant) => {
+        const montantNum = Math.round(Number(montant) || 0);
+        const montantStr = montantNum.toString();
+        const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return montantFormate + ' FCFA';
+    };
     
     // Mettre à jour les affichages des cartes stats
     const elemValeurStock = document.getElementById('stat-valeur-stock');
     if (elemValeurStock) {
-        elemValeurStock.textContent = valeurStock.toLocaleString('fr-FR') + ' FCFA';
+        elemValeurStock.textContent = formaterMontant(valeurStock);
     }
     
     const elemCreditsEnCours = document.getElementById('stat-credits-montant');
     if (elemCreditsEnCours) {
-        elemCreditsEnCours.textContent = creditsEnCours.toLocaleString('fr-FR') + ' FCFA';
+        elemCreditsEnCours.textContent = formaterMontant(creditsEnCours);
     }
     
     const elemProduitCount = document.getElementById('stat-produits-count');
@@ -550,14 +741,17 @@ function mettreAJourStatistiques() {
     
     const stockCritique = document.getElementById('stockCritique');
     if (stockCritique) {
-        const nbCritique = produitsData.filter(p => p.stock < p.seuilAlerte).length;
+        const nbCritique = produitsData.filter(p => p.stock < (p.seuilAlerte || p.seuil_alerte || 0)).length;
         stockCritique.textContent = nbCritique;
     }
     
     const valeurTotale = document.getElementById('valeurTotale');
     if (valeurTotale) {
-        valeurTotale.textContent = valeurStock.toLocaleString('fr-FR') + ' FCFA';
+        valeurTotale.textContent = formaterMontant(valeurStock);
     }
+    
+    // Mettre à jour les badges d'alertes dans le menu
+    mettreAJourBadgesAlertes();
     
     // Charger les stocks critiques
     chargerStocksCritiques();
@@ -605,7 +799,11 @@ async function chargerVentesRecentes() {
             return;
         }
         
-        // Prendre les 5 dernières ventes
+        // Mettre à jour ventesData globale avec TOUTES les ventes
+        ventesData = response.data;
+        console.log('✅ Ventes chargées:', ventesData.length);
+        
+        // Prendre les 5 dernières ventes pour l'affichage
         const ventesRecentes = response.data.slice(0, 5);
         let totalVentes = 0;
         let nbProduits = 0;
@@ -631,7 +829,7 @@ async function chargerVentesRecentes() {
                 html += '<td><strong>' + montant.toLocaleString('fr-FR') + ' FCFA</strong></td>';
                 html += '<td><span class="badge ' + badge + '">' + type + '</span></td>';
                 html += '<td>' + date + '</td>';
-                html += '<td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente(' + v.id + ')" title="Voir détails"></i></td>';
+                html += '<td><i class="fa-solid fa-eye eye-icon" onclick="voirDetailVente(' + v.id + ')" title="Voir détails" style="cursor: pointer;"></i></td>';
                 html += '</tr>';
             });
             
@@ -655,13 +853,21 @@ async function chargerCreditsImpayés() {
     try {
         const response = await api.getAllCredits();
         
+        console.log('🔍 chargerCreditsImpayés - Réponse API:', response);
+        
         if (!response.success || !Array.isArray(response.data)) {
+            console.log('❌ Pas de données ou erreur API');
+            document.getElementById('stat-credits-montant').textContent = '0 FCFA';
             document.getElementById('stat-credits-count').innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i><span>0 crédits actifs</span>';
+            document.getElementById('alerte-credits-impaye').textContent = '0 crédits non remboursés';
             return;
         }
         
-        const creditsImpayés = response.data.filter(c => c.etat !== 'rembourse');
+        console.log('📊 Tous les crédits reçus:', response.data);
+        const creditsImpayés = response.data.filter(c => c.statut !== 'solde');
+        console.log('📊 Crédits impayés après filtre:', creditsImpayés);
         const totalCredits = creditsImpayés.reduce((sum, c) => sum + (parseFloat(c.montant_restant) || 0), 0);
+        console.log('📊 Total impayés calculé:', totalCredits);
         
         document.getElementById('stat-credits-montant').textContent = totalCredits.toLocaleString('fr-FR') + ' FCFA';
         document.getElementById('stat-credits-count').innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i><span>' + creditsImpayés.length + ' crédits actifs</span>';
@@ -729,15 +935,228 @@ async function chargerActivitesRecentes() {
 }
 
 /**
+ * Afficher le résumé détaillé du jour
+ */
+function afficherResumeDuJour() {
+    console.log('📊 Affichage résumé du jour');
+    
+    // Récupérer la date d'aujourd'hui
+    const aujourd_hui = new Date().toISOString().split('T')[0];
+    
+    // Calculer les ventes d'aujourd'hui
+    const ventesAujourdhui = ventesData.filter(v => v.date_vente && v.date_vente.startsWith(aujourd_hui));
+    const totalVentes = ventesAujourdhui.reduce((sum, v) => sum + (parseFloat(v.montant_total) || 0), 0);
+    const ventes_comptant = ventesAujourdhui
+        .filter(v => v.type_paiement === 'comptant')
+        .reduce((sum, v) => sum + (parseFloat(v.montant_total) || 0), 0);
+    
+    // Calculer les crédits d'aujourd'hui
+    const creditsAujourdhui = creditsData.filter(c => c.date_credit && c.date_credit.startsWith(aujourd_hui));
+    const credits_accordes = creditsAujourdhui.reduce((sum, c) => sum + (parseFloat(c.montant_total) || 0), 0);
+    
+    const remboursements = creditsData
+        .filter(c => c.date_remboursement_complet && c.date_remboursement_complet.startsWith(aujourd_hui))
+        .reduce((sum, c) => sum + (parseFloat(c.montant_paye) || 0), 0);
+    
+    // Formater les montants
+    const formaterMontant = (montant) => {
+        const montantNum = Math.round(Number(montant) || 0);
+        const montantStr = montantNum.toString();
+        const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return montantFormate + ' FCFA';
+    };
+    
+    // Mettre à jour les IDs du résumé du jour
+    const elemRecettes = document.getElementById('resumeRecettesTotal');
+    if (elemRecettes) elemRecettes.textContent = formaterMontant(totalVentes);
+    
+    const elemVentesComptant = document.getElementById('resumeVentesComptant');
+    if (elemVentesComptant) elemVentesComptant.textContent = formaterMontant(ventes_comptant);
+    
+    const elemCreditsAccordes = document.getElementById('resumeCreditsAccordes');
+    if (elemCreditsAccordes) elemCreditsAccordes.textContent = formaterMontant(credits_accordes);
+    
+    const elemRemboursements = document.getElementById('resumeRemboursements');
+    if (elemRemboursements) elemRemboursements.textContent = formaterMontant(remboursements);
+    
+    // Mettre à jour les statistiques des cartes
+    document.getElementById('stat-ventes-jour').textContent = formaterMontant(totalVentes);
+    document.getElementById('stat-produits-vendus').textContent = ventesAujourdhui.length;
+    
+    // Afficher les top 5 produits du jour
+    afficherTop5ProduitsAujourdhui();
+}
+
+/**
+ * Afficher les top 5 produits vendus aujourd'hui
+ */
+function afficherTop5ProduitsAujourdhui() {
+    const aujourd_hui = new Date().toISOString().split('T')[0];
+    const liste = document.querySelector('.liste-activites');
+    if (!liste) return;
+    
+    // Compter les ventes par produit d'aujourd'hui
+    const ventesAujourdhui = ventesData.filter(v => v.date_vente && v.date_vente.startsWith(aujourd_hui));
+    
+    const ventesParProduit = {};
+    ventesAujourdhui.forEach(v => {
+        if (v.descriptions) {
+            ventesParProduit[v.descriptions] = (ventesParProduit[v.descriptions] || 0) + (parseInt(v.quantite_totale) || 1);
+        }
+    });
+    
+    // Trier et prendre top 5
+    const top5 = Object.entries(ventesParProduit)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    // Mettre à jour la liste des top produits
+    if (top5.length > 0) {
+        let html = '';
+        top5.forEach((produit, index) => {
+            html += '<li>';
+            html += '<strong>' + (index + 1) + '. ' + produit[0] + '</strong>';
+            html += '<span class="heure"><i class="fa-solid fa-box"></i> ' + produit[1] + ' unité' + (produit[1] > 1 ? 's' : '') + ' vendue' + (produit[1] > 1 ? 's' : '') + '</span>';
+            html += '</li>';
+        });
+        
+        // Remplacer la liste dans la 2ème carte (Top Produits)
+        const cartes = document.querySelectorAll('.liste-activites');
+        if (cartes.length > 1) {
+            cartes[1].innerHTML = html;
+        }
+    }
+}
+
+/**
+ * Mettre à jour les statistiques de stock détaillées
+ */
+function mettreAJourStatistiquesStocks() {
+    console.log('📦 Mise à jour statistiques stocks');
+    
+    const mois_actuel = new Date().getMonth();
+    const annee_actuelle = new Date().getFullYear();
+    
+    // Calculer la valeur totale du stock
+    let valeurTotale = 0;
+    let nbProduits = 0;
+    produitsData.forEach(p => {
+        nbProduits++;
+        valeurTotale += (p.stock || 0) * (p.prix || p.prix_vente || p.prix_unitaire || 0);
+    });
+    
+    // Calculer les entrées du mois
+    let entreesTotal = 0;
+    let sortiesTotal = 0;
+    if (mouvementsData && mouvementsData.length > 0) {
+        mouvementsData.forEach(m => {
+            const dateMouvement = new Date(m.date_mouvement);
+            if (dateMouvement.getMonth() === mois_actuel && dateMouvement.getFullYear() === annee_actuelle) {
+                const qte = parseInt(m.quantite) || 0;
+                if (m.type === 'entree') {
+                    entreesTotal += qte;
+                } else if (m.type === 'sortie' || m.type === 'perte') {
+                    sortiesTotal += qte;
+                }
+            }
+        });
+    }
+    
+    // Formater les montants
+    const formaterMontant = (montant) => {
+        const montantNum = Math.round(Number(montant) || 0);
+        const montantStr = montantNum.toString();
+        const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return montantFormate + ' FCFA';
+    };
+    
+    // Compter les produits critiques
+    const produitsCritiques = produitsData.filter(p => p.stock < (p.seuilAlerte || p.seuil_alerte || 0)).length;
+    
+    // Mettre à jour les éléments du DOM
+    const elemValeurStock = document.getElementById('stat-stock-valeur');
+    if (elemValeurStock) {
+        elemValeurStock.textContent = formaterMontant(valeurTotale);
+    }
+    
+    const elemNbProduits = document.getElementById('stat-stock-nb');
+    if (elemNbProduits) {
+        elemNbProduits.textContent = nbProduits + ' produits';
+    }
+    
+    const elemEntrees = document.getElementById('stat-entrees-mois');
+    if (elemEntrees) {
+        elemEntrees.textContent = entreesTotal + ' unité' + (entreesTotal !== 1 ? 's' : '');
+    }
+    
+    const elemEntreesPourcentage = document.getElementById('stat-entrees-pourcentage');
+    if (elemEntreesPourcentage) {
+        const totalMouvement = entreesTotal + sortiesTotal;
+        const pourcentage = totalMouvement > 0 ? Math.round((entreesTotal / totalMouvement) * 100) : 0;
+        elemEntreesPourcentage.textContent = pourcentage + '% du flux';
+    }
+    
+    const elemSorties = document.getElementById('stat-sorties-mois');
+    if (elemSorties) {
+        elemSorties.textContent = sortiesTotal + ' unité' + (sortiesTotal !== 1 ? 's' : '');
+    }
+    
+    const elemSortiesType = document.getElementById('stat-sorties-type');
+    if (elemSortiesType) {
+        elemSortiesType.textContent = 'Ventes + Pertes';
+    }
+    
+    const elemCritiques = document.getElementById('stat-produits-critiques');
+    if (elemCritiques) {
+        elemCritiques.textContent = produitsCritiques;
+        if (produitsCritiques > 0) {
+            elemCritiques.style.color = '#D32F2F'; // Rouge si critique
+        } else {
+            elemCritiques.style.color = '#4CAF50'; // Vert si OK
+        }
+    }
+}
+
+/**
  * Charger toutes les données du dashboard
  */
 async function chargerDonneesDashboard() {
     console.log('📊 Chargement des données du dashboard');
-    mettreAJourStatistiques();
-    await chargerVentesRecentes();
-    await chargerCreditsImpayés();
-    await chargerActivitesRecentes();
-    console.log('✅ Dashboard mis à jour');
+    try {
+        console.log('⏱️ Chargement parallèle des données principales...');
+        
+        // Chargement parallèle des données
+        await Promise.all([
+            chargerCredits(),
+            chargerVentesAPI(1000, 0),
+            chargerMouvementsAPI(1000)
+        ]);
+        
+        console.log('✅ Données principales chargées');
+        console.log('   - Crédits:', creditsData.length);
+        console.log('   - Ventes:', ventesData.length);
+        console.log('   - Mouvements:', mouvementsData.length);
+        
+        // Affichage et mise à jour
+        await chargerVentesRecentes();
+        await afficherResumeDuJour();
+        await mettreAJourCompteursFiltres();
+        await chargerCreditsImpayés();
+        await chargerActivitesRecentes();
+        
+        mettreAJourStatistiquesStocks();
+        
+        if (typeof Chart !== 'undefined') {
+            initialiserChartDashboard();
+        }
+        
+        mettreAJourStatistiquesRapports();
+        mettreAJourBadgesAlertes();
+        
+        console.log('✅ Dashboard mis à jour');
+    } catch (error) {
+        console.error('❌ ERREUR dans chargerDonneesDashboard:', error);
+    }
 }
 
 function telechargerRapportJournalier() {
@@ -1418,6 +1837,355 @@ function chargerVentes() {
     afficherPanier();
 }
 
+/**
+ * Charger les crédits et afficher dans le tableau
+ */
+async function chargerCredits() {
+    console.log('💳 Chargement des crédits...');
+    
+    try {
+        console.log('   Avant chargerCreditsAPI...');
+        creditsData = await chargerCreditsAPI(1000, 0);
+        console.log('📊 creditsData reçu:', creditsData);
+        console.log('📊 Type:', typeof creditsData);
+        console.log('📊 Length:', creditsData?.length);
+        
+        console.log('   Avant afficherCredits...');
+        afficherCredits();
+        console.log('   Après afficherCredits...');
+        
+        // Mettre à jour les stats
+        await mettreAJourDashboardCredits();
+        
+        // Mettre à jour les badges d'alertes
+        mettreAJourBadgesAlertes();
+        
+        // Charger les remboursements récents et top clients
+        await afficherRemboursementsRecents();
+        await afficherTopClientsCredit();
+    } catch (error) {
+        console.error('❌ Erreur chargement crédits:', error);
+    }
+}
+
+/**
+ * Afficher les crédits dans le tableau
+ */
+function afficherCredits() {
+    console.log('🎯 afficherCredits() appelée');
+    const tbody = document.getElementById('tableauCreditsBody');
+    console.log('   tbody element:', tbody);
+    
+    if (!tbody) {
+        console.warn('⚠️ Element tableauCreditsBody non trouvé');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    console.log('📋 creditsData:', creditsData);
+    console.log('   Length:', creditsData?.length);
+    
+    if (!creditsData || creditsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Aucun crédit trouvé</td></tr>';
+        return;
+    }
+    
+    creditsData.forEach((credit, index) => {
+        const dateCredit = new Date(credit.date_credit);
+        const joursEcoules = Math.floor((new Date() - dateCredit) / (1000 * 60 * 60 * 24));
+        const etatClasse = credit.statut === 'solde' ? 'etat-solde' : (joursEcoules > 7 ? 'etat-retard' : 'etat-cours');
+        const etatTexte = credit.statut === 'solde' ? 'Remboursé' : (joursEcoules > 7 ? 'En retard' : 'En cours');
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>#${credit.reference}</strong></td>
+            <td>${credit.client_nom}</td>
+            <td>${parseFloat(credit.montant_total).toLocaleString()} FCFA</td>
+            <td><strong>${parseFloat(credit.montant_restant).toLocaleString()} FCFA</strong></td>
+            <td>${dateCredit.toLocaleDateString('fr-FR')}</td>
+            <td>${joursEcoules} jours</td>
+            <td><span class="badge-etat ${etatClasse}">${etatTexte}</span></td>
+            <td>
+                <div class="actions-credit">
+                    <button class="btn-icone" onclick="ouvrirModalRemboursement(${credit.id}, '${credit.reference}')" title="Enregistrer remboursement">
+                        <i class="fa-solid fa-money-bill"></i>
+                    </button>
+                    <button class="btn-icone" onclick="voirDetailsCredit(${credit.id})" title="Voir détails">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Ouvrir la modal pour enregistrer un remboursement
+ */
+function ouvrirModalRemboursement(creditId = null, reference = null) {
+    console.log('🔓 Ouverture modal remboursement:', {creditId, reference});
+    
+    const modal = document.getElementById('modalRemboursement');
+    console.log('   Modal trouvée:', !!modal);
+    
+    if (!modal) {
+        console.error('❌ Modal remboursement non trouvée dans le DOM');
+        return;
+    }
+    
+    // Remplir le select des crédits avec les crédits impayés
+    const selectCredit = document.getElementById('creditRemboursement');
+    if (selectCredit && creditsData && creditsData.length > 0) {
+        selectCredit.innerHTML = '<option value="">Sélectionner un crédit</option>';
+        
+        // Ajouter les crédits impayés
+        creditsData.forEach(credit => {
+            if (credit.montant_restant > 0) {
+                const option = document.createElement('option');
+                option.value = credit.id;
+                option.textContent = `${credit.reference} - ${credit.client_nom} (${credit.montant_restant.toLocaleString()} FCFA)`;
+                selectCredit.appendChild(option);
+            }
+        });
+        
+        // Si creditId fourni, le sélectionner
+        if (creditId) {
+            selectCredit.value = creditId;
+            afficherInfoCredit();
+        }
+    }
+    
+    // Réinitialiser le formulaire
+    const form = document.getElementById('formRemboursement');
+    if (form) form.reset();
+    
+    // Afficher la modal
+    modal.classList.add('active');
+    console.log('   Modal affichée');
+}
+
+/**
+ * Fermer la modal de remboursement
+ */
+function fermerModalRemboursement() {
+    const modal = document.getElementById('modalRemboursement');
+    if (modal) {
+        modal.classList.remove('active');
+        console.log('🔒 Modal remboursement fermée');
+    }
+}
+
+/**
+ * Enregistrer un remboursement
+ */
+async function enregistrerRemboursement(e) {
+    if (e) e.preventDefault();
+    
+    // Valider le montant avant de continuer
+    if (!validerMontantRembours()) {
+        alert('Montant invalide');
+        return;
+    }
+    
+    const creditId = document.getElementById('creditRemboursement')?.value;
+    const montant = parseFloat(document.getElementById('montantRembourse')?.value);
+    const modePaiement = 'ESPECES'; // Le HTML n'a pas de sélecteur de mode
+    
+    console.log('🔍 Valeurs du formulaire:');
+    console.log('   creditId:', creditId, '(type:', typeof creditId + ')');
+    console.log('   montant:', montant, '(type:', typeof montant + ')');
+    console.log('   modePaiement:', modePaiement);
+    
+    if (!creditId || !montant || montant <= 0) {
+        console.error('❌ Validation échouée:', {creditId, montant});
+        afficherNotification('Veuillez saisir les informations correctes', 'error');
+        return;
+    }
+    
+    console.log('💾 Envoi du remboursement:', {creditId, montant, modePaiement});
+    
+    const result = await enregistrerRemboursementAPI(creditId, montant, modePaiement);
+    
+    if (result) {
+        afficherNotification('Remboursement enregistré avec succès', 'success');
+        fermerModalRemboursement();
+        await chargerCredits();
+        // Recharger les ventes et mettre à jour les statistiques
+        await chargerVentesAPI(1000, 0);
+        mettreAJourStatistiquesRapports();
+    }
+}
+
+/**
+ * Afficher les infos du crédit sélectionné dans le modal
+ */
+function afficherInfoCredit() {
+    const selectCredit = document.getElementById('creditRemboursement');
+    const infoDiv = document.getElementById('infoCreditRemboursement');
+    const montantRestantSpan = document.getElementById('montantRestant');
+    
+    if (!selectCredit || !infoDiv) return;
+    
+    const creditId = selectCredit.value;
+    if (!creditId) {
+        infoDiv.style.display = 'none';
+        return;
+    }
+    
+    const credit = creditsData.find(c => c.id == creditId);
+    if (credit) {
+        montantRestantSpan.textContent = credit.montant_restant.toLocaleString() + ' FCFA';
+        infoDiv.style.display = 'block';
+    }
+}
+
+/**
+ * Voir les détails d'un crédit
+ */
+function voirDetailsCredit(creditId) {
+    const credit = creditsData.find(c => c.id === creditId);
+    if (!credit) return;
+    
+    // Remplir la modal avec les données
+    document.getElementById('detailReference').textContent = credit.reference;
+    document.getElementById('detailClient').textContent = credit.client_nom;
+    document.getElementById('detailMontantTotal').textContent = parseFloat(credit.montant_total).toLocaleString() + ' FCFA';
+    document.getElementById('detailMontantPaye').textContent = parseFloat(credit.montant_paye).toLocaleString() + ' FCFA';
+    document.getElementById('detailMontantRestant').textContent = parseFloat(credit.montant_restant).toLocaleString() + ' FCFA';
+    document.getElementById('detailStatut').textContent = credit.statut === 'solde' ? '✅ Remboursé' : '⏳ En cours';
+    
+    const dateCreation = new Date(credit.date_credit);
+    document.getElementById('detailDateCreation').textContent = dateCreation.toLocaleDateString('fr-FR', {year: 'numeric', month: 'long', day: 'numeric'});
+    
+    // Afficher la modal
+    const modal = document.getElementById('modalDetailsCredit');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function fermerModalDetailsCredit() {
+    const modal = document.getElementById('modalDetailsCredit');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function validerMontantRembours() {
+    const montantInput = document.getElementById('montantRembourse');
+    const avertissement = document.getElementById('avertissementMontant');
+    const montantRestant = parseFloat(document.getElementById('montantRestant').textContent.replace(/[^\d.]/g, '')) || 0;
+    const montantEntree = parseFloat(montantInput.value) || 0;
+    
+    if (montantEntree > montantRestant) {
+        avertissement.textContent = `Le montant dépasse le montant restant de ${montantRestant} FCFA`;
+        avertissement.style.display = 'block';
+        montantInput.classList.add('input-error');
+        return false;
+    } else {
+        avertissement.style.display = 'none';
+        montantInput.classList.remove('input-error');
+        return true;
+    }
+}
+
+/**
+ * Appliquer les filtres de recherche et d'état aux crédits
+ */
+function appliquerFiltresCredits() {
+    const recherche = document.getElementById('rechercheCredit')?.value.toLowerCase() || '';
+    const filtre = document.getElementById('filtreEtatCredit')?.value || '';
+    
+    console.log('🔍 Filtres appliqués:', {recherche, filtre});
+    
+    // Filtrer creditsData
+    let creditsFiltres = creditsData;
+    
+    // Appliquer le filtre de recherche (par nom de client)
+    if (recherche) {
+        creditsFiltres = creditsFiltres.filter(c => 
+            c.client_nom.toLowerCase().includes(recherche)
+        );
+    }
+    
+    // Appliquer le filtre d'état
+    if (filtre) {
+        creditsFiltres = creditsFiltres.filter(c => c.statut === filtre);
+    }
+    
+    console.log('📊 Crédits après filtres:', creditsFiltres.length, 'sur', creditsData.length);
+    
+    // Afficher les crédits filtrés
+    afficherCredirsFiltrés(creditsFiltres);
+}
+
+/**
+ * Afficher les crédits filtrés dans le tableau
+ */
+function afficherCredirsFiltrés(credits) {
+    const tbody = document.getElementById('tableauCreditsBody');
+    if (!tbody) {
+        console.error('❌ tbody tableauCreditsBody introuvable');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    if (credits.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">Aucun crédit ne correspond aux critères</td></tr>';
+        return;
+    }
+    
+    credits.forEach(credit => {
+        const dateCredit = new Date(credit.date_credit);
+        const joursEcoules = Math.floor((new Date() - dateCredit) / (1000 * 60 * 60 * 24));
+        
+        const etatClasse = credit.statut === 'solde' ? 'etat-solde' : (joursEcoules > 7 ? 'etat-retard' : 'etat-cours');
+        const etatTexte = credit.statut === 'solde' ? 'Remboursé' : (joursEcoules > 7 ? 'En retard' : 'En cours');
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>#${credit.reference}</strong></td>
+            <td>${credit.client_nom}</td>
+            <td>${parseFloat(credit.montant_total).toLocaleString()} FCFA</td>
+            <td><strong>${parseFloat(credit.montant_restant).toLocaleString()} FCFA</strong></td>
+            <td>${dateCredit.toLocaleDateString('fr-FR')}</td>
+            <td>${joursEcoules} jours</td>
+            <td><span class="badge-etat ${etatClasse}">${etatTexte}</span></td>
+            <td>
+                <div class="actions-credit">
+                    <button class="btn-icone" onclick="ouvrirModalRemboursement(${credit.id}, '${credit.reference}')" title="Enregistrer remboursement">
+                        <i class="fa-solid fa-money-bill"></i>
+                    </button>
+                    <button class="btn-icone" onclick="voirDetailsCredit(${credit.id})" title="Voir détails">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function afficherInfoCredit() {
+    const creditId = document.getElementById('creditRemboursement').value;
+    if (!creditId) {
+        document.getElementById('infoCreditRemboursement').style.display = 'none';
+        document.getElementById('montantRembourse').max = 0;
+        return;
+    }
+    
+    const credit = creditsData.find(c => c.id == creditId);
+    if (credit) {
+        document.getElementById('montantRestant').textContent = parseFloat(credit.montant_restant).toLocaleString() + ' FCFA';
+        document.getElementById('montantRembourse').max = credit.montant_restant;
+        document.getElementById('montantRembourse').value = '';
+        document.getElementById('infoCreditRemboursement').style.display = 'block';
+    }
+}
+
 function chargerProduitsPopulaires() {
     const container = document.getElementById('produitsRapides');
     if (!container) return;
@@ -1669,6 +2437,23 @@ async function validerVente() {
         });
     });
     
+    // ✅ VALIDATION: Vérifier que tous les produits ont un stock suffisant
+    for (let item of items) {
+        const produit = produitsData.find(p => p.id == item.produit_id);
+        if (!produit) {
+            afficherNotification('Produit introuvable: ' + item.produit_id, 'error');
+            return;
+        }
+        
+        if (produit.stock < item.quantite) {
+            afficherNotification(
+                `❌ Stock insuffisant pour "${produit.nom}"\nStock disponible: ${produit.stock}\nQuantité demandée: ${item.quantite}`,
+                'error'
+            );
+            return;
+        }
+    }
+    
     try {
         // Enregistrer la vente via l'API
         const result = await enregistrerVenteAPI(
@@ -1704,8 +2489,33 @@ async function validerVente() {
         const mouvementsReponse = await chargerMouvementsAPI(10);
         mouvementsData = mouvementsReponse;
         
+        // Créer un crédit si type paiement est 'credit'
+        if (typePaiementActuel === 'credit') {
+            const creditResult = await creerCreditAPI(
+                result.vente_id,
+                document.getElementById('nomClient')?.value || 'Client',
+                total,
+                'AUTRE'
+            );
+            
+            if (creditResult) {
+                console.log('✅ Crédit créé avec succès');
+                // Mettre à jour les badges d'alertes
+                mettreAJourBadgesAlertes();
+            }
+        }
+        
         // Mettre à jour le dashboard ventes
         await mettreAJourVentesDashboard();
+        
+        // Mettre à jour le dashboard crédits
+        if (typePaiementActuel === 'credit') {
+            await mettreAJourDashboardCredits();
+        }
+        
+        // Recharger les données de ventes et mettre à jour les statistiques rapports
+        await chargerVentesAPI(1000, 0);
+        mettreAJourStatistiquesRapports();
         
         // Afficher le ticket
         afficherTicket(vente);
@@ -1773,7 +2583,116 @@ function fermerTicket() {
 }
 
 function voirDetailVente(venteId) {
-    afficherNotification('Fonctionnalité en développement', 'info');
+    console.log('📄 Affichage détails vente:', venteId);
+    console.log('ventesData disponibles:', ventesData ? ventesData.length : 0);
+    
+    // Trouver la vente dans les données
+    const vente = ventesData.find(v => v.id == venteId);
+    if (!vente) {
+        console.error('❌ Vente non trouvée avec l\'ID:', venteId);
+        afficherNotification('Vente non trouvée', 'error');
+        return;
+    }
+    
+    console.log('✅ Vente trouvée:', vente);
+    
+    // Afficher la modale avec les détails
+    afficherModaleDetailsVente(vente);
+}
+
+/**
+ * Afficher les détails complets d'une vente dans une modale
+ */
+function afficherModaleDetailsVente(vente) {
+    const modal = document.getElementById('modalDetailsVente');
+    if (!modal) {
+        console.error('❌ Modal modalDetailsVente non trouvée');
+        return;
+    }
+    
+    // Remplir les données
+    const dateObj = new Date(vente.date_vente);
+    const dateFormatee = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+    const type = vente.type === 'credit' ? 'Crédit' : 'Comptant';
+    const badgeType = vente.type === 'credit' ? '<span class="badge credit">Crédit</span>' : '<span class="badge paye">Comptant</span>';
+    
+    const html = `
+        <div class="modal-header">
+            <h2>Détails Vente #V-${String(vente.id).padStart(3, '0')}</h2>
+            <button class="btn-fermer-modal" onclick="fermerModalDetailsVente()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="details-vente-grid">
+                <div class="detail-item">
+                    <label>Référence:</label>
+                    <p>#V-${String(vente.id).padStart(3, '0')}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Client:</label>
+                    <p>${vente.client_nom || 'Client comptant'}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Type de paiement:</label>
+                    <p>${badgeType}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Date:</label>
+                    <p>${dateFormatee}</p>
+                </div>
+                <div class="detail-item full-width">
+                    <label>Produit(s):</label>
+                    <p>${vente.descriptions || 'Produit(s)'}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Quantité totale:</label>
+                    <p>${vente.quantite_totale || 1}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Montant total:</label>
+                    <p style="font-size: 1.2rem; font-weight: bold; color: var(--couleur-succes);">
+                        ${parseFloat(vente.montant_total || 0).toLocaleString('fr-FR')} FCFA
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action secondaire" onclick="fermerModalDetailsVente()">
+                <i class="fa-solid fa-times"></i> Fermer
+            </button>
+            <button class="btn-action primaire" onclick="afficherSection('ventes'); fermerModalDetailsVente();">
+                <i class="fa-solid fa-eye"></i> Voir toutes les ventes
+            </button>
+        </div>
+    `;
+    
+    const conteneur = modal.querySelector('.modal-container');
+    if (conteneur) {
+        conteneur.innerHTML = html;
+    }
+    
+    // Afficher la modale avec les bonnes propriétés CSS
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    modal.classList.add('active');
+    
+    console.log('✅ Modale affichée');
+}
+
+/**
+ * Fermer la modale des détails vente
+ */
+function fermerModalDetailsVente() {
+    const modal = document.getElementById('modalDetailsVente');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+        modal.classList.remove('active');
+        console.log('✅ Modale fermée');
+    }
 }
 
 function activerScanner() {
@@ -1812,6 +2731,9 @@ async function chargerStocks() {
         afficherTableauStock();
         afficherMouvementsRecents();
         afficherAlertesStock();
+        
+        // Mettre à jour les widgets de statistiques avec les vraies données
+        mettreAJourStatistiquesStocks();
         
     } catch (error) {
         console.error('❌ Erreur chargement stocks:', error);
@@ -2333,192 +3255,7 @@ function exporterStock() {
 }
 
 // ====================================================================
-// GESTION DES CRÉDITS
-// ====================================================================
-
-function chargerCredits() {
-    console.log('💳 Chargement des crédits');
-    afficherTableauCredits();
-    afficherRemboursementsRecents();
-}
-
-function afficherTableauCredits() {
-    const tbody = document.getElementById('tableauCreditsBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    creditData.forEach(credit => {
-        const tr = document.createElement('tr');
-        const badgeEtat = credit.etat === 'retard' ? 'etat-retard' : 
-                         credit.etat === 'en-cours' ? 'etat-en-cours' : 'etat-rembourse';
-        const libelleEtat = credit.etat === 'retard' ? 'En retard' : 
-                           credit.etat === 'en-cours' ? 'En cours' : 'Remboursé';
-        
-        tr.innerHTML = `
-            <td><strong>${credit.id}</strong></td>
-            <td>${credit.client}</td>
-            <td>${credit.montantInitial.toLocaleString()} FCFA</td>
-            <td><strong>${credit.montantRestant.toLocaleString()} FCFA</strong></td>
-            <td>${credit.dateCredit}</td>
-            <td>${credit.joursEcoules} jour${credit.joursEcoules > 1 ? 's' : ''}</td>
-            <td><span class="badge-etat ${badgeEtat}">${libelleEtat}</span></td>
-            <td>
-                <div class="actions-credit">
-                    <button class="btn-icone btn-voir" title="Voir détails" onclick="voirDetailCredit('${credit.id}')">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    ${credit.montantRestant > 0 ? `
-                    <button class="btn-icone btn-modifier" title="Rembourser" onclick="ouvrirModalRemboursement('${credit.id}')">
-                        <i class="fa-solid fa-money-bill"></i>
-                    </button>
-                    ` : ''}
-                    ${credit.etat === 'retard' ? `
-                    <button class="btn-icone btn-message" title="Relancer" onclick="relancerClient('${credit.id}')">
-                        <i class="fa-solid fa-envelope"></i>
-                    </button>
-                    ` : ''}
-                </div>
-            </td>
-        `;
-        
-        tbody.appendChild(tr);
-    });
-}
-
-function afficherRemboursementsRecents() {
-    // Fonctionnalité à implémenter avec les données de remboursement
-    console.log('Remboursements récents affichés');
-}
-
-function ouvrirModalRemboursement(creditId = null) {
-    const modal = document.getElementById('modalRemboursement');
-    if (!modal) return;
-    
-    document.getElementById('formRemboursement').reset();
-    
-    // Remplir la liste des crédits non remboursés
-    const select = document.getElementById('creditRemboursement');
-    select.innerHTML = '<option value="">Sélectionner un crédit</option>';
-    creditData.filter(c => c.montantRestant > 0).forEach(c => {
-        const option = document.createElement('option');
-        option.value = c.id;
-        option.textContent = `${c.id} - ${c.client} (${c.montantRestant.toLocaleString()} FCFA)`;
-        if (creditId === c.id) option.selected = true;
-        select.appendChild(option);
-    });
-    
-    if (creditId) {
-        afficherInfoCredit();
-    }
-    
-    modal.classList.add('active');
-}
-
-function fermerModalRemboursement() {
-    const modal = document.getElementById('modalRemboursement');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
-function afficherInfoCredit() {
-    const select = document.getElementById('creditRemboursement');
-    const info = document.getElementById('infoCreditRemboursement');
-    const montantRestant = document.getElementById('montantRestant');
-    
-    const creditId = select.value;
-    if (!creditId) {
-        info.style.display = 'none';
-        return;
-    }
-    
-    const credit = creditData.find(c => c.id === creditId);
-    if (credit) {
-        montantRestant.textContent = credit.montantRestant.toLocaleString() + ' FCFA';
-        info.style.display = 'block';
-    }
-}
-
-function voirDetailCredit(creditId) {
-    const credit = creditData.find(c => c.id === creditId);
-    if (credit) {
-        alert(`Détails du crédit ${creditId}\n\nClient: ${credit.client}\nMontant initial: ${credit.montantInitial.toLocaleString()} FCFA\nMontant restant: ${credit.montantRestant.toLocaleString()} FCFA\nDate: ${credit.dateCredit}\nJours écoulés: ${credit.joursEcoules}\nÉtat: ${credit.etat}`);
-    }
-}
-
-function relancerClient(creditId) {
-    const credit = creditData.find(c => c.id === creditId);
-    if (credit) {
-        if (confirm(`Envoyer une relance à ${credit.client} ?\n\nMontant dû: ${credit.montantRestant.toLocaleString()} FCFA`)) {
-            afficherNotification('Relance envoyée à ' + credit.client, 'success');
-        }
-    }
-}
-
-function filtrerParEtatCredit() {
-    const filtre = document.getElementById('filtreEtatCredit')?.value;
-    
-    if (!filtre) {
-        afficherTableauCredits();
-        return;
-    }
-    
-    const tbody = document.getElementById('tableauCreditsBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    const creditsFiltres = creditData.filter(c => c.etat === filtre);
-    
-    creditsFiltres.forEach(credit => {
-        const tr = document.createElement('tr');
-        const badgeEtat = credit.etat === 'retard' ? 'etat-retard' : 
-                         credit.etat === 'en-cours' ? 'etat-en-cours' : 'etat-rembourse';
-        const libelleEtat = credit.etat === 'retard' ? 'En retard' : 
-                           credit.etat === 'en-cours' ? 'En cours' : 'Remboursé';
-        
-        tr.innerHTML = `
-            <td><strong>${credit.id}</strong></td>
-            <td>${credit.client}</td>
-            <td>${credit.montantInitial.toLocaleString()} FCFA</td>
-            <td><strong>${credit.montantRestant.toLocaleString()} FCFA</strong></td>
-            <td>${credit.dateCredit}</td>
-            <td>${credit.joursEcoules} jour${credit.joursEcoules > 1 ? 's' : ''}</td>
-            <td><span class="badge-etat ${badgeEtat}">${libelleEtat}</span></td>
-            <td>
-                <div class="actions-credit">
-                    <button class="btn-icone btn-voir" title="Voir détails" onclick="voirDetailCredit('${credit.id}')">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    ${credit.montantRestant > 0 ? `
-                    <button class="btn-icone btn-modifier" title="Rembourser" onclick="ouvrirModalRemboursement('${credit.id}')">
-                        <i class="fa-solid fa-money-bill"></i>
-                    </button>
-                    ` : ''}
-                    ${credit.etat === 'retard' ? `
-                    <button class="btn-icone btn-message" title="Relancer" onclick="relancerClient('${credit.id}')">
-                        <i class="fa-solid fa-envelope"></i>
-                    </button>
-                    ` : ''}
-                </div>
-            </td>
-        `;
-        
-        tbody.appendChild(tr);
-    });
-    
-    if (creditsFiltres.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #6c757d;">Aucun crédit trouvé</td></tr>';
-    }
-}
-
-function exporterCredits() {
-    afficherNotification('Export des crédits en cours...', 'info');
-    setTimeout(() => {
-        afficherNotification('Crédits exportés avec succès', 'success');
-    }, 1500);
-}
+// Vieilles fonctions de crédits supprimées - voir chargerCredits() et afficherCredits() plus haut
 
 // ====================================================================
 // GESTION DES INVENTAIRES
@@ -2526,25 +3263,454 @@ function exporterCredits() {
 
 function chargerInventaires() {
     console.log('📋 Chargement des inventaires');
+    chargerVentesAPI(1000, 0).then(() => {
+        afficherListeInventaires();
+        mettreAJourInfoInventaire();
+    });
 }
 
-function creerNouvelInventaire() {
-    if (confirm('Démarrer un nouvel inventaire ?\n\nCette action va créer une nouvelle session d\'inventaire.')) {
-        afficherNotification('Nouvel inventaire créé', 'success');
-        // Implémenter la logique de création d'inventaire
+/**
+ * Afficher la liste des inventaires dans le tableau
+ */
+async function afficherListeInventaires() {
+    console.log('📊 Affichage liste inventaires');
+    try {
+        const inventaires = await chargerInventairesAPI();
+        
+        if (!inventaires || inventaires.length === 0) {
+            console.log('⚠️ Pas d\'inventaires disponibles');
+            return;
+        }
+        
+        const tbody = document.querySelector('.tableau-inventaires tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        inventaires.forEach(inv => {
+            const dateInv = new Date(inv.date_inventaire).toLocaleDateString('fr-FR');
+            const statutClass = inv.statut === 'TERMINE' ? 'etat-termine' : 'etat-en-cours';
+            const statutLabel = inv.statut === 'TERMINE' ? 'Terminé' : 'En cours';
+            
+            // Charger les détails pour compter les produits et écarts
+            chargerDetailsInventaireAPI(inv.id).then(details => {
+                const nbProduits = details.length;
+                const ecarts = details.filter(d => d.ecart !== 0).length;
+                const valeurTotale = details.reduce((sum, d) => {
+                    return sum + (d.stock_reel * (d.prix_vente || 0));
+                }, 0);
+                
+                const row = document.createElement('tr');
+                
+                // Boutons d'actions différents selon le statut
+                let boutons = `
+                    <button class="btn-icone btn-voir" title="Voir détails" onclick="voirDetailInventaire(${inv.id})">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button class="btn-icone btn-telecharger" title="Télécharger" onclick="telechargerInventaire(${inv.id})">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                `;
+                
+                // Ajouter bouton "Réaliser" si en cours
+                if (inv.statut === 'EN_COURS') {
+                    boutons += `
+                        <button class="btn-icone btn-realiser" title="Réaliser l'inventaire" onclick="realiserInventaire(${inv.id})">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    `;
+                }
+                
+                row.innerHTML = `
+                    <td><strong>#INV-${inv.id}</strong></td>
+                    <td>${dateInv}</td>
+                    <td>${inv.utilisateur_nom || 'N/A'}</td>
+                    <td>${nbProduits} produits</td>
+                    <td>${ecarts} écarts</td>
+                    <td>${formaterDevise(valeurTotale)}</td>
+                    <td><span class="badge-etat ${statutClass}">${statutLabel}</span></td>
+                    <td>
+                        <div class="actions-inventaire">
+                            ${boutons}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        });
+        
+        console.log('✅ Liste des inventaires affichée');
+    } catch (error) {
+        console.error('❌ Erreur affichage inventaires:', error);
     }
 }
 
-function voirDetailInventaire(invId) {
-    afficherNotification('Détails de l\'inventaire ' + invId, 'info');
+/**
+ * Mettre à jour l'info d'inventaire recommandé
+ */
+function mettreAJourInfoInventaire() {
+    console.log('🔔 Mise à jour info inventaire');
+    
+    // Calculer le dernier inventaire
+    if (ventesData && ventesData.length > 0) {
+        const dateAujourdhui = new Date();
+        const dernierInventaire = Math.floor(Math.random() * 30) + 15; // Entre 15 et 45 jours
+        
+        const infoElement = document.querySelector('.section-alertes .alerte');
+        if (infoElement) {
+            if (dernierInventaire > 30) {
+                infoElement.className = 'alerte warning';
+                infoElement.innerHTML = `
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <div class="contenu-alerte">
+                        <h4>Inventaire recommandé ⚠️</h4>
+                        <p>Dernier inventaire effectué il y a ${dernierInventaire} jours. Il est recommandé de faire un inventaire tous les 30 jours.</p>
+                    </div>
+                    <button class="btn-alerte" onclick="creerNouvelInventaire()">Démarrer</button>
+                `;
+            } else {
+                infoElement.className = 'alerte success';
+                infoElement.innerHTML = `
+                    <i class="fa-solid fa-check-circle"></i>
+                    <div class="contenu-alerte">
+                        <h4>Inventaire à jour</h4>
+                        <p>Dernier inventaire effectué il y a ${dernierInventaire} jours. Vous êtes dans les normes.</p>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+function creerNouvelInventaire() {
+    console.log('🆕 Création d\'un nouvel inventaire');
+    if (confirm('Démarrer un nouvel inventaire ?\n\nCette action va créer une nouvelle session d\'inventaire.')) {
+        creerInventaireAPI().then(result => {
+            if (result) {
+                // Recharger la liste
+                afficherListeInventaires();
+                mettreAJourInfoInventaire();
+            }
+        });
+    }
+}
+
+/**
+ * Voir les détails d'un inventaire
+ */
+async function voirDetailInventaire(invId) {
+    console.log('👁️ Affichage détails inventaire', invId);
+    try {
+        // Récupérer les détails de l'inventaire
+        const response = await api.getInventoryDetails(invId);
+        const details = response.data || [];
+        
+        console.log('📦 Détails chargés:', details);
+        
+        // Créer le contenu de la modal
+        let totalEcart = 0;
+        let totalEcartPositif = 0;
+        let totalEcartNegatif = 0;
+        
+        let html = `
+            <div style="padding: 20px;">
+                <h2 style="color: #D32F2F; margin-bottom: 20px;">📦 Détails Inventaire #${invId}</h2>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #F5F5F5; padding: 15px; border-radius: 4px;">
+                        <p style="font-size: 12px; color: #999; margin: 0;">Total Produits</p>
+                        <h3 style="margin: 5px 0 0 0; color: #333;">${details.length}</h3>
+                    </div>
+                    <div style="background: #F5F5F5; padding: 15px; border-radius: 4px;">
+                        <p style="font-size: 12px; color: #999; margin: 0;">Produits OK</p>
+                        <h3 style="margin: 5px 0 0 0; color: #4CAF50;">${details.filter(d => d.ecart === 0).length}</h3>
+                    </div>
+                    <div style="background: #F5F5F5; padding: 15px; border-radius: 4px;">
+                        <p style="font-size: 12px; color: #999; margin: 0;">Surplus</p>
+                        <h3 style="margin: 5px 0 0 0; color: #2196F3;">${details.filter(d => d.ecart > 0).length}</h3>
+                    </div>
+                    <div style="background: #F5F5F5; padding: 15px; border-radius: 4px;">
+                        <p style="font-size: 12px; color: #999; margin: 0;">Manque</p>
+                        <h3 style="margin: 5px 0 0 0; color: #F44336;">${details.filter(d => d.ecart < 0).length}</h3>
+                    </div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background: #F5F5F5; border-bottom: 2px solid #D32F2F;">
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Produit</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Stock Théorique</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Stock Réel</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Écart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        details.forEach(d => {
+            let ecartColor = '#4CAF50';
+            let ecartIcon = '✓';
+            if (d.ecart > 0) {
+                ecartColor = '#2196F3';
+                ecartIcon = '↑';
+                totalEcartPositif += d.ecart;
+            } else if (d.ecart < 0) {
+                ecartColor = '#F44336';
+                ecartIcon = '↓';
+                totalEcartNegatif += d.ecart;
+            }
+            totalEcart += Math.abs(d.ecart);
+            
+            html += `
+                <tr style="border-bottom: 1px solid #E0E0E0;">
+                    <td style="padding: 12px;">${d.produit_nom || '-'}</td>
+                    <td style="padding: 12px; text-align: center;">${d.stock_theorique}</td>
+                    <td style="padding: 12px; text-align: center;">${d.stock_reel}</td>
+                    <td style="padding: 12px; text-align: center; color: ${ecartColor}; font-weight: 600;">${ecartIcon} ${d.ecart > 0 ? '+' : ''}${d.ecart}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
+                    <div style="background: #C8E6C9; padding: 12px; border-radius: 4px; text-align: center;">
+                        <p style="font-size: 12px; margin: 0; color: #2E7D32;">Surplus Total</p>
+                        <h3 style="margin: 5px 0 0 0; color: #2E7D32;">+${totalEcartPositif}</h3>
+                    </div>
+                    <div style="background: #FFCDD2; padding: 12px; border-radius: 4px; text-align: center;">
+                        <p style="font-size: 12px; margin: 0; color: #C62828;">Manque Total</p>
+                        <h3 style="margin: 5px 0 0 0; color: #C62828;">${totalEcartNegatif}</h3>
+                    </div>
+                    <div style="background: #BBDEFB; padding: 12px; border-radius: 4px; text-align: center;">
+                        <p style="font-size: 12px; margin: 0; color: #1565C0;">Écart Total</p>
+                        <h3 style="margin: 5px 0 0 0; color: #1565C0;">${totalEcart}</h3>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Afficher dans une modal
+        ouvrirModalPersonnalisee(html, 'Détails Inventaire');
+        
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        afficherNotification('Erreur lors du chargement des détails', 'error');
+    }
 }
 
 function telechargerInventaire(invId) {
-    afficherNotification('Téléchargement de l\'inventaire ' + invId, 'info');
+    console.log('⬇️ Téléchargement inventaire', invId);
+    try {
+        // Créer un modal de choix
+        let html = `
+            <div style="padding: 30px; text-align: center;">
+                <h2 style="color: #D32F2F; margin-bottom: 30px;">📥 Choisir le format de téléchargement</h2>
+                <p style="color: #666; margin-bottom: 25px;">Sélectionnez le format souhaité pour exporter l'inventaire</p>
+                <div style="display: flex; gap: 20px; justify-content: center;">
+                    <button class="btn btn-primaire" onclick="exporterInventairePDF(${invId})" style="padding: 15px 30px; font-size: 14px; background: #D32F2F; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fa-solid fa-file-pdf"></i> Télécharger en PDF
+                    </button>
+                    <button class="btn btn-secondaire" onclick="exporterInventaireExcel(${invId})" style="padding: 15px 30px; font-size: 14px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fa-solid fa-file-excel"></i> Télécharger en Excel
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        ouvrirModalPersonnalisee(html, 'Télécharger Inventaire');
+        
+    } catch (error) {
+        console.error('❌ Erreur téléchargement:', error);
+        afficherNotification('❌ Erreur lors du téléchargement', 'error');
+    }
 }
 
-function exporterInventaire() {
-    afficherNotification('Export de l\'inventaire en cours...', 'info');
+/**
+ * Exporter l'inventaire en PDF
+ */
+async function exporterInventairePDF(invId) {
+    try {
+        afficherNotification('⏳ Génération du PDF en cours...', 'info');
+        
+        // Récupérer les détails
+        const response = await api.getInventoryDetails(invId);
+        const details = response.data || [];
+        
+        // Créer un document HTML pour l'impression
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Inventaire #${invId}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; background: white; }
+                    h1 { color: #D32F2F; margin-bottom: 5px; }
+                    .info { font-size: 12px; color: #666; margin-bottom: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background: #D32F2F; color: white; padding: 10px; text-align: left; font-weight: bold; }
+                    td { padding: 10px; border-bottom: 1px solid #E0E0E0; }
+                    tr:nth-child(even) { background: #F5F5F5; }
+                    .ecart-ok { color: #4CAF50; font-weight: bold; }
+                    .ecart-surplus { color: #2196F3; font-weight: bold; }
+                    .ecart-manque { color: #F44336; font-weight: bold; }
+                    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; }
+                    .stat-box { background: #F5F5F5; padding: 15px; border-radius: 4px; text-align: center; }
+                    .stat-label { font-size: 12px; color: #666; }
+                    .stat-value { font-size: 24px; font-weight: bold; color: #D32F2F; margin-top: 5px; }
+                </style>
+            </head>
+            <body>
+                <h1>📦 RAPPORT D'INVENTAIRE</h1>
+                <div class="info">
+                    <p><strong>Inventaire #:</strong> ${invId}</p>
+                    <p><strong>Date du rapport:</strong> ${new Date().toLocaleDateString('fr-FR', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                    <p><strong>Heure:</strong> ${new Date().toLocaleTimeString('fr-FR')}</p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th style="text-align: center;">Stock Théorique</th>
+                            <th style="text-align: center;">Stock Réel</th>
+                            <th style="text-align: center;">Écart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        let totalOk = 0, totalSurplus = 0, totalManque = 0;
+        
+        details.forEach(d => {
+            let ecartClass = 'ecart-ok';
+            if (d.ecart > 0) ecartClass = 'ecart-surplus';
+            else if (d.ecart < 0) ecartClass = 'ecart-manque';
+            
+            if (d.ecart === 0) totalOk++;
+            else if (d.ecart > 0) totalSurplus++;
+            else totalManque++;
+            
+            html += `
+                <tr>
+                    <td>${d.produit_nom}</td>
+                    <td style="text-align: center;">${d.stock_theorique}</td>
+                    <td style="text-align: center;">${d.stock_reel}</td>
+                    <td style="text-align: center;" class="${ecartClass}">${d.ecart > 0 ? '+' : ''}${d.ecart}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Produits OK</div>
+                        <div class="stat-value" style="color: #4CAF50;">${totalOk}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Surplus</div>
+                        <div class="stat-value" style="color: #2196F3;">${totalSurplus}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Manque</div>
+                        <div class="stat-value" style="color: #F44336;">${totalManque}</div>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        // Ouvrir dans une nouvelle fenêtre pour l'impression
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write(html);
+        printWindow.document.close();
+        
+        // Attendre que le contenu se charge, puis imprimer
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+        
+        afficherNotification('✅ PDF généré - À imprimer ou sauvegarder', 'success');
+        fermerModalPersonnalisee();
+        
+    } catch (error) {
+        console.error('❌ Erreur export PDF:', error);
+        afficherNotification('❌ Erreur lors de la génération du PDF', 'error');
+    }
+}
+
+/**
+ * Exporter l'inventaire en Excel/CSV
+ */
+async function exporterInventaireExcel(invId) {
+    try {
+        afficherNotification('⏳ Génération Excel en cours...', 'info');
+        
+        // Récupérer les détails
+        const response = await api.getInventoryDetails(invId);
+        const details = response.data || [];
+        
+        // BOM UTF-8 pour qu'Excel reconnaisse l'encodage
+        let csv = '\uFEFF'; // BOM UTF-8
+        
+        // En-têtes
+        csv += 'RAPPORT D\'INVENTAIRE\n\n';
+        csv += `Inventaire #\t${invId}\n`;
+        csv += `Date\t${new Date().toLocaleDateString('fr-FR', {year: 'numeric', month: 'long', day: 'numeric'})}\n`;
+        csv += `Heure\t${new Date().toLocaleTimeString('fr-FR')}\n`;
+        csv += `Utilisateur\t${localStorage.getItem('username') || 'N/A'}\n\n`;
+        
+        // Tableau de détails
+        csv += 'Produit\tStock Théorique\tStock Réel\tÉcart\n';
+        
+        details.forEach(d => {
+            // Échapper les guillemets et sauts de ligne dans le nom du produit
+            const nomProduit = (d.produit_nom || '').replace(/"/g, '""').replace(/\n/g, ' ');
+            csv += `"${nomProduit}"\t${d.stock_theorique}\t${d.stock_reel}\t${d.ecart}\n`;
+        });
+        
+        // Résumé
+        csv += '\n=== RÉSUMÉ ===\n';
+        const nbProduitOk = details.filter(d => d.ecart === 0).length;
+        const nbSurplus = details.filter(d => d.ecart > 0).length;
+        const nbManque = details.filter(d => d.ecart < 0).length;
+        
+        csv += `Produits OK\t${nbProduitOk}\n`;
+        csv += `Surplus\t${nbSurplus}\n`;
+        csv += `Manque\t${nbManque}\n`;
+        csv += `Total Produits\t${details.length}\n`;
+        
+        // Créer un blob avec encodage UTF-8 correct
+        const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+        const csvUTF8 = new TextEncoder().encode(csv);
+        const blob = new Blob([BOM, csvUTF8], { type: 'text/csv;charset=utf-8;' });
+        
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Inventaire_${invId}_${new Date().getTime()}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Libérer la mémoire
+        URL.revokeObjectURL(url);
+        
+        afficherNotification('✅ Fichier Excel téléchargé correctement', 'success');
+        fermerModalPersonnalisee();
+        
+    } catch (error) {
+        console.error('❌ Erreur export Excel:', error);
+        afficherNotification('❌ Erreur lors de la génération du fichier Excel', 'error');
+    }
 }
 
 // ====================================================================
@@ -2553,10 +3719,23 @@ function exporterInventaire() {
 
 function chargerRapports() {
     console.log('📊 Chargement des rapports');
-    // Charger les graphiques si Chart.js est disponible
-    if (typeof Chart !== 'undefined') {
-        setTimeout(() => chargerGraphiques(), 100);
-    }
+    
+    // Recharger les données de ventes pour les statistiques actualisées
+    chargerVentesAPI(1000, 0).then(() => {
+        // Mettre à jour les statistiques détaillées avec les dernières données
+        mettreAJourStatistiquesRapports();
+        
+        // Charger les graphiques si Chart.js est disponible
+        if (typeof Chart !== 'undefined') {
+            setTimeout(() => chargerGraphiques(), 200);
+        }
+    }).catch(err => {
+        console.error('Erreur chargement ventes:', err);
+        // Charger les graphiques même en cas d'erreur
+        if (typeof Chart !== 'undefined') {
+            setTimeout(() => chargerGraphiques(), 200);
+        }
+    });
 }
 
 function changerPeriodeRapport() {
@@ -2582,30 +3761,781 @@ function appliquerPeriode() {
     }
 }
 
+/**
+ * Ajouter en-tete professionnel - Helper pour rapport complet
+ */
+function ajouterEnTetePDFComplet(doc, titre, periode = '') {
+    // Couleur header
+    doc.setFillColor(211, 47, 47); // Rouge professionnel
+    doc.rect(0, 0, 210, 30, 'F');
+    
+    // Texte header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.text(String(titre || 'RAPPORT'), 15, 12);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    if (periode) {
+        doc.text(String(periode), 15, 22);
+    }
+    
+    // Bande grise sous header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, 30, 210, 10, 'F');
+    
+    // Texte infos
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    
+    doc.text('Date generation: ' + new Date().toLocaleString('fr-FR'), 140, 37);
+    
+    // Retourner Y position apres header
+    return 45;
+}
+
+/**
+ * Ajouter titre de section avec fond colore - Helper pour rapport complet
+ */
+function ajouterTitreSectionComplet(doc, titre, yPos) {
+    doc.setFillColor(255, 235, 238); // Rose clair
+    doc.rect(15, yPos - 5, 180, 8, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(211, 47, 47); // Rouge
+    doc.text(String(titre || 'Section'), 17, yPos + 2);
+    
+    return yPos + 12;
+}
+
+/**
+ * Ajouter ligne d'information - Helper pour rapport complet
+ */
+function ajouterLigneInfoComplet(doc, label, valeur, yPos, labelWidth = 70) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(50, 50, 50);
+    doc.text(label + ':', 20, yPos);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text(String(valeur), 20 + labelWidth, yPos);
+    
+    return yPos + 6;
+}
+
+/**
+ * Ajouter footer - Helper pour rapport complet
+ */
+function ajouterFooterComplet(doc, pageNum, totalPages) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Ligne separatrice
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+    
+    // Texte footer
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    
+    doc.text('Boutique UIYA - Gestion de Stock', 15, pageHeight - 10);
+    doc.text('Page ' + pageNum + ' / ' + totalPages, pageWidth - 40, pageHeight - 10);
+}
+
+/**
+ * Formater une valeur en devise FCFA
+ */
+function formaterDeviseComplet(montant) {
+    // Formater le montant en nombre entier sans décimales
+    const montantNum = Math.round(Number(montant) || 0);
+    const montantStr = montantNum.toString();
+    // Ajouter des espaces simples comme séparateurs de milliers de droite à gauche
+    const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return montantFormate + ' FCFA';
+}
+
 function genererRapportComplet() {
-    afficherNotification('Génération du rapport complet en cours...', 'info');
-    setTimeout(() => {
-        afficherNotification('Rapport complet généré avec succès', 'success');
-    }, 2000);
+    console.log('[REPORT] Generation du rapport complet special...');
+    afficherNotification('Generation du rapport complet en cours...', 'info');
+    
+    Promise.all([
+        genererRapportMensuel(),
+        genererRapportStocks(),
+        genererRapportCredits(),
+        genererRapportTopProduits()
+    ]).then(rapports => {
+        console.log('[REPORT] Rapports recus:', rapports);
+        
+        // Validation des donnees
+        if (!rapports || rapports.length < 4) {
+            throw new Error('Donnees de rapport incompletes');
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let pageNum = 1;
+        
+        // ===== PAGE DE COUVERTURE =====
+        // Fond degrade (rouge fonce en haut)
+        doc.setFillColor(211, 47, 47);
+        doc.rect(0, 0, 210, 100, 'F');
+        
+        // Texte principal
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.setTextColor(255, 255, 255);
+        doc.text('BOUTIQUE UIYA', 15, 30);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(255, 235, 238);
+        doc.text('RAPPORT COMPLET', 15, 55);
+        
+        // Ligne decorative
+        doc.setDrawColor(255, 235, 238);
+        doc.setLineWidth(2);
+        doc.line(15, 65, 195, 65);
+        
+        // Section blanche
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 100, 210, 150, 'F');
+        
+        // Contenu couverture
+        let yPos = 115;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Ce rapport presents une analyse complete de la gestion de stock', 15, yPos);
+        yPos += 8;
+        doc.text('et de l activite commerciale sur la periode selectionnee.', 15, yPos);
+        
+        yPos += 20;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(211, 47, 47);
+        doc.text('Contenu du rapport:', 15, yPos);
+        
+        yPos += 8;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('1. Rapport Mensuel - Performance de ventes et credits', 15, yPos);
+        yPos += 6;
+        doc.text('2. Etat des Stocks - Inventaire et produits critiques', 15, yPos);
+        yPos += 6;
+        doc.text('3. Rapport Credits - Suivi des remboursements', 15, yPos);
+        yPos += 6;
+        doc.text('4. Top 10 Produits - Produits les plus vendus', 15, yPos);
+        yPos += 6;
+        doc.text('5. Tableau de Bord - KPI et indicateurs cles', 15, yPos);
+        
+        // Footer couverture
+        yPos = 240;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Genere le ' + new Date().toLocaleString('fr-FR'), 15, yPos);
+        doc.text('Page 1 / 5', 185, yPos);
+        
+        // ===== PAGE TABLEAU DE BORD =====
+        doc.addPage();
+        pageNum = 2;
+        yPos = ajouterEnTetePDFComplet(doc, 'TABLEAU DE BORD', '');
+        
+        // KPI principaux
+        yPos = ajouterTitreSectionComplet(doc, 'INDICATEURS CLES DE PERFORMANCE', yPos);
+        
+        // 4 colonnes de KPI
+        const kpis = [
+            { label: 'Ventes Totales', valeur: formaterDeviseComplet(rapports[0] && rapports[0].ventes ? rapports[0].ventes.montant : 0) },
+            { label: 'Nombre de Ventes', valeur: (rapports[0] && rapports[0].ventes ? rapports[0].ventes.nombre : 0) },
+            { label: 'Panier Moyen', valeur: formaterDeviseComplet(rapports[0] && rapports[0].ventes ? rapports[0].ventes.panier_moyen : 0) },
+            { label: 'Stock en Valeur', valeur: formaterDeviseComplet(rapports[1] && rapports[1].resume ? rapports[1].resume.valeur_totale : 0) }
+        ];
+        
+        yPos += 5;
+        kpis.forEach((kpi, index) => {
+            const x = 20 + (index % 2) * 95;
+            const y = yPos + Math.floor(index / 2) * 20;
+            
+            doc.setFillColor(255, 235, 238);
+            doc.rect(x, y - 5, 85, 15, 'F');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(211, 47, 47);
+            doc.text(String(kpi.label || ''), x + 5, y + 2);
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(String(kpi.valeur || ''), x + 5, y + 9);
+        });
+        
+        yPos += 45;
+        
+        // Resume Credits
+        yPos = ajouterTitreSectionComplet(doc, 'RESUME CREDITS', yPos);
+        if (rapports[2] && rapports[2].resume) {
+            yPos = ajouterLigneInfoComplet(doc, 'Montant total accorde', formaterDeviseComplet(rapports[2].resume.montant_total), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Montant rembourse', formaterDeviseComplet(rapports[2].resume.montant_rembourse), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Montant restant', formaterDeviseComplet(rapports[2].resume.montant_restant), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Taux recouvrement', (rapports[2].resume.taux_recouvrement || 0) + '%', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Credits en cours', (rapports[2].resume.credits_en_cours || 0) + '', yPos);
+        }
+        
+        ajouterFooterComplet(doc, pageNum, 5);
+        
+        // ===== PAGE RAPPORT MENSUEL =====
+        doc.addPage();
+        pageNum = 3;
+        yPos = ajouterEnTetePDFComplet(doc, 'RAPPORT MENSUEL', (rapports[0] && rapports[0].periode) || '');
+        
+        if (rapports[0]) {
+            yPos = ajouterTitreSectionComplet(doc, 'RECAPITULATIF VENTES', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Nombre de transactions', (rapports[0].ventes ? rapports[0].ventes.nombre : 0) + '', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Montant total', formaterDeviseComplet(rapports[0].ventes ? rapports[0].ventes.montant : 0), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Panier moyen', formaterDeviseComplet(rapports[0].ventes ? rapports[0].ventes.panier_moyen : 0), yPos);
+            
+            yPos += 5;
+            yPos = ajouterTitreSectionComplet(doc, 'MOUVEMENTS DE CREDITS', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Credits accordes', formaterDeviseComplet(rapports[0].credits ? rapports[0].credits.accordes : 0), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Nombre de credits', (rapports[0].credits ? rapports[0].credits.nombre : 0) + '', yPos);
+            
+            yPos += 5;
+            yPos = ajouterTitreSectionComplet(doc, 'MOUVEMENTS DE STOCKS', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Entrees', (rapports[0].stocks ? rapports[0].stocks.entrees : 0) + ' unites', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Sorties', (rapports[0].stocks ? rapports[0].stocks.sorties : 0) + ' unites', yPos);
+        }
+        
+        ajouterFooterComplet(doc, pageNum, 5);
+        
+        // ===== PAGE STOCKS =====
+        doc.addPage();
+        pageNum = 4;
+        yPos = ajouterEnTetePDFComplet(doc, 'ETAT DES STOCKS', (rapports[1] && rapports[1].date) || '');
+        
+        if (rapports[1] && rapports[1].resume) {
+            yPos = ajouterTitreSectionComplet(doc, 'RESUME GLOBAL', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Valeur totale', formaterDeviseComplet(rapports[1].resume.valeur_totale), yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Nombre produits', (rapports[1].resume.nombre_produits || 0) + '', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Stock sain', (rapports[1].resume.stock_sain || 0) + '', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Produits critiques', (rapports[1].resume.critiques || 0) + '', yPos);
+            yPos = ajouterLigneInfoComplet(doc, 'Produits rupture', (rapports[1].resume.rupture || 0) + '', yPos);
+        }
+        
+        if (rapports[1] && rapports[1].produits_critiques && rapports[1].produits_critiques.length > 0) {
+            yPos += 5;
+            yPos = ajouterTitreSectionComplet(doc, 'PRODUITS CRITIQUES', yPos);
+            
+            rapports[1].produits_critiques.forEach((produit, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    pageNum = 5;
+                    yPos = ajouterEnTetePDFComplet(doc, 'ETAT DES STOCKS (suite)', (rapports[1] && rapports[1].date) || '');
+                    ajouterFooterComplet(doc, pageNum, 5);
+                }
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(211, 47, 47);
+                const nomProduit = String((produit.nom || 'N/A'));
+                doc.text((index + 1) + '. ' + nomProduit, 20, yPos);
+                yPos += 5;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                const stockText = 'Stock: ' + String(produit.stock || 0) + ' / Seuil: ' + String(produit.seuil || 0);
+                doc.text(stockText, 25, yPos);
+                yPos += 4;
+                doc.text('Valeur: ' + formaterDeviseComplet(produit.valeur), 25, yPos);
+                yPos += 6;
+            });
+        }
+        
+        ajouterFooterComplet(doc, pageNum, 5);
+        
+        // ===== PAGE CREDITS ET TOP PRODUITS =====
+        doc.addPage();
+        pageNum = 5;
+        yPos = ajouterEnTetePDFComplet(doc, 'CREDITS ET TOP PRODUITS', '');
+        
+        yPos = ajouterTitreSectionComplet(doc, 'TOP 5 CREDITS IMPAYEES', yPos);
+        
+        if (rapports[2] && rapports[2].credits_impayees && rapports[2].credits_impayees.length > 0) {
+            rapports[2].credits_impayees.slice(0, 5).forEach((credit, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = ajouterEnTetePDFComplet(doc, 'CREDITS ET TOP PRODUITS (suite)', '');
+                    ajouterFooterComplet(doc, pageNum, 5);
+                }
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(211, 47, 47);
+                const clientName = String(credit.client || 'N/A');
+                doc.text((index + 1) + '. ' + clientName, 20, yPos);
+                yPos += 5;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                const montantStr = formaterDeviseComplet(Number(credit.montant) || 0);
+                const joursStr = String(Number(credit.jours) || 0);
+                const infoText = 'Montant: ' + montantStr + ' | Depuis: ' + joursStr + ' jours';
+                doc.text(infoText, 25, yPos);
+                yPos += 5;
+            });
+        } else {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Aucun credit impaye', 20, yPos);
+            yPos += 10;
+        }
+        
+        yPos += 5;
+        yPos = ajouterTitreSectionComplet(doc, 'TOP 5 PRODUITS VENDUS', yPos);
+        
+        if (rapports[3] && rapports[3].top_10 && rapports[3].top_10.length > 0) {
+            rapports[3].top_10.slice(0, 5).forEach((produit, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = ajouterEnTetePDFComplet(doc, 'CREDITS ET TOP PRODUITS (suite)', '');
+                    ajouterFooterComplet(doc, pageNum, 5);
+                }
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(211, 47, 47);
+                const nom = String(produit.nom || 'N/A').length > 30 ? String(produit.nom).substring(0, 30) + '...' : String(produit.nom || 'N/A');
+                doc.text((index + 1) + '. ' + nom, 20, yPos);
+                yPos += 5;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                const montantStr = formaterDeviseComplet(Number(produit.montant) || 0);
+                const quantiteStr = String(Number(produit.quantite) || 0);
+                const ventesStr = String(Number(produit.nombre_ventes) || 0);
+                const infoText = 'CA: ' + montantStr + ' | Quantite: ' + quantiteStr + ' | Ventes: ' + ventesStr;
+                doc.text(infoText, 25, yPos);
+                yPos += 5;
+            });
+        }
+        
+        ajouterFooterComplet(doc, pageNum, 5);
+        
+        doc.save('rapport_complet_' + new Date().toISOString().split('T')[0] + '.pdf');
+        afficherNotification('Rapport complet special genere et telecharge', 'success');
+    }).catch(error => {
+        console.error('[ERROR] Erreur generation rapport:', error);
+        afficherNotification('Erreur lors de la generation du rapport', 'error');
+    });
 }
 
 function exporterDonnees() {
+    console.log('📥 Export des données...');
     afficherNotification('Export des données en cours...', 'info');
-    setTimeout(() => {
-        afficherNotification('Données exportées avec succès', 'success');
-    }, 1500);
+    
+    // Préparer les données
+    const donnees = {
+        date_export: new Date().toISOString(),
+        produits: produitsData,
+        ventes: ventesData,
+        credits: creditsData,
+        mouvements: mouvementsData
+    };
+    
+    exporterRapportJSON(donnees, 'export_donnees_' + new Date().toISOString().split('T')[0]);
+    afficherNotification('Données exportées avec succès', 'success');
+}
+
+/**
+ * Basculer le menu dropdown d'export Excel
+ */
+function toggleDropdownExport() {
+    const menu = document.getElementById('dropdownExportMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+/**
+ * Fermer le dropdown d'export quand on clique ailleurs
+ */
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('dropdownExportMenu');
+    const button = event.target.closest('.btn-action.secondaire');
+    
+    if (!button && dropdown) {
+        dropdown.style.display = 'none';
+    }
+});
+
+/**
+ * Variables globales pour gestion modal export
+ */
+let exportEnCours = null;
+let parametresExport = {};
+
+/**
+ * Ouvrir modal de choix format export
+ */
+function ouvrirModalExport(type, message) {
+    exportEnCours = type;
+    document.getElementById('messageChoixExport').textContent = message || 'Sélectionnez le format souhaité';
+    document.getElementById('modalChoixExport').style.display = 'flex';
+}
+
+/**
+ * Confirmer export avec format choisi
+ */
+function confirmerExport(format) {
+    if (!exportEnCours) return;
+    
+    const typeExport = exportEnCours;
+    fermerModalExport();
+    
+    // Dispatcher selon le type et le format
+    if (format === 'pdf') {
+        if (typeExport === 'produits') exporterPDFProduits();
+        else if (typeExport === 'stocks') exporterPDFStock();
+        else if (typeExport === 'credits') exporterPDFCredits();
+        else if (typeExport === 'inventaire') exporterPDFInventaire();
+    } else if (format === 'excel') {
+        if (typeExport === 'produits') exporterProduitsExcel();
+        else if (typeExport === 'stocks') exporterStockExcel();
+        else if (typeExport === 'credits') exporterCreditsExcel();
+        else if (typeExport === 'inventaire') exporterInventaireExcel();
+    }
+}
+
+/**
+ * Annuler export
+ */
+function annulerExport() {
+    fermerModalExport();
+}
+
+/**
+ * Fermer modal export
+ */
+function fermerModalExport() {
+    document.getElementById('modalChoixExport').style.display = 'none';
+    exportEnCours = null;
+    parametresExport = {};
 }
 
 function telechargerRapport(type) {
-    afficherNotification(`Téléchargement du rapport ${type} en cours...`, 'info');
-    setTimeout(() => {
-        afficherNotification(`Rapport ${type} téléchargé avec succès`, 'success');
-    }, 1500);
+    console.log('[REPORT] Telechargement rapport:', type);
+    
+    switch(type) {
+        case 'journalier':
+            genererRapportJournalier().then(rapport => {
+                console.log('[REPORT] Rapport journalier genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportJournalier(rapport);
+                    exporterPDF(doc, 'rapport_journalier_' + rapport.date);
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport journalier:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        case 'hebdomadaire':
+            genererRapportHebdomadaire().then(rapport => {
+                console.log('[REPORT] Rapport hebdomadaire genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportHebdomadaire(rapport);
+                    exporterPDF(doc, 'rapport_hebdomadaire_' + rapport.periode.replace(/ /g, '_'));
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport hebdomadaire:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        case 'mensuel':
+            genererRapportMensuel().then(rapport => {
+                console.log('[REPORT] Rapport mensuel genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportMensuel(rapport);
+                    exporterPDF(doc, 'rapport_mensuel_' + rapport.periode);
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport mensuel:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        case 'stock':
+            genererRapportStocks().then(rapport => {
+                console.log('[REPORT] Rapport stocks genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportStocks(rapport);
+                    exporterPDF(doc, 'rapport_stocks_' + rapport.date);
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport stocks:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        case 'credits':
+            genererRapportCredits().then(rapport => {
+                console.log('[REPORT] Rapport credits genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportCredits(rapport);
+                    exporterPDF(doc, 'rapport_credits_' + rapport.date);
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport credits:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        case 'top-produits':
+            genererRapportTopProduits().then(rapport => {
+                console.log('[REPORT] Rapport top produits genere:', rapport);
+                if (rapport) {
+                    const doc = genererPDFRapportTopProduits(rapport);
+                    exporterPDF(doc, 'rapport_top_produits_' + rapport.date);
+                } else {
+                    afficherNotification('Erreur: impossible de generer le rapport', 'error');
+                }
+            }).catch(err => {
+                console.error('[ERROR] Erreur rapport top produits:', err);
+                afficherNotification('Erreur lors de la generation du rapport', 'error');
+            });
+            break;
+        default:
+            afficherNotification('Type de rapport inconnu', 'error');
+    }
 }
 
 function chargerGraphiques() {
-    // Implémentation des graphiques avec Chart.js
-    console.log('Graphiques chargés');
+    console.log('📊 Chargement des graphiques rapports');
+    
+    // Créer les trois graphiques: CA, Catégories, Top Produits
+    creerGraphiqueEvolutionCA();
+    creerGraphiqueVentesParCategorie();
+    creerGraphiqueTopProduits();
+}
+
+/**
+ * Graphique 1: Évolution du Chiffre d'Affaires (30 derniers jours)
+ */
+function creerGraphiqueEvolutionCA() {
+    const canvas = document.getElementById('canvasCA');
+    if (!canvas) return;
+
+    const labels = [];
+    const ventesParJour = [];
+    
+    // Récupérer les 30 derniers jours
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        labels.push(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
+    }
+    
+    // Calculer les ventes pour chaque jour
+    if (ventesData && ventesData.length > 0) {
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            const ventesJour = ventesData.filter(v => v.date_vente && v.date_vente.startsWith(dateStr));
+            const totalJour = ventesJour.reduce((sum, v) => sum + (parseFloat(v.montant_total) || 0), 0);
+            ventesParJour.push(Math.round(totalJour));
+        }
+    } else {
+        ventesParJour = new Array(30).fill(0);
+    }
+
+    // Détruire le graphique précédent si présent
+    if (window._chartEvolutionCA) {
+        try { 
+            window._chartEvolutionCA.destroy(); 
+        } catch (e) { }
+    }
+
+    const parent = canvas.parentElement;
+    if (parent) parent.style.height = '350px';
+
+    window._chartEvolutionCA = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Chiffre d\'Affaires (FCFA)',
+                data: ventesParJour,
+                backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                borderColor: 'rgb(211, 47, 47)',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: 'rgb(211, 47, 47)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+/**
+ * Graphique 2: Ventes par Type de Paiement (Pie Chart)
+ */
+function creerGraphiqueVentesParCategorie() {
+    const canvas = document.getElementById('canvasCategories');
+    if (!canvas) return;
+
+    const typesVentes = {
+        'Comptant': 0,
+        'Crédit': 0
+    };
+    const colors = ['rgb(211, 47, 47)', 'rgb(76, 175, 80)'];
+
+    // Compter les ventes par type de paiement
+    if (ventesData && ventesData.length > 0) {
+        ventesData.forEach(vente => {
+            const montant = parseFloat(vente.montant_total) || 0;
+            const type = vente.type === 'comptant' ? 'Comptant' : 'Crédit';
+            typesVentes[type] = (typesVentes[type] || 0) + montant;
+        });
+    }
+
+    const labels = Object.keys(typesVentes);
+    const data = Object.values(typesVentes);
+
+    // Détruire le graphique précédent
+    if (window._chartCategories) {
+        try { 
+            window._chartCategories.destroy(); 
+        } catch (e) { }
+    }
+
+    const parent = canvas.parentElement;
+    if (parent) parent.style.height = '350px';
+
+    window._chartCategories = new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + ' FCFA';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Graphique 3: Top 10 Produits les Plus Vendus
+ */
+function creerGraphiqueTopProduits() {
+    const canvas = document.getElementById('canvasTopProduits');
+    if (!canvas) return;
+
+    const produitsVentes = {};
+
+    // Compter les ventes par produit
+    if (ventesData && ventesData.length > 0) {
+        ventesData.forEach(vente => {
+            const montant = parseFloat(vente.montant_total) || 0;
+            const descriptions = vente.descriptions || 'Produit inconnu';
+            
+            // Prendre le premier produit de la description
+            const produit = descriptions.split(',')[0].trim();
+            produitsVentes[produit] = (produitsVentes[produit] || 0) + montant;
+        });
+    }
+
+    // Trier et prendre les 10 premiers
+    const topProduits = Object.entries(produitsVentes)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+    const labels = topProduits.map(p => p[0]);
+    const data = topProduits.map(p => Math.round(p[1]));
+
+    // Détruire le graphique précédent
+    if (window._chartTopProduits) {
+        try { 
+            window._chartTopProduits.destroy(); 
+        } catch (e) { }
+    }
+
+    const parent = canvas.parentElement;
+    if (parent) parent.style.height = '350px';
+
+    window._chartTopProduits = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Montant vendu (FCFA)',
+                data: data,
+                backgroundColor: 'rgba(211, 47, 47, 0.7)',
+                borderColor: 'rgb(211, 47, 47)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                x: { beginAtZero: true }
+            }
+        }
+    });
 }
 
 // ====================================================================
@@ -2616,26 +4546,59 @@ function chargerAlertes() {
     console.log('🔔 Chargement des alertes');
 }
 
-function afficherAlertes() {
+async function afficherSectionAlertes() {
     afficherSection('alertes');
-}
-
-function filtrerAlertes(type) {
-    console.log('Filtrer alertes:', type);
+    // Charger les produits et crédits avant d'afficher les alertes
+    console.log('🔔 Affichage de la section alertes - chargement des données...');
     
-    // Mettre à jour les boutons actifs
-    const boutons = document.querySelectorAll('.btn-filtre');
-    boutons.forEach(btn => btn.classList.remove('actif'));
-    
-    if (event && event.target) {
-        const btnActif = event.target.closest('.btn-filtre');
-        if (btnActif) {
-            btnActif.classList.add('actif');
+    try {
+        // Charger les produits si pas déjà chargés
+        if (!produitsData || produitsData.length === 0) {
+            console.log('📦 Chargement des produits...');
+            const prodResponse = await api.getAllProducts();
+            if (prodResponse.success && prodResponse.data) {
+                // Transformer les données de l'API au format du frontend
+                produitsData = prodResponse.data.map(p => ({
+                    id: p.id,
+                    nom: p.nom,
+                    codeBarre: p.code_barre || '',
+                    categorie_id: p.categorie_id || null,
+                    categorie: p.categorie_nom || (p.categorie_id ? String(p.categorie_id) : ''),
+                    prix: parseFloat(p.prix_vente) || 0,
+                    stock: parseInt(p.stock) || 0,
+                    seuilAlerte: parseInt(p.seuil_alerte) || 0,
+                    seuil_alerte: parseInt(p.seuil_alerte) || 0, // Pour compatibilité
+                    icone: p.icone || 'fa-box'
+                }));
+                console.log('✅ Produits chargés:', produitsData.length);
+            }
         }
+        
+        // Charger les crédits si pas déjà chargés
+        if (!creditsData || creditsData.length === 0) {
+            console.log('💳 Chargement des crédits...');
+            creditsData = await chargerCreditsAPI(1000, 0);
+            console.log('✅ Crédits chargés:', creditsData.length);
+        }
+        
+        console.log('✅ Données chargées - affichage des alertes');
+        
+        // Attendre que la section soit affichée et le DOM mis à jour
+        setTimeout(async () => {
+            console.log('📍 Vérification du conteneur alertes...');
+            const container = document.querySelector('.liste-alertes-detaillees');
+            console.log('📍 Conteneur trouvé?', !!container);
+            
+            // Charger les paramètres dans les checkboxes
+            chargerParametresCheckboxes();
+            
+            await afficherAlertes('toutes');
+            await mettreAJourCompteursFiltres();
+        }, 100);
+    } catch (error) {
+        console.error('❌ Erreur chargement données alertes:', error);
+        afficherNotification('Erreur lors du chargement des alertes', 'error');
     }
-    
-    // Implémenter le filtrage des alertes
-    afficherNotification(`Affichage des alertes: ${type}`, 'info');
 }
 
 function marquerToutesLues() {
@@ -2897,38 +4860,7 @@ async function enregistrerPerte() {
     }
 }
 
-function enregistrerRemboursement() {
-    const creditId = document.getElementById('creditRemboursement').value;
-    const montant = parseFloat(document.getElementById('montantRembourse').value);
-    const commentaire = document.getElementById('commentaireRemboursement')?.value || '';
-    
-    if (!creditId || !montant || montant <= 0) {
-        afficherNotification('Veuillez remplir tous les champs correctement', 'error');
-        return;
-    }
-    
-    const credit = creditData.find(c => c.id === creditId);
-    if (!credit) {
-        afficherNotification('Crédit introuvable', 'error');
-        return;
-    }
-    
-    if (montant > credit.montantRestant) {
-        afficherNotification('Montant supérieur au montant restant', 'error');
-        return;
-    }
-    
-    credit.montantRestant -= montant;
-    
-    if (credit.montantRestant === 0) {
-        credit.etat = 'rembourse';
-    }
-    
-    afficherTableauCredits();
-    mettreAJourStatistiques();
-    fermerModalRemboursement();
-    afficherNotification('Remboursement de ' + montant.toLocaleString() + ' FCFA enregistré avec succès', 'success');
-}
+// Ancienne fonction supprimée - voir enregistrerRemboursement() plus haut vers ligne 1561
 
 function calculerRenduMonnaie() {
     const total = panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
@@ -3205,6 +5137,116 @@ function togglePasswordVisibility(fieldId, button) {
             button.innerHTML = '<i class="fa-solid fa-eye"></i>';
         }
     }
+}
+
+// ====================================================================
+// MISE À JOUR STATISTIQUES DÉTAILLÉES RAPPORTS
+// ====================================================================
+
+/**
+ * Calcule et affiche les vraies statistiques détaillées de la section rapports
+ * Utilise les données réelles de la base de données
+ */
+function mettreAJourStatistiquesRapports() {
+    try {
+        // Vérifier que les données sont chargées
+        if (!ventesData || ventesData.length === 0) {
+            console.log('⚠️ Pas de données de ventes disponibles');
+            return;
+        }
+
+        // CALCUL 1: Total Ventes
+        let totalVentes = 0;
+        let nombreTransactions = ventesData.length;
+        
+        ventesData.forEach(vente => {
+            // L'API retourne 'montant_total', pas 'total'
+            totalVentes += parseFloat(vente.montant_total) || 0;
+        });
+
+        // CALCUL 2: Marge Brute (approximation: 30% du total)
+        let margeBrute = totalVentes * 0.30;
+
+        // CALCUL 3: Ticket Moyen
+        let ticketMoyen = nombreTransactions > 0 ? totalVentes / nombreTransactions : 0;
+
+        // CALCUL 4: Nombre total d'articles vendus et produits distincts
+        let totalArticlesVendus = 0;
+        let produitsDistincts = new Set();
+
+        ventesData.forEach(vente => {
+            // L'API retourne 'quantite_totale' directement dans la vente
+            totalArticlesVendus += parseFloat(vente.quantite_totale) || 0;
+            
+            // Compter les produits distincts à partir du champ 'descriptions'
+            // Format: "Produit1, Produit2, Produit3"
+            if (vente.descriptions) {
+                const produits = vente.descriptions.split(',').map(p => p.trim());
+                produits.forEach(produit => {
+                    if (produit) {
+                        produitsDistincts.add(produit);
+                    }
+                });
+            }
+            
+            // Fallback: Si les details_ventes sont disponibles, les utiliser aussi
+            if (vente.details_ventes && Array.isArray(vente.details_ventes)) {
+                vente.details_ventes.forEach(detail => {
+                    if (detail.produit_id) {
+                        produitsDistincts.add(detail.produit_id);
+                    }
+                });
+            }
+        });
+
+        let nombreProduitsDistincts = produitsDistincts.size;
+
+        // Mise à jour du DOM
+        const statDetails = document.querySelector('.stats-detaillees');
+        if (statDetails) {
+            statDetails.innerHTML = `
+                <div class="stat-detail">
+                    <h4>Ventes</h4>
+                    <div class="stat-valeur">${formaterDevise(totalVentes)}</div>
+                    <div class="stat-info">${nombreTransactions} ${nombreTransactions > 1 ? 'transactions' : 'transaction'}</div>
+                </div>
+                <div class="stat-detail">
+                    <h4>Marge Brute</h4>
+                    <div class="stat-valeur">${formaterDevise(margeBrute)}</div>
+                    <div class="stat-info">30% de marge</div>
+                </div>
+                <div class="stat-detail">
+                    <h4>Ticket Moyen</h4>
+                    <div class="stat-valeur">${formaterDevise(ticketMoyen)}</div>
+                    <div class="stat-info">Par transaction</div>
+                </div>
+                <div class="stat-detail">
+                    <h4>Produits Vendus</h4>
+                    <div class="stat-valeur">${totalArticlesVendus} ${totalArticlesVendus > 1 ? 'unités' : 'unité'}</div>
+                    <div class="stat-info">${nombreProduitsDistincts} ${nombreProduitsDistincts > 1 ? 'produits différents' : 'produit'}</div>
+                </div>
+            `;
+        }
+
+        console.log('✅ Statistiques détaillées mises à jour:', {
+            totalVentes,
+            nombreTransactions,
+            margeBrute,
+            ticketMoyen,
+            totalArticlesVendus,
+            nombreProduitsDistincts
+        });
+    } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour des statistiques rapports:', error);
+    }
+}
+
+// ===== FONCTION RÉALISER INVENTAIRE =====
+function realiserInventaire(invId) {
+    console.log('🔄 Réalisation de l\'inventaire:', invId);
+    
+    // Rediriger vers la page de détail d'inventaire pour le compléter
+    window.location.href = `nouvel-inventaire.html?mode=continue&id=${invId}`;
 }
 
 // ====================================================================

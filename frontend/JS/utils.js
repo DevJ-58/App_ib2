@@ -54,10 +54,12 @@ function afficherNotification(message, type = 'info') {
    ==================================================================== */
 
 function formaterDevise(montant) {
-    return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'XOF'
-    }).format(montant);
+    // Formater le montant en nombre entier sans décimales
+    const montantNum = Math.round(Number(montant) || 0);
+    const montantStr = montantNum.toString();
+    // Ajouter des espaces simples comme séparateurs de milliers de droite à gauche
+    const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return montantFormate + ' FCFA';
 }
 
 function formaterDate(date) {

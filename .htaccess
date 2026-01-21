@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /APP_IB/
+    
+    # Rediriger les requêtes /Api/* vers /backend/Api/*
+    RewriteRule ^Api/(.*)$ backend/Api/$1 [L,QSA]
+    
+    # Autres redirections existantes si nécessaire
+</IfModule>

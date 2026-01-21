@@ -2,10 +2,12 @@
 
 header('Content-Type: application/json');
 
+// Chemin vers la racine du projet
+$projectRoot = dirname(dirname(__FILE__));
+
 // Inclure les fichiers nécessaires
-$basePath = dirname(dirname(dirname(__FILE__)));
-require_once $basePath . '/models/Database.php';
-require_once $basePath . '/models/Credit.php';
+require_once $projectRoot . '/backend/models/Database.php';
+require_once $projectRoot . '/backend/models/Credit.php';
 
 use backend\models\Credit;
 
@@ -21,6 +23,9 @@ try {
     }
     
     $data = json_decode(file_get_contents('php://input'), true);
+    
+    // DEBUG
+    error_log("DEBUG reimburse.php - Données reçues: " . json_encode($data));
     
     if (!$data) {
         http_response_code(400);
@@ -43,14 +48,21 @@ try {
         exit;
     }
     
+    $credit_id = intval($data['credit_id']);
+    $montant = floatval($data['montant']);
+    
+    error_log("DEBUG reimburse.php - Credit_id (int): " . $credit_id . ", Montant: " . $montant);
+    
     $credit = new Credit();
     
     $result = $credit->addPayment(
-        $data['credit_id'],
-        floatval($data['montant']),
+        $credit_id,
+        $montant,
         $data['mode_paiement'] ?? 'ESPECES',
         $data['utilisateur_id'] ?? 1
     );
+    
+    error_log("DEBUG reimburse.php - Résultat addPayment: " . json_encode($result));
     
     if ($result['success']) {
         http_response_code(200);

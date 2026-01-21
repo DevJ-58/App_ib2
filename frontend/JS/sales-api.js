@@ -30,22 +30,26 @@ async function enregistrerVenteAPI(client_nom, total, type_paiement, items, mont
 }
 
 /**
- * Charger les ventes depuis l'API
+ * Charger les ventes depuis l'API ET remplir ventesData global
  */
-async function chargerVentesAPI(limit = 50, offset = 0) {
-    console.log('📦 Chargement des ventes...');
+async function chargerVentesAPI(limit = 1000, offset = 0) {
+    console.log('📦 Chargement des ventes depuis la base de données...');
     try {
-        const response = await api.getAllSales(limit, offset);
+        const response = await api.getAllSales();
         
         if (!response.success) {
             console.error('❌ Erreur API ventes:', response.message);
+            ventesData = [];
             return [];
         }
         
-        console.log('✅ Ventes chargées:', response.data.length);
-        return response.data;
+        // Remplir la variable globale ventesData avec TOUTES les ventes de la DB
+        ventesData = response.data || [];
+        console.log('✅ Ventes chargées depuis DB:', ventesData.length, 'ventes');
+        return ventesData;
     } catch (error) {
         console.error('❌ Erreur chargement ventes:', error);
+        ventesData = [];
         return [];
     }
 }
@@ -123,5 +127,73 @@ async function mettreAJourVentesDashboard() {
         console.log('✅ Dashboard ventes mis à jour');
     } catch (error) {
         console.error('❌ Erreur mise à jour dashboard:', error);
+    }
+}
+/**
+ * Charger et afficher le résumé du jour
+ */
+async function afficherResumeDuJour() {
+    try {
+        // Charger les ventes du jour
+        const ventes = await chargerVentesAPI(1000, 0);
+        const statsVentes = await chargerStatsVentesAPI();
+        
+        // Charger les crédits
+        const creditsApi = await api.getAllCredits();
+        const creditsData = creditsApi.data || [];
+        
+        // Aujourd'hui en format YYYY-MM-DD
+        const aujourd_hui = new Date().toISOString().split('T')[0];
+        
+        // Filtrer les ventes d'aujourd'hui
+        const ventesAujourdhui = ventes.filter(v => v.date_vente.startsWith(aujourd_hui));
+        
+        // Crédits accordés aujourd'hui
+        const creditsAujourdhui = creditsData.filter(c => c.date_credit.startsWith(aujourd_hui));
+        
+        // Calculer les montants
+        let recettesTotal = 0;
+        let ventesComptant = 0;
+        let creditsAccordes = 0;
+        let remboursements = 0;
+        
+        // Ventes d'aujourd'hui
+        ventesAujourdhui.forEach(v => {
+            recettesTotal += parseFloat(v.montant_total) || 0;
+            if (v.type_paiement === 'comptant' || v.type_paiement === 'COMPTANT') {
+                ventesComptant += parseFloat(v.montant_total) || 0;
+            }
+        });
+        
+        // Crédits accordés aujourd'hui
+        creditsAujourdhui.forEach(c => {
+            creditsAccordes += parseFloat(c.montant_total) || 0;
+        });
+        
+        // Remboursements (fictif: on compte les montants payés sur les crédits)
+        creditsData.forEach(c => {
+            if (c.date_remboursement_complet && c.date_remboursement_complet.startsWith(aujourd_hui)) {
+                remboursements += parseFloat(c.montant_paye) || 0;
+            }
+        });
+        
+        console.log('📊 Résumé du jour calculé:', {recettesTotal, ventesComptant, creditsAccordes, remboursements});
+        
+        // Mettre à jour les affichages
+        const elem1 = document.getElementById('resumeRecettesTotal');
+        if (elem1) elem1.textContent = recettesTotal.toLocaleString() + ' FCFA';
+        
+        const elem2 = document.getElementById('resumeVentesComptant');
+        if (elem2) elem2.textContent = ventesComptant.toLocaleString() + ' FCFA';
+        
+        const elem3 = document.getElementById('resumeCreditsAccordes');
+        if (elem3) elem3.textContent = creditsAccordes.toLocaleString() + ' FCFA';
+        
+        const elem4 = document.getElementById('resumeRemboursements');
+        if (elem4) elem4.textContent = remboursements.toLocaleString() + ' FCFA';
+        
+        console.log('✅ Résumé du jour affiché');
+    } catch (error) {
+        console.error('❌ Erreur affichage résumé:', error);
     }
 }

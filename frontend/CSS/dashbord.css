@@ -713,6 +713,21 @@ button:disabled,
     grid-column: 1 / -1;
 }
 
+.grille-graphiques-2col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espacement-lg);
+    margin: 0 auto var(--espacement-lg) auto;
+    max-width: 1400px;
+    width: 100%;
+    padding: 0 var(--espacement-lg);
+    box-sizing: border-box;
+}
+
+.grille-graphiques-2col .carte-contenu {
+    width: 100%;
+}
+
 .carte-contenu .entete-carte {
     display: flex;
     align-items: center;
@@ -943,6 +958,16 @@ table tbody tr:only-child td[colspan] {
     color: #155724;
 }
 
+.etat-solde {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.etat-cours {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
 .etat-termine {
     background-color: #d4edda;
     color: #155724;
@@ -972,6 +997,37 @@ table tbody tr:only-child td[colspan] {
     cursor: pointer;
     transition: all var(--transition-rapide);
     font-size: 16px;
+}
+
+/* Conteneur de détails du crédit */
+.details-credit-container {
+    background-color: var(--couleur-fond);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--couleur-texte-clair);
+    min-width: 150px;
+}
+
+.detail-value {
+    color: var(--couleur-texte);
+    text-align: right;
 }
 
 .btn-icone:hover {
@@ -1019,6 +1075,17 @@ table tbody tr:only-child td[colspan] {
 .btn-icone.btn-telecharger:hover {
     background-color: var(--couleur-succes);
     color: white;
+}
+
+.btn-icone.btn-realiser {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--couleur-succes);
+}
+
+.btn-icone.btn-realiser:hover {
+    background-color: var(--couleur-succes);
+    color: white;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .eye-icon {
@@ -1886,6 +1953,16 @@ table tbody tr:only-child td[colspan] {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
+.form-group input.input-error {
+    border-color: var(--couleur-danger);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.form-group input.input-error:focus {
+    border-color: var(--couleur-danger);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
 /* AMÉLIORATION: Indicateur de champ requis */
 .form-group label:has(+ input[required])::after,
 .form-group label:has(+ select[required])::after,
@@ -2419,10 +2496,48 @@ table tbody tr:only-child td[colspan] {
    CRÉDITS
    ==================================================================== */
 
+.contenu-dashboard-infos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacement-lg);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    grid-column: 1 / -1;
+}
+
+.contenu-credits-infos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacement-lg);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    grid-column: 1 / -1;
+}
+
+.contenu-stocks-infos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacement-lg);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    grid-column: 1 / -1;
+}
+
+#carteRemboursementsRecents,
+#carteTopClientsCredit {
+    flex: 1;
+    min-width: 0;
+}
+
 .liste-remboursements {
     display: flex;
     flex-direction: column;
     gap: var(--espacement-md);
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .remboursement-item {
@@ -2475,6 +2590,8 @@ table tbody tr:only-child td[colspan] {
     display: flex;
     flex-direction: column;
     gap: var(--espacement-md);
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .liste-clients-credit li {
@@ -2794,12 +2911,25 @@ button:focus-visible {
         grid-template-columns: 1fr;
     }
     
+    .contenu-dashboard-infos,
+    .contenu-credits-infos {
+        grid-template-columns: 1fr;
+    }
+    
     .barre-actions,
     .actions-rapides {
         flex-direction: column;
     }
     
     .section-contenu {
+        grid-template-columns: 1fr;
+    }
+    
+    .grille-graphiques-2col {
+        grid-template-columns: 1fr;
+    }
+    
+    .contenu-credits-infos {
         grid-template-columns: 1fr;
     }
     
@@ -4094,4 +4224,51 @@ button:focus-visible {
     to {
         opacity: 1;
     }
+}
+
+/* ====================================================================== */
+/* STYLES MODALE DÉTAILS VENTE */
+/* ====================================================================== */
+
+.details-vente-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espacement-md);
+    padding: var(--espacement-lg) 0;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: var(--couleur-secondaire);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item p {
+    font-size: 1rem;
+    color: var(--couleur-texte);
+    margin: 0;
+    padding: 0.75rem;
+    background: var(--couleur-fond-leger);
+    border-radius: var(--rayon-md);
+    border-left: 4px solid var(--couleur-primaire);
+}
+
+.modal-footer {
+    display: flex;
+    gap: var(--espacement-md);
+    padding: var(--espacement-lg);
+    border-top: 1px solid var(--couleur-bordure);
+    justify-content: flex-end;
 }

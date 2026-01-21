@@ -2,10 +2,12 @@
 
 header('Content-Type: application/json');
 
+// Chemin vers la racine du projet
+$projectRoot = dirname(dirname(__FILE__));
+
 // Inclure les fichiers nécessaires
-$basePath = dirname(dirname(dirname(__FILE__)));
-require_once $basePath . '/models/Database.php';
-require_once $basePath . '/models/Credit.php';
+require_once $projectRoot . '/backend/models/Database.php';
+require_once $projectRoot . '/backend/models/Credit.php';
 
 use backend\models\Credit;
 
@@ -33,31 +35,31 @@ try {
     }
     
     // Valider les paramètres obligatoires
-    if (empty($data['credit_id']) || empty($data['montant'])) {
+    if (empty($data['vente_id']) || empty($data['client_nom']) || empty($data['montant_total'])) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
             'code' => 400,
-            'message' => 'Paramètres manquants: credit_id, montant'
+            'message' => 'Paramètres manquants: vente_id, client_nom, montant_total'
         ]);
         exit;
     }
     
     $credit = new Credit();
     
-    $result = $credit->addPayment(
-        $data['credit_id'],
-        floatval($data['montant']),
-        $data['mode_paiement'] ?? 'ESPECES',
-        $data['utilisateur_id'] ?? 1
+    $result = $credit->create(
+        $data['vente_id'],
+        $data['client_nom'],
+        floatval($data['montant_total']),
+        $data['type_client'] ?? 'AUTRE'
     );
     
     if ($result['success']) {
-        http_response_code(200);
+        http_response_code(201);
         echo json_encode([
             'success' => true,
-            'code' => 200,
-            'message' => 'Remboursement enregistré',
+            'code' => 201,
+            'message' => 'Crédit créé avec succès',
             'data' => $result
         ]);
     } else {
@@ -65,7 +67,7 @@ try {
         echo json_encode([
             'success' => false,
             'code' => 400,
-            'message' => $result['message'] ?? 'Erreur lors du remboursement'
+            'message' => $result['message'] ?? 'Erreur lors de la création du crédit'
         ]);
     }
 } catch (\Exception $e) {

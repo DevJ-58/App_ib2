@@ -3,7 +3,7 @@
 // ====================================================================
 
 class APIClient {
-    constructor(baseURL = 'http://localhost/APP_IB/backend') {
+    constructor(baseURL = 'http://localhost/APP_IB') {
         this.baseURL = baseURL;
     }
 
@@ -203,13 +203,6 @@ class APIClient {
     // ==================== CRÉDITS ====================
 
     /**
-     * Récupérer tous les crédits
-     */
-    async getAllCredits() {
-        return this.request('/Api/Credits/list.php');
-    }
-
-    /**
      * Créer un crédit
      */
     async createCredit(data) {
@@ -343,6 +336,102 @@ class APIClient {
         if (date_fin) params.push('date_fin=' + date_fin);
         if (params.length > 0) url += '?' + params.join('&');
         return this.request(url);
+    }
+
+    /**
+     * Créer un crédit
+     */
+    async createCredit(vente_id, client_nom, montant_total, type_client = 'AUTRE') {
+        return this.request('/Api/Credits/create.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                vente_id: vente_id,
+                client_nom: client_nom,
+                montant_total: montant_total,
+                type_client: type_client
+            })
+        });
+    }
+
+    /**
+     * Récupérer les crédits
+     */
+    async getAllCredits(limit = 50, offset = 0, status = null) {
+        let url = '/Api/Credits/list.php?limit=' + limit + '&offset=' + offset;
+        if (status) url += '&status=' + status;
+        return this.request(url);
+    }
+
+    /**
+     * Enregistrer un remboursement
+     */
+    async addCreditPayment(credit_id, montant, mode_paiement = 'ESPECES', utilisateur_id = 1) {
+        return this.request('/Api/Credits/reimburse.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                credit_id: credit_id,
+                montant: montant,
+                mode_paiement: mode_paiement,
+                utilisateur_id: utilisateur_id
+            })
+        });
+    }
+
+    /**
+     * Récupérer les statistiques des crédits
+     */
+    async getCreditStats() {
+        return this.request('/Api/Credits/stats.php');
+    }
+
+    /**
+     * Récupérer tous les inventaires
+     */
+    async getAllInventories() {
+        return this.request('/backend/Api/Inventaires/list.php');
+    }
+
+    /**
+     * Récupérer les détails d'un inventaire
+     */
+    async getInventoryDetails(inventaire_id) {
+        return this.request(`/backend/Api/Inventaires/details.php?id=${inventaire_id}`);
+    }
+
+    /**
+     * Créer un nouvel inventaire
+     */
+    async createInventory() {
+        return this.request('/backend/Api/Inventaires/create.php', {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+    }
+
+    /**
+     * Ajouter un produit à l'inventaire
+     */
+    async addProductToInventory(inventaire_id, produit_id, stock_reel) {
+        return this.request('/backend/Api/Inventaires/add-product.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                inventaire_id: parseInt(inventaire_id),
+                produit_id: parseInt(produit_id),
+                stock_reel: parseInt(stock_reel)
+            })
+        });
+    }
+
+    /**
+     * Terminer un inventaire
+     */
+    async completeInventory(inventaire_id) {
+        return this.request('/backend/Api/Inventaires/complete.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                inventaire_id: parseInt(inventaire_id)
+            })
+        });
     }
 }
 

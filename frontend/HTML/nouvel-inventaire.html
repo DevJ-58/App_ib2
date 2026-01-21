@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvel Inventaire - Gestion de Stock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../CSS/dashbord.css">
+    <style>
+        :root {
+            --couleur-primaire: #D32F2F;
+            --couleur-secondaire: #FFC107;
+            --couleur-success: #4CAF50;
+            --couleur-danger: #F44336;
+            --couleur-info: #2196F3;
+            --couleur-light: #F5F5F5;
+            --couleur-dark: #333;
+            --couleur-border: #E0E0E0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--couleur-light);
+            color: var(--couleur-dark);
+        }
+
+        .container-inventaire {
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--couleur-primaire), #B71C1C);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section-block {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-block h2 {
+            color: var(--couleur-primaire);
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--couleur-primaire);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--couleur-dark);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--couleur-border);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--couleur-primaire);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primaire {
+            background-color: var(--couleur-primaire);
+            color: white;
+        }
+
+        .btn-primaire:hover {
+            background-color: #B71C1C;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+
+        .btn-secondaire {
+            background-color: var(--couleur-light);
+            color: var(--couleur-dark);
+            border: 1px solid var(--couleur-border);
+        }
+
+        .btn-secondaire:hover {
+            background-color: #EEEEEE;
+            border-color: var(--couleur-dark);
+        }
+
+        /* Section des produits */
+        .produits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .produit-item {
+            background: var(--couleur-light);
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid var(--couleur-primaire);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .produit-item:hover {
+            background: #EEEEEE;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .produit-info {
+            flex: 1;
+        }
+
+        .produit-info h4 {
+            color: var(--couleur-dark);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .produit-info p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .produit-quantite {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .produit-quantite input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid var(--couleur-border);
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .btn-remove {
+            background-color: var(--couleur-danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-remove:hover {
+            background-color: #D32323;
+        }
+
+        .notification {
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .notification.show {
+            display: flex;
+        }
+
+        .notification.success {
+            background-color: #C8E6C9;
+            color: #2E7D32;
+            border-left: 4px solid var(--couleur-success);
+        }
+
+        .notification.error {
+            background-color: #FFCDD2;
+            color: #C62828;
+            border-left: 4px solid var(--couleur-danger);
+        }
+
+        .notification.info {
+            background-color: #BBDEFB;
+            color: #1565C0;
+            border-left: 4px solid var(--couleur-info);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--couleur-primaire);
+            font-size: 14px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(211, 47, 47, 0.3);
+            border-top-color: var(--couleur-primaire);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .vide-etat {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .vide-etat i {
+            font-size: 48px;
+            color: #DDD;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 24px;
+            }
+
+            .section-block {
+                padding: 15px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-inventaire">
+        <!-- Header -->
+        <header>
+            <h1>
+                <i class="fa-solid fa-box-open"></i>
+                Nouvel Inventaire
+            </h1>
+            <p>Créer et gérer une nouvelle session d'inventaire</p>
+        </header>
+
+        <!-- Contenu -->
+        <div class="content-wrapper">
+            <!-- Formulaire de création -->
+            <div class="section-block">
+                <h2>
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    Détails de l'Inventaire
+                </h2>
+
+                <div id="notificationCreation" class="notification"></div>
+
+                <div class="form-group">
+                    <label for="dateInventaire">Date de l'Inventaire *</label>
+                    <input type="date" id="dateInventaire" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="commentaire">Commentaire / Notes</label>
+                    <textarea id="commentaire" placeholder="Ajoutez des notes ou des commentaires sur cet inventaire..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="utilisateur">Responsable de l'Inventaire</label>
+                    <input type="text" id="utilisateur" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Stock à Inventorier</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 0; font-weight: 400;">
+                            <input type="radio" name="typeInventaire" value="tous" checked style="width: auto; margin-right: 8px;">
+                            Tous les produits
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 0; font-weight: 400;">
+                            <input type="radio" name="typeInventaire" value="selectionnes" style="width: auto; margin-right: 8px;">
+                            Produits sélectionnés
+                        </label>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondaire" onclick="annulerCreation()">
+                        <i class="fa-solid fa-times"></i> Annuler
+                    </button>
+                    <button type="button" class="btn btn-primaire" id="btnSauvegarder" onclick="sauvegarderInventaire()">
+                        <i class="fa-solid fa-save"></i> Créer l'Inventaire
+                    </button>
+                </div>
+            </div>
+
+            <!-- Liste des produits -->
+            <div class="section-block">
+                <h2>
+                    <i class="fa-solid fa-list"></i>
+                    Produits à Inventorier
+                </h2>
+
+                <div id="notificationProduits" class="notification"></div>
+
+                <div id="produitsContainer" class="produits-container">
+                    <div class="vide-etat">
+                        <i class="fa-solid fa-box"></i>
+                        <p>Chargement des produits...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/auth-api.js"></script>
+    
+    <script>
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let tousLesProduits = [];
+        let produitSurnom = {};
+        let inventaireEnCours = null;
+        let isModeContinue = false;
+        let inventaireIdContinue = null;
+        // 'api' est déjà déclaré globalement dans api-client.js
+
+        // ============================================
+        // FONCTIONS GLOBALES
+        // ============================================
+
+        function initialiserFormulaire() {
+            // Définir la date d'aujourd'hui
+            const dateInput = document.getElementById('dateInventaire');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            // Récupérer l'utilisateur depuis le localStorage (si disponible)
+            const utilisateur = localStorage.getItem('username') || 'Utilisateur courant';
+            document.getElementById('utilisateur').value = utilisateur;
+            console.log('👤 Utilisateur:', utilisateur);
+
+            // Vérifier si on est en mode "continue"
+            const params = new URLSearchParams(window.location.search);
+            const inventaireId = params.get('id');
+            const mode = params.get('mode');
+
+            if (inventaireId && mode === 'continue') {
+                isModeContinue = true;
+                inventaireIdContinue = inventaireId;
+                console.log('🔄 Mode CONTINUE pour inventaire ID:', inventaireId);
+                chargerInventaireExistant(inventaireId);
+            } else {
+                console.log('✨ Mode CRÉATION nouveau inventaire');
+            }
+        }
+
+        async function chargerInventaireExistant(inventaireId) {
+            try {
+                console.log('📥 Chargement de l\'inventaire existant:', inventaireId);
+                
+                // Changer le titre
+                document.querySelector('header h1').innerHTML = `
+                    <i class="fa-solid fa-pencil"></i>
+                    Continuer l'Inventaire #${inventaireId}
+                `;
+                document.querySelector('header p').textContent = 'Compléter ou modifier l\'inventaire en cours';
+
+                // Changer le bouton de sauvegarde
+                const btnSauvegarder = document.getElementById('btnSauvegarder');
+                btnSauvegarder.innerHTML = '<i class="fa-solid fa-check"></i> Finaliser l\'Inventaire';
+
+                // Charger les détails de l'inventaire
+                const response = await fetch(`../../backend/Api/Inventaires/details.php?id=${inventaireId}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Impossible de charger l\'inventaire');
+                }
+
+                inventaireEnCours = data.data;
+                console.log('✅ Inventaire chargé:', inventaireEnCours);
+
+                // Pré-remplir les champs (récupérer depuis le premier détail)
+                const firstDetail = inventaireEnCours[0];
+                if (firstDetail) {
+                    document.getElementById('dateInventaire').value = firstDetail.date_inventaire || new Date().toISOString().split('T')[0];
+                    document.getElementById('commentaire').value = firstDetail.commentaire || '';
+                } else {
+                    document.getElementById('dateInventaire').value = new Date().toISOString().split('T')[0];
+                }
+                document.getElementById('dateInventaire').disabled = true;
+
+                // Créer un mapping des produits existants dans cet inventaire
+                const produitsExistants = {};
+                inventaireEnCours.forEach(detail => {
+                    produitsExistants[detail.produit_id] = {
+                        stock_reel: detail.stock_reel,
+                        stock_theorique: detail.stock_theorique,
+                        ecart: detail.ecart
+                    };
+                });
+
+                console.log('📦 Produits existants:', produitsExistants);
+
+                // Attendre le chargement des produits
+                await new Promise(resolve => {
+                    const checkProduits = setInterval(() => {
+                        if (tousLesProduits.length > 0) {
+                            clearInterval(checkProduits);
+                            resolve();
+                        }
+                    }, 100);
+                });
+
+                // Pré-remplir les valeurs de stock réel avec les valeurs existantes
+                setTimeout(() => {
+                    const inputs = document.querySelectorAll('.stock-reel-input');
+                    inputs.forEach(input => {
+                        const produitItem = input.closest('.produit-item');
+                        const produitId = parseInt(produitItem?.dataset.id);
+                        
+                        if (produitsExistants[produitId]) {
+                            input.value = produitsExistants[produitId].stock_reel;
+                            console.log(`✅ Pré-remplissage produit ${produitId}: ${produitsExistants[produitId].stock_reel}`);
+                        }
+                    });
+                }, 200);
+
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement:', error);
+                afficherNotificationCreation('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+
+        async function chargerProduits() {
+            try {
+                console.log('📦 Chargement des produits...');
+                const response = await api.getAllProducts();
+                console.log('✅ Produits chargés:', response);
+                tousLesProduits = response.data || [];
+                console.log('📋 Nombre de produits:', tousLesProduits.length);
+                afficherProduits();
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement des produits:', error);
+                afficherNotificationProduits('❌ Erreur: Impossible de charger les produits', 'error');
+            }
+        }
+
+        function afficherProduits() {
+            console.log('🎨 Affichage des produits, total:', tousLesProduits.length);
+            const container = document.getElementById('produitsContainer');
+            
+            if (!container) {
+                console.error('❌ Container produitsContainer pas trouvé!');
+                return;
+            }
+            
+            if (tousLesProduits.length === 0) {
+                container.innerHTML = `
+                    <div class="vide-etat">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>Aucun produit disponible</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const typeInventaire = document.querySelector('input[name="typeInventaire"]:checked')?.value || 'tous';
+            console.log('📋 Type inventaire sélectionné:', typeInventaire);
+            
+            const produitsAfficher = typeInventaire === 'tous' ? tousLesProduits : tousLesProduits.filter(p => p.checked);
+
+            console.log('🎯 Produits à afficher:', produitsAfficher.length);
+
+            container.innerHTML = produitsAfficher.map(produit => `
+                <div class="produit-item" data-id="${produit.id}">
+                    <div class="produit-info">
+                        <h4>${produit.nom || 'Sans nom'}</h4>
+                        <p>Référence: <strong>${produit.reference || '-'}</strong></p>
+                        <p>Stock actuel: <strong>${produit.stock || 0}</strong> unités</p>
+                        <p>Catégorie: <strong>${produit.categorie_nom || 'Sans catégorie'}</strong></p>
+                    </div>
+                    <div class="produit-quantite">
+                        <label style="font-size: 12px; font-weight: 500;">Stock réel:</label>
+                        <input type="number" class="stock-reel-input" value="${produit.stock || 0}" min="0" placeholder="0">
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log('✅ Produits affichés avec succès');
+        }
+
+        async function sauvegarderInventaire() {
+            console.log('🔄 Début de sauvegarde inventaire, Mode:', isModeContinue ? 'CONTINUE' : 'CRÉATION');
+            const btnSauvegarder = document.getElementById('btnSauvegarder');
+            
+            try {
+                btnSauvegarder.disabled = true;
+                btnSauvegarder.innerHTML = '<span class="spinner"></span> ' + (isModeContinue ? 'Finalisation...' : 'Création en cours...');
+
+                const dateInventaire = document.getElementById('dateInventaire').value;
+                const commentaire = document.getElementById('commentaire').value;
+
+                console.log('📅 Date:', dateInventaire);
+                console.log('📝 Commentaire:', commentaire);
+                console.log('🌐 API client disponible:', typeof api !== 'undefined');
+
+                if (!dateInventaire) {
+                    afficherNotificationCreation('⚠️ Veuillez entrer une date', 'error');
+                    btnSauvegarder.disabled = false;
+                    btnSauvegarder.innerHTML = '<i class="fa-solid fa-save"></i> ' + (isModeContinue ? 'Finaliser' : 'Créer l\'Inventaire');
+                    return;
+                }
+
+                let inventaireId;
+
+                // Créer un nouvel inventaire OU utiliser l'existant
+                if (isModeContinue) {
+                    // Mode continue: utiliser l'inventaire existant depuis les paramètres
+                    inventaireId = inventaireIdContinue;
+                    console.log('🔄 Continuation avec inventaire ID:', inventaireId);
+                } else {
+                    // Mode création: créer un nouvel inventaire
+                    console.log('📤 Appel API createInventory()');
+                    const responseCreation = await api.createInventory();
+                    
+                    console.log('✅ Réponse API:', responseCreation);
+                    
+                    if (!responseCreation || !responseCreation.success) {
+                        throw new Error(responseCreation?.message || 'Erreur lors de la création');
+                    }
+
+                    inventaireId = responseCreation.data?.id;
+                    console.log('🆔 ID Inventaire créé:', inventaireId);
+
+                    if (!inventaireId) {
+                        throw new Error('ID inventaire non retourné par l\'API');
+                    }
+                }
+
+                // Ajouter les produits avec quantités réelles
+                const inputs = document.querySelectorAll('.stock-reel-input');
+                console.log('📦 Nombre d\'inputs trouvés:', inputs.length);
+                
+                let compteurAjoutes = 0;
+                for (const input of inputs) {
+                    const produitItem = input.closest('.produit-item');
+                    const produitId = produitItem?.dataset.id;
+                    const stockReel = parseInt(input.value) || 0;
+
+                    console.log(`📤 Tentative ajout produit ${produitId} avec stock ${stockReel}`);
+
+                    if (produitId && stockReel > 0) {
+                        try {
+                            const respProduit = await api.addProductToInventory(inventaireId, produitId, stockReel);
+                            console.log(`✅ Produit ${produitId} ajouté:`, respProduit);
+                            compteurAjoutes++;
+                        } catch (e) {
+                            console.warn(`⚠️ Erreur ajout produit ${produitId}:`, e);
+                        }
+                    }
+                }
+
+                console.log(`📊 Total produits ajoutés: ${compteurAjoutes}`);
+                
+                // Si mode continue, finaliser l'inventaire
+                if (isModeContinue) {
+                    console.log('🔄 Mode continue: finalisation de l\'inventaire avec ID:', inventaireId);
+                    const responseComplete = await fetch('../../backend/Api/Inventaires/complete.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            inventaire_id: parseInt(inventaireId)
+                        })
+                    });
+
+                    const completeData = await responseComplete.json();
+                    console.log('✅ Réponse finalisation:', completeData);
+
+                    if (!completeData.success) {
+                        throw new Error(completeData.message || 'Erreur lors de la finalisation');
+                    }
+
+                    afficherNotificationCreation('✅ Inventaire finalisé avec succès! Redirection...', 'success');
+                    console.log('🎉 Redirection dans 2s...');
+                    
+                    setTimeout(() => {
+                        console.log('🚀 Redirection vers dashbord.html');
+                        window.location.href = 'dashbord.html';
+                    }, 2000);
+                } else {
+                    // Mode création
+                    afficherNotificationCreation('✅ Inventaire créé avec succès! Redirection...', 'success');
+                    console.log('🎉 Redirection dans 2s...');
+                    
+                    setTimeout(() => {
+                        console.log('🚀 Redirection vers dashbord.html');
+                        window.location.href = 'dashbord.html';
+                    }, 2000);
+                }
+
+            } catch (error) {
+                console.error('❌ ERREUR COMPLÈTE:', error);
+                console.error('Stack:', error.stack);
+                afficherNotificationCreation(`❌ Erreur: ${error.message}`, 'error');
+                btnSauvegarder.disabled = false;
+                btnSauvegarder.innerHTML = '<i class="fa-solid fa-save"></i> ' + (isModeContinue ? 'Finaliser' : 'Créer l\'Inventaire');
+            }
+        }
+
+        function annulerCreation() {
+            if (confirm('Êtes-vous sûr de vouloir annuler la création d\'un nouvel inventaire?')) {
+                window.location.href = 'dashbord.html';
+            }
+        }
+
+        function afficherNotificationCreation(message, type) {
+            const notif = document.getElementById('notificationCreation');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `
+                <i class="fa-solid fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            notif.classList.add('show');
+            
+            if (type !== 'error') {
+                setTimeout(() => notif.classList.remove('show'), 3000);
+            }
+        }
+
+        function afficherNotificationProduits(message, type) {
+            const notif = document.getElementById('notificationProduits');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `
+                <i class="fa-solid fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            notif.classList.add('show');
+            
+            if (type !== 'error') {
+                setTimeout(() => notif.classList.remove('show'), 3000);
+            }
+        }
+
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Page chargée');
+            console.log('🌐 API globale disponible:', typeof api !== 'undefined');
+            initialiserFormulaire();
+            chargerProduits();
+        });
+
+        // Mettre à jour l'affichage des produits selon le type sélectionné
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'typeInventaire') {
+                afficherProduits();
+            }
+        });
+    </script>
+</body>
+</html>

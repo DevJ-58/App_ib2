@@ -9,9 +9,21 @@ let utilisateurConnecte = null;
  */
 async function initialiserAuthentification() {
     try {
+        // Essayer d'abord localStorage
+        const userFromStorage = localStorage.getItem('utilisateur');
+        if (userFromStorage) {
+            utilisateurConnecte = JSON.parse(userFromStorage);
+            console.log('✅ Session utilisateur restaurée depuis localStorage:', utilisateurConnecte);
+            return;
+        }
+        
+        // Sinon vérifier via API
         const response = await api.checkSession();
         if (response.success && response.user) {
             utilisateurConnecte = response.user;
+            localStorage.setItem('utilisateur', JSON.stringify(response.user));
+            localStorage.setItem('username', `${response.user.prenom} ${response.user.nom}`);
+            localStorage.setItem('utilisateur_id', response.user.id);
             console.log('✅ Session utilisateur restaurée:', utilisateurConnecte);
         }
     } catch (error) {
@@ -33,6 +45,10 @@ async function seConnecter(telephone, motDePasse) {
 
         if (response.success && response.data) {
             utilisateurConnecte = response.data;
+            // Sauvegarder en localStorage
+            localStorage.setItem('utilisateur', JSON.stringify(response.data));
+            localStorage.setItem('username', `${response.data.prenom} ${response.data.nom}`);
+            localStorage.setItem('utilisateur_id', response.data.id);
             console.log('✅ Connexion RÉUSSIE - utilisateur:', utilisateurConnecte);
             afficherUtilisateurHeader();
             console.log('📢 Affichage notification...');
@@ -119,6 +135,10 @@ async function sInscrire(nom, prenom, telephone, email, motDePasse, confirmMotDe
         
         if (response.success && response.data) {
             utilisateurConnecte = response.data;
+            // Sauvegarder en localStorage
+            localStorage.setItem('utilisateur', JSON.stringify(response.data));
+            localStorage.setItem('username', `${response.data.prenom} ${response.data.nom}`);
+            localStorage.setItem('utilisateur_id', response.data.id);
             console.log('✅ 🔐 sInscrire: SUCCESS - utilisateur créé:', utilisateurConnecte);
             afficherUtilisateurHeader();
             
@@ -161,6 +181,10 @@ async function deconnecterUtilisateur() {
         const response = await api.logout();
         
         utilisateurConnecte = null;
+        // Nettoyer localStorage
+        localStorage.removeItem('utilisateur');
+        localStorage.removeItem('username');
+        localStorage.removeItem('utilisateur_id');
         afficherNotification('Vous avez été déconnecté', 'success');
         afficherUtilisateurHeader();
         
