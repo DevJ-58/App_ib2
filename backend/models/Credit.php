@@ -46,7 +46,7 @@ class Credit {
                 'message' => 'Crédit créé avec succès'
             ];
         } catch (\Exception $e) {
-            error_log("Error in Credit::create: " . $e->getMessage());
+            // error_log("Error in Credit::create: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -65,7 +65,7 @@ class Credit {
             $stmt->execute([$limit, $offset]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getAll: " . $e->getMessage());
+            // error_log("Error in getAll: " . $e->getMessage());
             return [];
         }
     }
@@ -81,7 +81,7 @@ class Credit {
             $stmt->execute();
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getUnpaid: " . $e->getMessage());
+            // error_log("Error in getUnpaid: " . $e->getMessage());
             return [];
         }
     }
@@ -97,7 +97,7 @@ class Credit {
             $stmt->execute([$credit_id]);
             return $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getById: " . $e->getMessage());
+            // error_log("Error in getById: " . $e->getMessage());
             return null;
         }
     }
@@ -168,7 +168,7 @@ class Credit {
             if (isset($conn) && $conn->inTransaction()) {
                 $conn->rollBack();
             }
-            error_log("Error in addPayment: " . $e->getMessage());
+            // error_log("Error in addPayment: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -194,7 +194,7 @@ class Credit {
             $stmt->execute();
             return $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getStats: " . $e->getMessage());
+            // error_log("Error in getStats: " . $e->getMessage());
             return null;
         }
     }

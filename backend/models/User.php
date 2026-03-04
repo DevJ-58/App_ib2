@@ -93,7 +93,7 @@ class User
             $query = "SELECT id, nom, prenom, telephone, email, role, photo, mot_de_passe, created_at 
                       FROM utilisateurs WHERE telephone = :telephone";
             $res = $this->db->selectOne($query, [':telephone' => $telephone]);
-            error_log('User::getByTelephone SQL: ' . $query . ' -- param: ' . $telephone . ' -- result: ' . json_encode($res));
+            // error_log('User::getByTelephone SQL: ' . $query . ' -- param: ' . $telephone . ' -- result: ' . json_encode($res));
             return $res;
         } catch (\Exception $e) {
             return null;
@@ -160,7 +160,7 @@ class User
     {
         $res = $this->getByEmail($email);
         $exists = ($res !== false && $res !== null);
-        error_log('User::emailExists: ' . $email . ' => ' . ($exists ? 'true' : 'false'));
+        // error_log('User::emailExists: ' . $email . ' => ' . ($exists ? 'true' : 'false'));
         return $exists;
     }
 
@@ -171,7 +171,7 @@ class User
     {
         $res = $this->getByTelephone($telephone);
         $exists = ($res !== false && $res !== null);
-        error_log('User::telephoneExists: ' . $telephone . ' => ' . ($exists ? 'true' : 'false'));
+        // error_log('User::telephoneExists: ' . $telephone . ' => ' . ($exists ? 'true' : 'false'));
         return $exists;
     }
 

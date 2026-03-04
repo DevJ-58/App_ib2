@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Inscription API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 600px; margin: 0 auto; }
+        textarea { width: 100%; height: 300px; font-family: monospace; }
+        button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Test API d'Inscription</h1>
+    
+    <button onclick="testRegister()">Tester Inscription API</button>
+    
+    <h2>Résultat:</h2>
+    <textarea id="result" readonly></textarea>
+    
+    <script src="/APP_IB/frontend/JS/api-client.js"></script>
+    <script>
+        // Créer une instance de l'API client
+        const api = new APIClient('http://localhost/APP_IB/backend');
+        
+        async function testRegister() {
+            const resultEl = document.getElementById('result');
+            
+            try {
+                resultEl.value = 'Envoi requête...\n';
+                
+                // Générer un email unique
+                const uniqueEmail = 'testuser' + Date.now() + '@example.com';
+                const uniquePhone = '09' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+                
+                console.log('🚀 Envoi inscription avec:', {
+                    nom: 'TestNom',
+                    prenom: 'TestPrenom',
+                    telephone: uniquePhone,
+                    email: uniqueEmail,
+                    mot_de_passe: 'Password123!',
+                    confirm_mot_de_passe: 'Password123!'
+                });
+                
+                const response = await api.register(
+                    'TestNom',
+                    'TestPrenom',
+                    uniquePhone,
+                    uniqueEmail,
+                    'Password123!',
+                    'Password123!'
+                );
+                
+                resultEl.value = 'Réponse reçue:\n\n' + JSON.stringify(response, null, 2);
+                console.log('✅ Réponse API:', response);
+                
+                if (response.success) {
+                    resultEl.value += '\n\n✅ INSCRIPTION RÉUSSIE!';
+                } else {
+                    resultEl.value += '\n\n❌ ERREUR: ' + (response.message || 'Erreur inconnue');
+                }
+            } catch (error) {
+                resultEl.value = '❌ Erreur:\n\n' + error.toString();
+                console.error('❌ Exception:', error);
+            }
+        }
+    </script>
+</body>
+</html>

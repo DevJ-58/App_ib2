@@ -210,11 +210,11 @@ class Product
             $stmt = $this->db->getConnection()->prepare($query);
             $stmt->execute([':id' => intval($id)]);
             
-            error_log("DELETE: Query=$query, ID=$id, RowCount=" . $stmt->rowCount());
+            // error_log("DELETE: Query=$query, ID=$id, RowCount=" . $stmt->rowCount());
             
             return $stmt->rowCount();
         } catch (\Exception $e) {
-            error_log("DELETE ERROR: " . $e->getMessage());
+            // error_log("DELETE ERROR: " . $e->getMessage());
             throw new \Exception("Erreur suppression produit: " . $e->getMessage());
         }
     }
@@ -230,11 +230,11 @@ class Product
             $stmt = $this->db->getConnection()->prepare($query);
             $stmt->execute([':id' => intval($id)]);
             
-            error_log("FORCE_DELETE: Query=$query, ID=$id, RowCount=" . $stmt->rowCount());
+            // error_log("FORCE_DELETE: Query=$query, ID=$id, RowCount=" . $stmt->rowCount());
             
             return $stmt->rowCount();
         } catch (\Exception $e) {
-            error_log("FORCE_DELETE ERROR: " . $e->getMessage());
+            // error_log("FORCE_DELETE ERROR: " . $e->getMessage());
             throw new \Exception("Erreur suppression produit: " . $e->getMessage());
         }
     }
@@ -271,11 +271,11 @@ class Product
             $conn->commit();
 
             $total = $stmt1->rowCount() + $stmt2->rowCount() + $stmt3->rowCount() + $stmt4->rowCount();
-            error_log("FORCE_DELETE_WITH_DEPS: Deleted rows for ID=$id totals: " . $total);
+            // error_log("FORCE_DELETE_WITH_DEPS: Deleted rows for ID=$id totals: " . $total);
             return $total;
         } catch (\Exception $e) {
             $conn->rollBack();
-            error_log("FORCE_DELETE_WITH_DEPS ERROR: " . $e->getMessage());
+            // error_log("FORCE_DELETE_WITH_DEPS ERROR: " . $e->getMessage());
             throw $e;
         }
     }

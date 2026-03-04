@@ -56,7 +56,7 @@ class Sale {
             $stmt = $conn->prepare($sql);
             
             // Log pour déboggage
-            error_log("INSERT VENTE: montant_recu=$montant_recu, montant_rendu=$montant_rendu");
+            // error_log("INSERT VENTE: montant_recu=$montant_recu, montant_rendu=$montant_rendu");
             
             $stmt->execute([
                 $numero_vente, 
@@ -119,7 +119,7 @@ class Sale {
             if (isset($conn) && $conn->inTransaction()) {
                 $conn->rollBack();
             }
-            error_log("Error in Sale::create: " . $e->getMessage());
+            // error_log("Error in Sale::create: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Erreur lors de la création de la vente: ' . $e->getMessage()
@@ -152,7 +152,7 @@ class Sale {
             $stmt->execute([$limit, $offset]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getAllWithDetails: " . $e->getMessage());
+            // error_log("Error in getAllWithDetails: " . $e->getMessage());
             return [];
         }
     }
@@ -177,7 +177,7 @@ class Sale {
             $stmt->execute([$vente_id]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getDetails: " . $e->getMessage());
+            // error_log("Error in getDetails: " . $e->getMessage());
             return [];
         }
     }
@@ -213,7 +213,7 @@ class Sale {
             $stmt->execute($params);
             return $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error in getStats: " . $e->getMessage());
+            // error_log("Error in getStats: " . $e->getMessage());
             return null;
         }
     }
