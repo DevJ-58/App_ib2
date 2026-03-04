@@ -4695,6 +4695,59 @@ function initialiserEvenements() {
         });
     }
     
+    // ==================== ÉCOUTEUR BARCODE SCANNER ====================
+    window.addEventListener('barcodeScanned', function(event) {
+        const barcode = event.detail?.barcode;
+        
+        if (!barcode) {
+            console.warn('⚠️ Événement barcode sans données valides:', event.detail);
+            return;
+        }
+        
+        console.log('📱 Barcode scanné:', barcode);
+        
+        // Chercher le produit par code-barre
+        const produit = produitsData.find(p => 
+            p.code_barre === barcode || 
+            p.codeBarre === barcode
+        );
+        
+        if (produit) {
+            console.log('✅ Produit trouvé:', produit.nom);
+            // Produit trouvé : l'ajouter au panier
+            if (panier.find(item => item.id === produit.id)) {
+                // Augmenter la quantité
+                const panierItem = panier.find(item => item.id === produit.id);
+                panierItem.quantite++;
+            } else {
+                // Ajouter au panier
+                panier.push({
+                    id: produit.id,
+                    nom: produit.nom,
+                    prix: produit.prix || produit.prix_vente,
+                    quantite: 1,
+                    stock: produit.stock
+                });
+            }
+            afficherPanier();
+            afficherNotification(`✅ ${produit.nom} ajouté au panier`, 'success');
+        } else {
+            console.warn('⚠️ Produit non trouvé:', barcode);
+            // Produit non trouvé : ouvrir modal d'ajout
+            afficherNotification(`⚠️ Produit ${barcode} introuvable. Ouverture de la modal d'ajout...`, 'warning');
+            
+            // Ouvrir modal d'ajout de produit avec code-barre pré-rempli
+            const modal = document.getElementById('modalProduit');
+            if (modal) {
+                const codeBarre = document.getElementById('codeBarreProduit');
+                if (codeBarre) {
+                    codeBarre.value = barcode;
+                }
+                modal.classList.add('active');
+            }
+        }
+    });
+    
     console.log('✅ Événements initialisés');
 }
 
