@@ -298,6 +298,11 @@ class APIClient {
      * Créer une nouvelle vente
      */
     async createSale(client_nom, total, type_paiement, items, montant_recu = 0, montant_rendu = 0) {
+        // Vérifier que l'utilisateur est authentifié
+        if (!utilisateurConnecte || !utilisateurConnecte.id) {
+            throw new Error('Utilisateur non authentifié');
+        }
+        
         return this.request('/Api/Sales/create.php', {
             method: 'POST',
             body: JSON.stringify({
@@ -307,7 +312,7 @@ class APIClient {
                 items: items,
                 montant_recu: montant_recu,
                 montant_rendu: montant_rendu,
-                utilisateur_id: utilisateurConnecte?.id || 1
+                utilisateur_id: utilisateurConnecte.id
             })
         });
     }
@@ -365,7 +370,10 @@ class APIClient {
     /**
      * Enregistrer un remboursement
      */
-    async addCreditPayment(credit_id, montant, mode_paiement = 'ESPECES', utilisateur_id = 1) {
+    async addCreditPayment(credit_id, montant, mode_paiement = 'ESPECES', utilisateur_id = null) {
+        if (!utilisateur_id) {
+            throw new Error('Utilisateur non authentifié');
+        }
         return this.request('/Api/Credits/reimburse.php', {
             method: 'POST',
             body: JSON.stringify({
@@ -432,6 +440,27 @@ class APIClient {
                 inventaire_id: parseInt(inventaire_id)
             })
         });
+    }
+
+    /**
+     * Récupérer les statistiques du dashboard
+     */
+    async getDashboardStats() {
+        return this.request('/backend/Api/dashbord.php/stats.php');
+    }
+
+    /**
+     * Récupérer les ventes récentes
+     */
+    async getRecentSales() {
+        return this.request('/backend/Api/dashbord.php/recent-sales.php');
+    }
+
+    /**
+     * Récupérer les alertes
+     */
+    async getDashboardAlerts() {
+        return this.request('/backend/Api/dashbord.php/alerts.php');
     }
 }
 

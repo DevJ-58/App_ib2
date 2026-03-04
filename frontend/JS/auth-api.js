@@ -19,11 +19,11 @@ async function initialiserAuthentification() {
         
         // Sinon vérifier via API
         const response = await api.checkSession();
-        if (response.success && response.user) {
-            utilisateurConnecte = response.user;
-            localStorage.setItem('utilisateur', JSON.stringify(response.user));
-            localStorage.setItem('username', `${response.user.prenom} ${response.user.nom}`);
-            localStorage.setItem('utilisateur_id', response.user.id);
+        if (response.success && response.data) {
+            utilisateurConnecte = response.data;
+            localStorage.setItem('utilisateur', JSON.stringify(response.data));
+            localStorage.setItem('username', `${response.data.prenom} ${response.data.nom}`);
+            localStorage.setItem('utilisateur_id', response.data.id);
             console.log('✅ Session utilisateur restaurée:', utilisateurConnecte);
         }
     } catch (error) {
@@ -339,18 +339,39 @@ function afficherPhotoProfil() {
     }
     
     const photoURL = utilisateurConnecte.photo;
+    const defaultPhoto = 'https://via.placeholder.com/40';
     console.log('📷 Affichage photo profil:', photoURL || '(null)');
     
     // Mettre à jour l'image du header
     const photoHeader = document.getElementById('photoProfilHeader');
-    if (photoHeader && photoURL) {
-        photoHeader.src = photoURL;
+    if (photoHeader) {
+        if (photoURL) {
+            photoHeader.src = photoURL;
+            // Ajouter un gestionnaire d'erreur pour les images qui ne chargent pas
+            photoHeader.onerror = function() {
+                console.warn('⚠️ Impossible de charger la photo:', photoURL);
+                photoHeader.src = defaultPhoto;
+                photoHeader.onerror = null; // Éviter les boucles infinies
+            };
+        } else {
+            photoHeader.src = defaultPhoto;
+        }
     }
     
     // Mettre à jour l'image du profil preview
     const photoPreview = document.getElementById('profilPhotoPreview');
-    if (photoPreview && photoURL) {
-        photoPreview.src = photoURL;
+    if (photoPreview) {
+        if (photoURL) {
+            photoPreview.src = photoURL;
+            // Ajouter un gestionnaire d'erreur pour les images qui ne chargent pas
+            photoPreview.onerror = function() {
+                console.warn('⚠️ Impossible de charger la photo preview:', photoURL);
+                photoPreview.src = defaultPhoto;
+                photoPreview.onerror = null; // Éviter les boucles infinies
+            };
+        } else {
+            photoPreview.src = defaultPhoto;
+        }
     }
 }
 
@@ -384,17 +405,55 @@ function getUtilisateurConnecte() {
     return utilisateurConnecte;
 }
 
+// ====================================================================
+// INITIALISATION AUTOMATIQUE
+// ====================================================================
+
+/**
+ * Auto-initialiser depuis localStorage dès le chargement du script
+ * SANS attendre l'API (pour la rapidité)
+ */
+(function initFromLocalStorage() {
+    const userFromStorage = localStorage.getItem('utilisateur');
+    if (userFromStorage) {
+        try {
+            utilisateurConnecte = JSON.parse(userFromStorage);
+            console.log('🚀 Utilisateur restauré depuis localStorage au chargement du script:', utilisateurConnecte.prenom, utilisateurConnecte.nom);
+        } catch (err) {
+            console.warn('⚠️ localStorage corruption:', err);
+            localStorage.removeItem('utilisateur');
+            utilisateurConnecte = null;
+        }
+    }
+})();
+
+/**
+ * Vérifier la session API au démarrage du DOM
+ */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initialiserAuthentification();
+    });
+} else {
+    // DOM déjà chargé
+    initialiserAuthentification();
+}
+
+// ====================================================================
+// Attacher les gestionnaires de formulaires d'authentification
+// ====================================================================
+
 // Attacher les gestionnaires de formulaires d'authentification
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('auth-api: DOMContentLoaded - attachement formulaires auth');
+    const currentPage = window.location.pathname.toLowerCase();
+    const isAuthPage = currentPage.includes('connexion.html') || currentPage.includes('inscription.html');
     
     // ==================== FORMULAIRE CONNEXION ====================
     const formConn = document.getElementById('formConnexion');
     if (formConn) {
-        console.log('auth-api: formConnexion trouvé - attachement submit');
+        console.log('✅ auth-api: formConnexion trouvé - attachement submit');
         formConn.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('auth-api: formConnexion submit reçu');
             const telephone = document.getElementById('telephone')?.value.trim();
             const motDePasse = document.getElementById('motDePasse')?.value;
             const zoneErreur = document.getElementById('messageErreur');
@@ -405,7 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!telephone || !motDePasse) {
-                console.log('auth-api: données manquantes');
                 if (zoneErreur) {
                     zoneErreur.style.display = 'block';
                     zoneErreur.textContent = 'Veuillez saisir téléphone et mot de passe';
@@ -414,9 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                console.log('auth-api: appel seConnecter', telephone);
                 const result = await seConnecter(telephone, motDePasse);
-                console.log('auth-api: seConnecter résultat', result);
                 if (result && result.success) {
                     // Redirection vers dashboard après un court délai
                     setTimeout(() => {
@@ -429,21 +485,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             } catch (err) {
-                console.error('auth-api: exception seConnecter', err);
+                console.error('Erreur connexion:', err);
                 if (zoneErreur) {
                     zoneErreur.style.display = 'block';
                     zoneErreur.textContent = err.message || 'Erreur réseau';
                 }
             }
         });
-    } else {
-        console.log('auth-api: formConnexion non trouvé');
+    } else if (isAuthPage) {
+        console.warn('⚠️  formConnexion attendu sur cette page mais non trouvé');
     }
     
     // ==================== FORMULAIRE INSCRIPTION ====================
     const formInsc = document.getElementById('formInscription');
     if (formInsc) {
-        console.log('auth-api: formInscription trouvé - attachement submit');
+        console.log('✅ auth-api: formInscription trouvé - attachement submit');
         formInsc.addEventListener('submit', async function(e) {
             e.preventDefault();
             console.log('🔐 INSCRIPTION: submit event reçu');

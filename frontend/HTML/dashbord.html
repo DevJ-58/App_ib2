@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Boutique UIYA - Dashboard</title>
+    <title>APP_IB - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../CSS/dashbord.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -43,11 +43,17 @@
         <div class="logo-navigation">
             <i class="fa-solid fa-store"></i>
             <div>
-                <h1>Boutique UIYA</h1>
-                <div class="sous-titre">Système de Gestion de Stock</div>
+                <h1>APP_IB</h1>
+                <div class="sous-titre">Application de Gestion de Stock</div>
             </div>
         </div>
         <div class="elements-entete">
+            <!-- Indicateur Scanner -->
+            <div class="indicateur-scanner" id="indicateurScanner" title="État du scanner de code-barre" style="margin-right: 20px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f5f5f5; border-radius: 20px;">
+                <div class="point-scanner" id="pointScanner" style="width: 10px; height: 10px; border-radius: 50%; background: #d32f2f; animation: pulse 2s infinite;"></div>
+                <span id="textScanner" style="font-size: 0.85rem; color: #666; font-weight: 500;">Scanner</span>
+                <button onclick="console.log('🔘 Bouton Test cliqué directement dans HTML'); testScannerConnection()" style="font-size: 0.7rem; padding: 2px 6px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer;">Test</button>
+            </div>
             <!-- Icon de notifications -->
             <div class="notification-header" onclick="afficherSection('alertes')" style="cursor: pointer; position: relative; margin-right: 20px;">
                 <i class="fa-solid fa-bell" style="font-size: 1.3rem; color: #09093A;"></i>
@@ -163,11 +169,11 @@
                     <div class="carte-stat ventes">
                         <div class="entete-carte">
                             <div class="info-stat">
-                                <h3>Ventes du jour</h3>
-                                <p id="stat-ventes-jour">125 000 FCFA</p>
+                                <h3>Ventes du mois</h3>
+                                <p id="stat-ventes-total">0 FCFA</p>
                                 <div class="variation positive">
                                     <i class="fa-solid fa-arrow-up"></i>
-                                    <span>+12% vs hier</span>
+                                    <span id="stat-ventes-nombre">0 ventes</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-chart-line icone-stat"></i>
@@ -177,11 +183,11 @@
                     <div class="carte-stat produits">
                         <div class="entete-carte">
                             <div class="info-stat">
-                                <h3>Produits vendus</h3>
-                                <p id="stat-produits-vendus">48</p>
+                                <h3>Nombre de ventes</h3>
+                                <p id="stat-ventes-nombre">0</p>
                                 <div class="variation positive">
                                     <i class="fa-solid fa-arrow-up"></i>
-                                    <span>+8 vs hier</span>
+                                    <span id="stat-ventes-panier">0 FCFA</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-box-open icone-stat"></i>
@@ -192,10 +198,10 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Valeur du stock</h3>
-                                <p id="stat-valeur-stock">842 000 FCFA</p>
-                                <div class="variation negative">
-                                    <i class="fa-solid fa-arrow-down"></i>
-                                    <span id="stat-produits-count">342 produits</span>
+                                <p id="stat-stock-valeur">0 FCFA</p>
+                                <div class="variation neutral">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    <span id="stat-stock-nb">0 produits</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-cubes icone-stat"></i>
@@ -206,10 +212,10 @@
                         <div class="entete-carte">
                             <div class="info-stat">
                                 <h3>Crédits en cours</h3>
-                                <p id="stat-credits-montant">75 000 FCFA</p>
-                                <div class="variation negative">
+                                <p id="stat-credits-total">0 FCFA</p>
+                                <div class="variation warning">
                                     <i class="fa-solid fa-exclamation-triangle"></i>
-                                    <span id="stat-credits-count">8 crédits actifs</span>
+                                    <span id="stat-credits-nombre">0 crédits</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-credit-card icone-stat"></i>
@@ -384,7 +390,7 @@
                         <input type="text" id="champRecherche" placeholder="Rechercher par nom, code-barre ou catégorie...">
                     </div>
                     <div class="groupe-boutons-actions">
-                        <button class="btn-action btn-primaire" onclick="afficherModalProduit()">
+                        <button class="btn-action btn-primaire" onclick="ouvrirModalProduit('ajouter')">
                             <i class="fa-solid fa-plus"></i> Ajouter Produit
                         </button>
                         <button class="btn-action btn-secondaire" onclick="ouvrirModalExport('produits', 'Exporter les produits en PDF ou Excel ?')">
@@ -403,7 +409,7 @@
                         <h3><i class="fa-solid fa-filter"></i> Filtres</h3>
                         <div class="groupe-filtre">
                             <label>Catégorie</label>
-                            <button class="btn-action btn-primaire" onclick="ouvrirModalCategorie()">Gerer categorie</button>
+                            <button class="btn-action btn-primaire" onclick="ouvrirModalCategorie()">Gérer catégories</button>
                             <br>
                             <select id="filtreCategorie" onchange="filtrerProduits()">
                                 <option value="">Toutes les catégories</option>
@@ -541,11 +547,8 @@
                         <div class="zone-recherche-vente">
                             <div class="input-recherche">
                                 <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="rechercheVente" placeholder="Rechercher un article par nom ou code-barre..." autocomplete="off">
+                                <input type="text" id="rechercheVente" placeholder="Rechercher un article par nom ou code-barre... (Scanner actif)" autocomplete="off">
                             </div>
-                            <button class="btn-scanner" onclick="activerScanner()">
-                                <i class="fa-solid fa-barcode"></i> Scanner
-                            </button>
                         </div>
                         <div class="selection-rapid">
                             <h4><i class="fa-solid fa-fire"></i> Produits populaires</h4>
@@ -1337,11 +1340,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Code-barre <span class="text-muted">(optionnel - auto-généré si vide)</span></label>
-                        <input type="text" id="codeBarreProduit">
-                        <button type="button" class="btn-scanner-inline" onclick="scannerCodeBarre()">
-                            <i class="fa-solid fa-barcode"></i> Scanner
-                        </button>
+                        <label>Code-barre <span class="text-muted">(optionnel - auto-généré si vide, Scanner actif)</span></label>
+                        <input type="text" id="codeBarreProduit" placeholder="Scannez un code-barre ou entrez-le manuellement">
                     </div>
 
                     <div class="form-group">
@@ -1407,7 +1407,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2 id="titreCategorie">
-                    <i class="fa-solid fa-box-open"></i> Ajouter une Categorie
+                    <i class="fa-solid fa-box-open"></i> Ajouter une Catégorie
                 </h2>
                 <button class="btn-fermer-modal" onclick="fermerModalCategorie()">
                     <i class="fa-solid fa-times"></i>
@@ -1428,7 +1428,7 @@
                 <div id="tabAjouter" class="categorie-tab-content active">
                     <form id="formCategorie">
                         <div class="form-group">
-                            <label>Nom de la categorie</label>
+                            <label>Nom de la catégorie</label>
                             <input type="text" id="nomCategorie" required>
                         </div>
 
@@ -1783,7 +1783,7 @@
     </div>
 
     <!-- Modale Profil -->
-    <div id="modalProfil" class="modal" style="display:none;">
+    <div id="modalProfil" class="modal">
         <div class="modal-contenu">
             <div class="modal-entete">
                 <h2>Mon Profil</h2>
@@ -1807,26 +1807,31 @@
                 </div>
 
                 <div class="profil-info-section">
-                    <h3>Informations personnelles</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Informations personnelles</h3>
+                        <button type="button" class="btn-editer-profil" onclick="toggleEditModeProfil()" style="padding: 6px 12px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                            <i class="fa-solid fa-edit"></i> Modifier
+                        </button>
+                    </div>
                     <div class="profil-info-groupe">
                         <div class="profil-info-champ">
                             <label>Prénom</label>
-                            <input type="text" id="profilPrenom" placeholder="Prénom" readonly>
+                            <input type="text" id="profilPrenom" placeholder="Prénom">
                         </div>
                         <div class="profil-info-champ">
                             <label>Nom</label>
-                            <input type="text" id="profilNom" placeholder="Nom" readonly>
+                            <input type="text" id="profilNom" placeholder="Nom">
                         </div>
                     </div>
 
                     <div class="profil-info-groupe">
                         <div class="profil-info-champ">
                             <label>Téléphone</label>
-                            <input type="text" id="profilTelephone" placeholder="Téléphone" readonly>
+                            <input type="text" id="profilTelephone" placeholder="Téléphone">
                         </div>
                         <div class="profil-info-champ">
                             <label>Email</label>
-                            <input type="email" id="profilEmail" placeholder="Email" readonly>
+                            <input type="email" id="profilEmail" placeholder="Email">
                         </div>
                     </div>
                 </div>
@@ -1869,6 +1874,26 @@
             </div>
 
             <div class="modal-pied">
+                <!-- zone d'alerte interne pour la réinitialisation complète -->
+                <div id="resetWarningDiv" class="reset-warning" style="display:none; margin-bottom:15px; padding:15px; border:2px solid #dc3545; background:#f8d7da; border-radius:8px;">
+                    <p style="margin:0 0 10px 0; font-weight:bold; color:#721c24;">
+                        ⚠️ Vous êtes sur le point de supprimer **toutes** les données du système.
+                        Tapez <strong>SUPPRIMER</strong> ci-dessous pour confirmer.
+                    </p>
+                    <input type="text" id="confirmationReset" placeholder="Tapez SUPPRIMER ici" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:10px; text-align:center;" onkeyup="verifierConfirmationReset()">
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button id="btnResetConfirm" class="btn-modal btn-danger" onclick="executerResetSystem()" disabled>
+                            <i class="fa-solid fa-trash"></i> Réinitialiser
+                        </button>
+                        <button class="btn-modal btn-annuler" onclick="hideResetWarning()">
+                            <i class="fa-solid fa-times"></i> Annuler
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn-modal btn-danger" onclick="confirmerResetSystem()" title="Réinitialiser tous les données du système">
+                    <i class="fa-solid fa-exclamation-triangle"></i> Réinitialiser
+                </button>
                 <button class="btn-modal btn-annuler" onclick="fermerModalProfil()">Annuler</button>
                 <button class="btn-modal btn-sauvegarder" onclick="sauvegarderProfil()">Sauvegarder</button>
             </div>
@@ -1878,6 +1903,7 @@
     <script src="../JS/utils.js"></script>
     <script src="../JS/api-client.js"></script>
     <script src="../JS/auth-api.js"></script>
+    <script src="../JS/barcode-scanner.js"></script>
     <script src="../JS/stocks-api.js"></script>
     <script src="../JS/sales-api.js"></script>
     <script src="../JS/credits-api.js"></script>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Utilisateur Connecté</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .test { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .pass { background: #d4edda; border-color: #28a745; }
+        .fail { background: #f8d7da; border-color: #dc3545; }
+        .info { background: #d1ecf1; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Test Utilisateur Connecté</h1>
+
+    <div class="test info">
+        <h3>📝 Vérifications</h3>
+        <ol>
+            <li>LocalStorage <code>utilisateur</code> ?</li>
+            <li>Variable <code>utilisateurConnecte</code> ?</li>
+            <li>Affichage du nom dans le header ?</li>
+            <li>Appel API <code>check.php</code> ?</li>
+        </ol>
+    </div>
+
+    <div id="results"></div>
+
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/auth-api.js"></script>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addTest(title, success, message, extra) {
+            const div = document.createElement('div');
+            div.className = `test ${success ? 'pass' : 'fail'}`;
+            
+            const titleEl = document.createElement('h3');
+            titleEl.textContent = (success ? '✅' : '❌') + ' ' + title;
+            div.appendChild(titleEl);
+            
+            const msgEl = document.createElement('p');
+            msgEl.textContent = message;
+            div.appendChild(msgEl);
+            
+            if (extra) {
+                const preEl = document.createElement('pre');
+                preEl.textContent = extra;
+                div.appendChild(preEl);
+            }
+            
+            resultsDiv.appendChild(div);
+        }
+
+        // Test 1: LocalStorage
+        const userFromStorage = localStorage.getItem('utilisateur');
+        if (userFromStorage) {
+            try {
+                const parsed = JSON.parse(userFromStorage);
+                addTest(
+                    'LocalStorage "utilisateur"',
+                    true,
+                    `Trouvé: ${parsed.prenom} ${parsed.nom}`,
+                    JSON.stringify(parsed, null, 2)
+                );
+            } catch (e) {
+                addTest('LocalStorage "utilisateur"', false, 'JSON invalide: ' + e.message);
+            }
+        } else {
+            addTest('LocalStorage "utilisateur"', false, 'Non trouvé - l\'utilisateur n\'a pas été sauvegardé après connexion');
+        }
+
+        // Test 2: Variable utilisateurConnecte
+        const hasGlobalUser = typeof utilisateurConnecte !== 'undefined' && utilisateurConnecte !== null;
+        if (hasGlobalUser) {
+            addTest(
+                'Variable globale "utilisateurConnecte"',
+                true,
+                `Défini: ${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
+                JSON.stringify(utilisateurConnecte, null, 2)
+            );
+        } else {
+            addTest('Variable globale "utilisateurConnecte"', false, 'null ou undefined (pas d\'initialisation)');
+        }
+
+        // Test 3: Affichage header
+        const nomSpan = document.querySelector('.nom-utilisateur');
+        if (nomSpan) {
+            addTest(
+                'Affichage du nom (header)',
+                true,
+                `Span trouvé: "${nomSpan.textContent}"`,
+                `<span class="nom-utilisateur">${nomSpan.textContent}</span>`
+            );
+        } else {
+            addTest('Affichage du nom (header)', false, 'Élément .nom-utilisateur non trouvé (pas de header sur cette page)');
+        }
+
+        // Test 4: API check.php
+        (async () => {
+            try {
+                const response = await fetch('http://localhost/APP_IB/Api/Auth/check.php', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    addTest(
+                        'API check.php',
+                        true,
+                        `Session valide: ${data.data.prenom} ${data.data.nom}`,
+                        JSON.stringify(data.data, null, 2)
+                    );
+                } else {
+                    addTest(
+                        'API check.php',
+                        false,
+                        data.message || 'Session invalide',
+                        JSON.stringify(data, null, 2)
+                    );
+                }
+            } catch (e) {
+                addTest('API check.php', false, 'Exception: ' + e.message);
+            }
+        })();
+
+        // Résumé
+        setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'test info';
+            
+            const h3 = document.createElement('h3');
+            h3.textContent = '📌 Résumé';
+            div.appendChild(h3);
+            
+            const p = document.createElement('p');
+            if (userFromStorage && hasGlobalUser) {
+                p.innerHTML = '✅ <strong>Utilisateur bien chargé!</strong> Essayez de rafraîchir le dashboard (F5) ou allez à <a href="dashbord.html">dashbord.html</a>';
+            } else if (!userFromStorage) {
+                p.innerHTML = '❌ <strong>Pas de connexion détectée.</strong> Allez d\'abord à <a href="connexion.html">connexion.html</a> pour vous connecter.';
+            } else {
+                p.innerHTML = '⚠️ <strong>Configuration incohérente.</strong> Il y a un problème d\'initialisation du JavaScript.';
+            }
+            div.appendChild(p);
+            resultsDiv.appendChild(div);
+        }, 2000);
+    </script>
+</body>
+</html>

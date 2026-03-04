@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réinitialisation mot de passe</title>
+    <link rel="stylesheet" href="../CSS/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="struct">
+        <i class="fa-solid fa-store"></i>
+        <h1>Boutique UIYA - Gestion de Stock</h1>
+    </div>
+
+    <div class="container">
+        <form id="formNewPassword">
+            <h1>Nouveau mot de passe</h1>
+            <div id="messageErreur" style="display:none; color: #e74c3c; text-align: center; margin-bottom: 15px; padding: 10px; background-color: #fadbd8; border-radius: 5px;"></div>
+            <div id="messageSucces" style="display:none; color: #155724; text-align: center; margin-bottom: 15px; padding: 10px; background-color: #d4edda; border-radius: 5px;"></div>
+
+            <div class="detail-user">
+                <div class="colonne">
+                    <div class="zone-saisie">
+                        <input 
+                            type="password" 
+                            id="newPassword" 
+                            placeholder="Nouveau mot de passe" 
+                            required 
+                            minlength="6"
+                            autocomplete="new-password" />
+                    </div>
+                </div>
+                <div class="colonne">
+                    <div class="zone-saisie">
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            placeholder="Confirmer le mot de passe" 
+                            required 
+                            minlength="6"
+                            autocomplete="new-password" />
+                    </div>
+                </div>
+            </div>
+
+            <input id="btnSubmit" type="submit" value="Réinitialiser le mot de passe" />
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="connexion.html" style="color: #3498db; text-decoration: none;">Retour à la connexion</a>
+        </div>
+    </div>
+
+    <script>
+        // Extraire le token de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const formNewPassword = document.getElementById('formNewPassword');
+        const errDiv = document.getElementById('messageErreur');
+        const successDiv = document.getElementById('messageSucces');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        if (!token) {
+            errDiv.textContent = 'Token manquant dans l\'URL. Lien invalide ou expiré.';
+            errDiv.style.display = 'block';
+            formNewPassword.style.display = 'none';
+        }
+
+        formNewPassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            
+            // Vérifier les mots de passe
+            if (!pwd || !confirmPwd) {
+                errDiv.textContent = 'Veuillez remplir tous les champs.';
+                errDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            if (pwd.length < 6) {
+                errDiv.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+                errDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            if (pwd !== confirmPwd) {
+                errDiv.textContent = 'Les mots de passe ne correspondent pas.';
+                errDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            try {
+                btnSubmit.disabled = true;
+                btnSubmit.value = 'Traitement en cours...';
+                
+                const response = await fetch('/APP_IB/backend/Api/Auth/confirm-reset.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        token: token, 
+                        new_password: pwd 
+                    })
+                });
+                
+                const responseText = await response.text();
+                let data = {};
+                
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Erreur parsing JSON:', responseText);
+                    errDiv.textContent = 'Réponse serveur invalide.';
+                    errDiv.style.display = 'block';
+                    successDiv.style.display = 'none';
+                    return;
+                }
+                
+                if (data.success) {
+                    successDiv.textContent = data.message || 'Mot de passe réinitialisé avec succès! Redirection vers la connexion...';
+                    successDiv.style.display = 'block';
+                    errDiv.style.display = 'none';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    
+                    // Redirection vers la page de connexion après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = '/APP_IB/frontend/HTML/connexion.html';
+                    }, 2000);
+                } else {
+                    errDiv.textContent = data.message || 'Erreur lors de la réinitialisation.';
+                    errDiv.style.display = 'block';
+                    successDiv.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                errDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                errDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.value = 'Réinitialiser le mot de passe';
+            }
+        });
+    </script>
+</body>
+</html>

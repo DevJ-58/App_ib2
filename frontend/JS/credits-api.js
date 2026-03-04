@@ -72,7 +72,13 @@ async function enregistrerRemboursementAPI(credit_id, montant, mode_paiement = '
     console.log('💰 Remboursement crédit:', {credit_id, montant, mode_paiement});
     
     try {
-        const response = await api.addCreditPayment(credit_id, montant, mode_paiement, utilisateurConnecte?.id || 1);
+        // Vérifier que l'utilisateur est authentifié
+        if (!utilisateurConnecte || !utilisateurConnecte.id) {
+            afficherNotification('Erreur: Utilisateur non authentifié', 'error');
+            return false;
+        }
+        
+        const response = await api.addCreditPayment(credit_id, montant, mode_paiement, utilisateurConnecte.id);
         
         if (!response.success) {
             console.error('❌ Erreur remboursement:', response.message);

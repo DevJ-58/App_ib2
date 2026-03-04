@@ -114,13 +114,19 @@ async function enregistrerMouvementAPI(produit_id, type, quantite, motif = '', c
     console.log('💾 Enregistrement mouvement:', {produit_id, type, quantite, motif});
     
     try {
+        // Vérifier que l'utilisateur est authentifié
+        if (!utilisateurConnecte || !utilisateurConnecte.id) {
+            afficherNotification('Erreur: Utilisateur non authentifié', 'error');
+            return false;
+        }
+        
         const response = await api.recordMovement({
             produit_id: parseInt(produit_id),
             type: type,
             quantite: parseInt(quantite),
             motif: motif,
             commentaire: commentaire,
-            utilisateur_id: utilisateurConnecte?.id || 1
+            utilisateur_id: utilisateurConnecte.id
         });
         
         if (!response.success) {

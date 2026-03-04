@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Modal Profil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 10px 5px 10px 0;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .button:hover {
+            background: #0052a3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li::before {
+            content: "✅ ";
+        }
+        .checklist li.todo::before {
+            content: "❌ ";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test - Modal Profil avec Gestion Complète</h1>
+        
+        <div class="test-section">
+            <h2>📋 Fonctionnalités Implémentées</h2>
+            <ul class="checklist">
+                <li>✅ Ouverture/Fermeture de la modal profil</li>
+                <li>✅ Affichage des informations utilisateur</li>
+                <li>✅ Mode édition/lecture des informations</li>
+                <li>✅ Modification du prénom, nom, téléphone, email</li>
+                <li>✅ Upload et preview de la photo de profil</li>
+                <li>✅ Changement du mot de passe</li>
+                <li>✅ Bouton de réinitialisation du système dans la modal</li>
+                <li>✅ Sauvegarde des modifications via API</li>
+                <li>✅ Validation des données</li>
+                <li>✅ Messages de notification</li>
+                <li>✅ Visibilité du mot de passe</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Tests à Effectuer (depuis le dashboard)</h2>
+            <p><strong>Prérequis:</strong> Être connecté au dashboard en tant qu'utilisateur</p>
+            <ol>
+                <li><strong>Ouvrir la modal:</strong> Cliquez sur votre photo/profil en haut à droite</li>
+                <li><strong>Mode édition:</strong> Cliquez sur le bouton "Modifier"</li>
+                <li><strong>Modifier les informations:</strong>
+                    <ul>
+                        <li>Changez le prénom</li>
+                        <li>Changez le nom</li>
+                        <li>Changez le téléphone</li>
+                        <li>Changez l'email</li>
+                    </ul>
+                </li>
+                <li><strong>Changer la photo:</strong>
+                    <ul>
+                        <li>Cliquez sur "Changer la photo"</li>
+                        <li>Sélectionnez une image depuis votre ordinateur</li>
+                        <li>Vérifiez que la preview s'affiche</li>
+                    </ul>
+                </li>
+                <li><strong>Changer le mot de passe:</strong>
+                    <ul>
+                        <li>Entrez votre mot de passe actuel</li>
+                        <li>Entrez un nouveau mot de passe (min 6 caractères)</li>
+                        <li>Confirmez le nouveau mot de passe</li>
+                    </ul>
+                </li>
+                <li><strong>Visibilité du mot de passe:</strong> Cliquez sur l'icône oeil pour afficher/masquer</li>
+                <li><strong>Sauvegarder:</strong> Cliquez sur "Sauvegarder"</li>
+                <li><strong>Réinitialisation:</strong> Cliquez sur le bouton rouge "Réinitialiser" (danger)</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>📡 APIs Implémentées</h2>
+            <h3>Mise à jour du profil</h3>
+            <p><strong>Endpoint:</strong> POST /backend/Api/Auth/update-profile.php</p>
+            <p><strong>Données:</strong></p>
+            <pre>{
+  "prenom": "John",
+  "nom": "Doe",
+  "telephone": "0123456789",
+  "email": "john@example.com",
+  "password": "newPassword123",  // optionnel
+  "oldPassword": "currentPassword" // optionnel
+}</pre>
+
+            <h3>Upload de photo</h3>
+            <p><strong>Endpoint:</strong> POST /backend/Api/Auth/upload-photo.php</p>
+            <p><strong>Données:</strong> multipart/form-data avec fichier 'photo'</p>
+            <p><strong>Restrictions:</strong></p>
+            <ul>
+                <li>Type: JPEG, PNG, GIF, WebP</li>
+                <li>Taille max: 5MB</li>
+                <li>Dossier de destination: /backend/uploads/</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>✨ Résumé des Fonctionnalités</h2>
+            <div class="result success">
+✅ Modal Profil Complète
+
+✅ Gestion Utilisateur:
+  - Affichage des infos
+  - Mode édition
+  - Mode lecture
+  - Bouton modifier/terminer
+
+✅ Informations Personnelles:
+  - Prénom, Nom
+  - Téléphone, Email
+  - Sauvegarde via API
+
+✅ Photo de Profil:
+  - Upload via input file
+  - Preview en temps réel
+  - Validation (type + taille)
+  - Suppression de l'ancienne photo
+
+✅ Mot de Passe:
+  - Vérification ancien mot de passe
+  - Création nouveau mot de passe
+  - Validation (min 6 caractères)
+  - Toggle visibilité
+
+✅ Bouton Réinitialisation:
+  - Positionné dans le pied de modal
+  - Couleur rouge danger
+  - Icône avertissement
+  - Appelle le formulaire de confirmation
+
+✅ Feedback Utilisateur:
+  - Messages de notification
+  - Indication du statut
+  - Validation client + serveur
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Notes d'Implémentation</h2>
+            <ul>
+                <li>Les champs sont désactivés (readonly) par défaut</li>
+                <li>Le bouton "Modifier" bascule l'état éditable</li>
+                <li>Les modifications sont validées côté client et serveur</li>
+                <li>La photo est stockée dans /backend/uploads/profiles/</li>
+                <li>L'utilisateur est mis à jour dans localStorage après sauvegarde</li>
+                <li>Le header est mis à jour immédiatement après modification</li>
+                <li>Les données sont envoyées en JSON via FETCH API</li>
+                <li>La réinitialisation est maintenant dans la modal profil (pas en sidebar)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

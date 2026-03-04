@@ -65,18 +65,60 @@ try {
     $resetToken = Security::generateToken(32);
     $expiresAt = time() + (3600 * 1); // Token valide 1 heure
 
-    // Sauvegarder le token (à implémenter: ajouter colonne reset_token et reset_token_expires dans la DB)
-    // Pour maintenant, on simule en session (à améliorer)
-    $_SESSION['reset_token'] = $resetToken;
-    $_SESSION['reset_token_user_id'] = $user['id'];
-    $_SESSION['reset_token_expires'] = $expiresAt;
+    // Sauvegarder le token en base
+    $userModel->setResetToken($user['id'], $resetToken, $expiresAt);
 
-    // IMPORTANT: En production, envoyer un email avec le lien de réinitialisation
-    // mail($user['email'], 'Réinitialisation de mot de passe', 
-    //     "Cliquez ici pour réinitialiser votre mot de passe: " . 
-    //     "http://yoursite.com/reset.php?token=" . $resetToken);
+    // Construire le lien de réinitialisation
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    
+    // Extraire le chemin depuis REQUEST_URI et recalculer vers frontend
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '/APP_IB/backend/Api/Auth/reset-password.php';
+    // Si on est dans /APP_IB/backend/Api/Auth/reset-password.php, on veut /APP_IB/frontend/HTML/reset_confirm.html
+    preg_match('#(/[^/]+)?/backend/Api/Auth/reset-password\.php#', $requestUri, $matches);
+    $appPath = $matches[1] ?? '/APP_IB';
+    $resetLink = $protocol . '://' . $host . $appPath . '/frontend/HTML/reset_confirm.html?token=' . urlencode($resetToken);
 
-    Security::logSecurityEvent('RESET_PASSWORD_REQUESTED', ['user_id' => $user['id']]);
+    // Essayer d'envoyer l'email via PHPMailer si disponible
+    $mailConfig = [];
+    $mailCfgPath = __DIR__ . '/../../configs/mail.php';
+    if (file_exists($mailCfgPath)) {
+        $mailConfig = require $mailCfgPath;
+    }
+
+    $emailSent = false;
+    $sendError = null;
+
+    if (file_exists(__DIR__ . '/../../../vendor/autoload.php')) {
+        try {
+            require_once __DIR__ . '/../../../vendor/autoload.php';
+            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host = $mailConfig['smtp_host'] ?? 'localhost';
+            $mail->SMTPAuth = true;
+            $mail->Username = $mailConfig['smtp_user'] ?? '';
+            $mail->Password = $mailConfig['smtp_pass'] ?? '';
+            $mail->SMTPSecure = $mailConfig['smtp_secure'] ?? 'tls';
+            $mail->Port = $mailConfig['smtp_port'] ?? 587;
+            $mail->setFrom($mailConfig['from_email'] ?? $mailConfig['smtp_user'] ?? 'no-reply@example.com', $mailConfig['from_name'] ?? 'Support');
+            $mail->addAddress($user['email']);
+            $mail->isHTML(true);
+            $mail->Subject = 'Réinitialisation de votre mot de passe';
+            $mail->Body = "Bonjour,<br/><br/>Cliquez sur le lien suivant pour réinitialiser votre mot de passe:<br/><a href=\"{$resetLink}\">{$resetLink}</a><br/><br/>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.";
+            $emailSent = $mail->send();
+        } catch (Exception $e) {
+            $sendError = $e->getMessage();
+            $emailSent = false;
+        }
+    } else {
+        // Fallback natif
+        $subject = 'Réinitialisation de votre mot de passe';
+        $message = "Cliquez sur le lien pour réinitialiser: {$resetLink}";
+        $headers = 'From: ' . ($mailConfig['from_email'] ?? 'no-reply@example.com') . "\r\n";
+        $emailSent = @mail($user['email'], $subject, $message, $headers);
+    }
+
+    Security::logSecurityEvent('RESET_PASSWORD_REQUESTED', ['user_id' => $user['id'], 'email_sent' => $emailSent, 'error' => $sendError]);
     Response::success(null, 'Si un compte existe avec ces informations, un email de réinitialisation vous a été envoyé');
 
 } catch (\Exception $e) {

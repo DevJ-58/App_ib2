@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Scanner WebSocket</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #2196F3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2196F3;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+            color: #2e7d32;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #d32f2f;
+            color: #c62828;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+            color: #e65100;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid #333;
+        }
+        .log-info { color: #4fc3f7; }
+        .log-success { color: #4caf50; }
+        .log-error { color: #ff5252; }
+        .log-warning { color: #ffb74d; }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1976D2;
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        .status-connected {
+            background: #4caf50;
+        }
+        .status-disconnected {
+            background: #d32f2f;
+            animation: none;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        .mono {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnostic Scanner WebSocket</h1>
+        
+        <div class="info-box">
+            <strong>Serveur WebSocket:</strong><br>
+            <span class="mono" id="wsUrl">ws://localhost:3000</span><br><br>
+            <strong>État:</strong><br>
+            <span id="statusDisplay">
+                <span class="status-indicator status-disconnected"></span> Déconnecté
+            </span>
+        </div>
+
+        <h2>📋 Informations Système</h2>
+        <table>
+            <tr>
+                <th>Paramètre</th>
+                <th>Valeur</th>
+            </tr>
+            <tr>
+                <td>Hostname serveur</td>
+                <td><span class="mono" id="hostname">-</span></td>
+            </tr>
+            <tr>
+                <td>URL du navigateur</td>
+                <td><span class="mono" id="pageUrl">-</span></td>
+            </tr>
+            <tr>
+                <td>WebSocket URL</td>
+                <td><span class="mono" id="wsUrlTable">-</span></td>
+            </tr>
+            <tr>
+                <td>Browser WebSocket Support</td>
+                <td id="wsSupport">-</td>
+            </tr>
+        </table>
+
+        <h2>🧪 Test de Connexion</h2>
+        <div class="button-group">
+            <button class="btn-primary" onclick="testConnection()">Tester la Connexion</button>
+            <button class="btn-danger" onclick="clearLog()">Effacer le Log</button>
+        </div>
+
+        <h2>📊 Historique Détaillé</h2>
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-warning">En attente de test...</div>
+        </div>
+
+        <h2>❓ Dépannage</h2>
+        <div class="info-box warning">
+            <strong>Si la connexion échoue:</strong>
+            <ol>
+                <li>Vérifiez que le serveur WebSocket est en cours d'exécution:
+                    <code>node ws-server.js</code>
+                </li>
+                <li>Vérifiez que le port 3000 n'est pas bloqué par un firewall</li>
+                <li>Vérifiez que le nom d'hôte est correct (devrait être l'IP du serveur)</li>
+                <li>Essayez d'accéder à <span class="mono">http://192.168.1.119:3000</span> (remplacez par votre IP)</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Initialiser les infos
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('pageUrl').textContent = window.location.href;
+        
+        // Déterminer l'URL WebSocket
+        const host = window.location.hostname;
+        const wsUrl = `ws://${host}:3000`;
+        document.getElementById('wsUrl').textContent = wsUrl;
+        document.getElementById('wsUrlTable').textContent = wsUrl;
+        
+        // Vérifier le support WebSocket
+        if (window.WebSocket) {
+            document.getElementById('wsSupport').innerHTML = '<span style="color: green;">✅ Supporté</span>';
+        } else {
+            document.getElementById('wsSupport').innerHTML = '<span style="color: red;">❌ Non supporté</span>';
+        }
+
+        let ws = null;
+        let logCount = 0;
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('fr-FR');
+            entry.textContent = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            logCount++;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            logCount = 0;
+            log('Log effacé', 'warning');
+        }
+
+        function updateStatus(connected) {
+            const statusDisplay = document.getElementById('statusDisplay');
+            if (connected) {
+                statusDisplay.innerHTML = '<span class="status-indicator status-connected"></span> Connecté';
+                statusDisplay.style.color = '#2e7d32';
+            } else {
+                statusDisplay.innerHTML = '<span class="status-indicator status-disconnected"></span> Déconnecté';
+                statusDisplay.style.color = '#c62828';
+            }
+        }
+
+        function testConnection() {
+            if (ws) {
+                log('Fermeture de la connexion précédente...', 'warning');
+                ws.close();
+            }
+
+            const wsUrl = `ws://${window.location.hostname}:3000`;
+            log(`Tentative de connexion à: ${wsUrl}`, 'info');
+            log('Création de la connexion WebSocket...', 'info');
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                log('✅ Connexion établie avec succès!', 'success');
+                updateStatus(true);
+                
+                // Tester l'envoi d'un message
+                log('Envoi d\'un message de test...', 'info');
+                ws.send('TEST:BARCODE:123456789');
+                log('Message envoyé', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                log(`Message reçu: ${event.data}`, 'success');
+            };
+
+            ws.onerror = (error) => {
+                log(`❌ Erreur WebSocket: ${error.message}`, 'error');
+                updateStatus(false);
+            };
+
+            ws.onclose = () => {
+                log('Connexion fermée', 'warning');
+                updateStatus(false);
+            };
+
+            // Timeout après 5 secondes
+            setTimeout(() => {
+                if (ws && ws.readyState !== WebSocket.OPEN) {
+                    log('❌ Timeout: Impossible de se connecter (5 secondes)', 'error');
+                    log('Vérifiez que le serveur WebSocket est en cours d\'exécution', 'error');
+                    updateStatus(false);
+                    ws.close();
+                }
+            }, 5000);
+        }
+
+        // Log initial
+        log('Page de diagnostic chargée', 'info');
+        log(`Hostname détecté: ${window.location.hostname}`, 'info');
+        log(`WebSocket URL: ws://${window.location.hostname}:3000`, 'info');
+    </script>
+</body>
+</html>

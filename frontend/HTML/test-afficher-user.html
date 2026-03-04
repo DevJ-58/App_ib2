@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test afficherUtilisateurHeader()</title>
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .test { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .pass { background: #d4edda; }
+        .fail { background: #f8d7da; }
+        code { background: #f5f5f5; padding: 2px 6px; }
+        pre { background: #f5f5f5; overflow-x: auto; }
+        .nom-utilisateur { color: blue; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test afficherUtilisateurHeader()</h1>
+
+    <!-- Simuler le header du dashboard -->
+    <div style="border: 2px solid #333; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Dashboard</h3>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img id="photoProfilHeader" src="https://via.placeholder.com/40" alt="Photo" style="width: 40px; height: 40px; border-radius: 50%;">
+                <span class="nom-utilisateur">Mr IB</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="results"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></script>
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api-client.js"></script>
+    <script src="../JS/auth-api.js"></script>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addTest(title, success, message, extra) {
+            const div = document.createElement('div');
+            div.className = `test ${success ? 'pass' : 'fail'}`;
+            div.innerHTML = `<h3>${success ? '✅' : '❌'} ${title}</h3><p>${message}</p>`;
+            if (extra) div.innerHTML += `<pre>${extra}</pre>`;
+            resultsDiv.appendChild(div);
+        }
+
+        // Test 1: Vérifier que les fonctions existent
+        const hasAfficheur = typeof afficherUtilisateurHeader === 'function';
+        addTest('Fonction afficherUtilisateurHeader existe', hasAfficheur, 
+            hasAfficheur ? '✅ Fonction trouvée' : '❌ Fonction non trouvée');
+
+        // Test 2: Vérifier utilisateurConnecte
+        addTest('Variable utilisateurConnecte', utilisateurConnecte !== null,
+            utilisateurConnecte ? `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}` : 'null (pas chargé)',
+            utilisateurConnecte ? JSON.stringify(utilisateurConnecte, null, 2) : 'N/A');
+
+        // Test 3: Appeler afficherUtilisateurHeader() et vérifier le résultat
+        if (hasAfficheur) {
+            console.log('🟡 Appel de afficherUtilisateurHeader()...');
+            afficherUtilisateurHeader();
+            
+            const nomSpan = document.querySelector('.nom-utilisateur');
+            const nomActuel = nomSpan?.textContent || 'N/A';
+            
+            setTimeout(() => {
+                const success = nomActuel !== 'Mr IB' && nomActuel.includes('Frejus');
+                addTest('Affichage du nom après afficherUtilisateurHeader()', success,
+                    `Span affiche: "${nomActuel}"`,
+                    `<span class="nom-utilisateur">${nomActuel}</span>`);
+            }, 100);
+        }
+
+        // Test 4: Vérifier localStorage
+        const userFromStorage = localStorage.getItem('utilisateur');
+        if (userFromStorage) {
+            try {
+                const parsed = JSON.parse(userFromStorage);
+                addTest('localStorage "utilisateur"', true,
+                    `${parsed.prenom} ${parsed.nom}`,
+                    JSON.stringify(parsed, null, 2));
+            } catch (e) {
+                addTest('localStorage "utilisateur"', false, 'JSON invalide: ' + e);
+            }
+        }
+    </script>
+</body>
+</html>

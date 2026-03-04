@@ -1,0 +1,7 @@
+{
+    "name": "app/gestion-stock",
+    "description": "Application de gestion de stock",
+    "require": {
+        "phpmailer/phpmailer": "^6.8"
+    }
+}

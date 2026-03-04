@@ -282,5 +282,34 @@ class User
             return 0;
         }
     }
+
+    /**
+     * Enregistrer le token de réinitialisation pour un utilisateur
+     */
+    public function setResetToken($userId, $token, $expiresTimestamp)
+    {
+        $expires = date('Y-m-d H:i:s', $expiresTimestamp);
+        $query = "UPDATE utilisateurs SET reset_token = :token, reset_token_expires = :expires WHERE id = :id";
+        return $this->db->execute($query, [':token' => $token, ':expires' => $expires, ':id' => $userId]);
+    }
+
+    /**
+     * Récupérer un utilisateur par token de réinitialisation valide
+     */
+    public function getByResetToken($token)
+    {
+        $query = "SELECT id, nom, prenom, telephone, email, role, photo, reset_token_expires FROM utilisateurs WHERE reset_token = :token AND reset_token_expires >= NOW()";
+        return $this->db->selectOne($query, [':token' => $token]);
+    }
+
+    /**
+     * Réinitialiser le mot de passe via token et supprimer le token
+     */
+    public function resetPasswordWithToken($token, $newPassword)
+    {
+        $hash = password_hash($newPassword, PASSWORD_BCRYPT);
+        $query = "UPDATE utilisateurs SET mot_de_passe = :pwd, reset_token = NULL, reset_token_expires = NULL WHERE reset_token = :token";
+        return $this->db->execute($query, [':pwd' => $hash, ':token' => $token]);
+    }
 }
 ?>

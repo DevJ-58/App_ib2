@@ -5,7 +5,7 @@
 -- ============================================================================
 
 -- Créer la base de données
-CREATE DATABASE IF NOT EXISTS gestion_stock
+CREATE DATABASE gestion_stock
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 

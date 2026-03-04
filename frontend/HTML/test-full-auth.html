@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Test Authentification</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .test { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .pass { background: #d4edda; border-color: #28a745; }
+        .fail { background: #f8d7da; border-color: #dc3545; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Test d'Authentification</h1>
+
+    <div class="test info">
+        <h3>📋 Étapes du test</h3>
+        <ol>
+            <li>Lister les utilisateurs en BD</li>
+            <li>Tester la connexion avec un utilisateur valide</li>
+            <li>Vérifier la session PHP</li>   
+            <li>Vérifier l'appel API check.php</li>
+            <li>Vérifier le chargement du dashboard</li>
+        </ol>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        async function test(title, fn) {
+            const div = document.createElement('div');
+            div.className = 'test';
+            resultsDiv.appendChild(div);
+            
+            const titleEl = document.createElement('h3');
+            titleEl.textContent = title;
+            div.appendChild(titleEl);
+
+            try {
+                const result = await fn();
+                if (result.success) {
+                    div.classList.add('pass');
+                    div.innerHTML += `<p>✅ ${result.message}</p>`;
+                    if (result.data) {
+                        div.innerHTML += `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                    }
+                } else {
+                    div.classList.add('fail');
+                    div.innerHTML += `<p>❌ ${result.message}</p>`;
+                    if (result.error) {
+                        div.innerHTML += `<pre>${result.error}</pre>`;
+                    }
+                }
+            } catch (err) {
+                div.classList.add('fail');
+                div.innerHTML += `<p>❌ Exception: ${err.message}</p>`;
+                div.innerHTML += `<pre>${err.stack}</pre>`;
+            }
+        }
+
+        // Test 1: Lister utilisateurs
+        test('📊 Utilisateurs en BD', async () => {
+            const response = await fetch('../list-users.php');
+            const text = await response.text();
+            
+            if (text.includes('Utilisateurs trouvés')) {
+                return { 
+                    success: true, 
+                    message: 'Listes reçue',
+                    data: text 
+                };
+            } else {
+                throw new Error('Réponse invalide de list-users.php: ' + text.substring(0, 100));
+            }
+        });
+
+        // Test 2: Tester login API
+        test('🔑 Tester Login API', async () => {
+            const response = await fetch('http://localhost/APP_IB/Api/Auth/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    telephone: '0123456789',
+                    mot_de_passe: 'test123'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                return { 
+                    success: true, 
+                    message: 'Login réussi - ' + (data.data?.prenom || 'User'),
+                    data: data.data 
+                };
+            } else {
+                return { 
+                    success: false, 
+                    message: data.message || 'Login failed',
+                    error: JSON.stringify(data, null, 2)
+                };
+            }
+        });
+
+        // Test 3: Tester check API
+        test('✓ Tester Check API (Session)', async () => {
+            const response = await fetch('http://localhost/APP_IB/Api/Auth/check.php', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                return { 
+                    success: true, 
+                    message: 'Session valide - ' + (data.data?.prenom || 'User'),
+                    data: data.data 
+                };
+            } else {
+                return { 
+                    success: false, 
+                    message: data.message || 'Session check failed',
+                    error: JSON.stringify(data, null, 2)
+                };
+            }
+        });
+
+        // Test 4: Tester getAllProducts API
+        test('📦 Test API Products', async () => {
+            const response = await fetch('http://localhost/APP_IB/Api/Products/list.php', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && Array.isArray(data.data)) {
+                return { 
+                    success: true, 
+                    message: `${data.data.length} produits trouvés`,
+                    data: data.data.slice(0, 2) // Afficher les 2 premiers
+                };
+            } else {
+                return { 
+                    success: false, 
+                    message: data.message || 'Products fetch failed',
+                    error: JSON.stringify(data, null, 2)
+                };
+            }
+        });
+
+        // Test 5: Accès au dashboard
+        test('📊 Accès Dashboard', async () => {
+            const response = await fetch('http://localhost/APP_IB/frontend/HTML/dashbord.html');
+            
+            if (response.ok) {
+                const html = await response.text();
+                const hasForm = html.includes('id="formProduit"') || html.includes('id="formStock"');
+                return { 
+                    success: true, 
+                    message: 'Dashboard chargeable - ' + (hasForm ? 'formulaires trouvés' : 'formulaires manquants')
+                };
+            } else {
+                return { 
+                    success: false, 
+                    message: `Erreur HTTP: ${response.status}`
+                };
+            }
+        });
+
+        // Lancer tous les tests
+        console.log('🚀 Lancement des tests...');
+    </script>
+</body>
+</html>

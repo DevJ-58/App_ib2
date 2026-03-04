@@ -224,5 +224,35 @@ class Sale {
     public function getRecent($limit = 5) {
         return $this->getAllWithDetails($limit, 0);
     }
+
+    /**
+     * Récupérer les top produits vendus aujourd'hui
+     */
+    public function getTopProductsToday($limit = 5) {
+        try {
+            $today = date('Y-m-d');
+            
+            $query = "SELECT 
+                        p.id,
+                        p.nom as nom_produit,
+                        SUM(dv.quantite) as quantite_vendue,
+                        SUM(dv.sous_total) as montant_total
+                      FROM details_ventes dv
+                      LEFT JOIN produits p ON dv.produit_id = p.id
+                      LEFT JOIN ventes v ON dv.vente_id = v.id
+                      WHERE DATE(v.date_vente) = ?
+                        AND p.nom IS NOT NULL
+                      GROUP BY p.id, p.nom
+                      ORDER BY quantite_vendue DESC
+                      LIMIT ?";
+            
+            $stmt = $this->db->getConnection()->prepare($query);
+            $stmt->execute([$today, $limit]);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            // error_log("Error in getTopProductsToday: " . $e->getMessage());
+            return [];
+        }
+    }
 }
 ?>
