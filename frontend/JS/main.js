@@ -1297,6 +1297,10 @@ async function afficherCredits() {
         });
         
         console.log('✅ Crédits affichés');
+        
+        // Mettre à jour les statistiques du dashboard crédits
+        await mettreAJourDashboardCredits();
+        
     } catch (error) {
         console.error('❌ Erreur affichage crédits:', error);
     }

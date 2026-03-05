@@ -7,11 +7,11 @@ console.log('✅ credits-api.js chargé');
 /**
  * Créer un crédit pour une vente
  */
-async function creerCreditAPI(vente_id, client_nom, montant_total, type_client = 'AUTRE') {
-    console.log('💳 Création crédit:', {vente_id, client_nom, montant_total, type_client});
+async function creerCreditAPI(vente_id, client_nom, montant_total, type_client = 'AUTRE', whatsapp = null, client_telephone = null) {
+    console.log('💳 Création crédit:', {vente_id, client_nom, montant_total, type_client, whatsapp});
     
     try {
-        const response = await api.createCredit(vente_id, client_nom, montant_total, type_client);
+        const response = await api.createCredit(vente_id, client_nom, montant_total, type_client, whatsapp, client_telephone);
         
         if (!response.success) {
             console.error('❌ Erreur API crédit:', response.message);
@@ -47,13 +47,17 @@ async function chargerCreditsAPI(limit = 50, offset = 0, status = null) {
         
         if (!response.success) {
             console.error('❌ Erreur API crédits:', response.message);
+            window.creditsData = [];
             return [];
         }
         
-        console.log('✅ Crédits chargés:', response.data.length);
-        return response.data;
+        // Assigner à la variable globale
+        window.creditsData = response.data || [];
+        console.log('✅ Crédits chargés:', window.creditsData.length);
+        return window.creditsData;
     } catch (error) {
         console.error('❌ Erreur chargement crédits:', error);
+        window.creditsData = [];
         return [];
     }
 }
@@ -136,61 +140,43 @@ async function chargerStatsCreditsAPI() {
  */
 async function mettreAJourDashboardCredits() {
     console.log('🔄 Mise à jour dashboard crédits...');
-    
+
     try {
-        if (!creditsData || creditsData.length === 0) {
-            console.log('📊 Pas de crédits à afficher');
+        // Charger les vraies statistiques depuis l'API
+        const stats = await chargerStatsCreditsAPI();
+
+        if (!stats) {
+            console.log('📊 Aucune statistique disponible');
             return;
         }
-        
-        console.log('📊 creditsData brut:', creditsData);
-        console.log('📊 Premier crédit:', creditsData[0]);
-        
-        // Calculer les statistiques
-        const totalCredits = creditsData.length;
-        const creditsSoldes = creditsData.filter(c => c.statut === 'solde').length;
-        const creditsEnCours = creditsData.filter(c => c.statut === 'en_cours').length;
-        
-        console.log('📊 Crédits en cours:', creditsEnCours, 'Crédits soldés:', creditsSoldes);
-        
-        // Convertir en nombres correctement
-        let montantTotal = 0;
-        let montantRembourse = 0;
-        let montantRestant = 0;
-        
-        creditsData.forEach((c, i) => {
-            const mt = parseFloat(c.montant_total);
-            const mp = parseFloat(c.montant_paye);
-            const mr = parseFloat(c.montant_restant);
-            
-            console.log(`Crédit ${i}: total=${mt}, payé=${mp}, restant=${mr}`);
-            
-            montantTotal += mt || 0;
-            montantRembourse += mp || 0;
-            montantRestant += mr || 0;
-        });
-        
-        console.log('📊 Montants calculés:', {montantTotal, montantRembourse, montantRestant});
-        
-        const tauxRecouvrement = montantTotal > 0 ? Math.round((montantRembourse / montantTotal) * 100) : 0;
-        
-        console.log('📊 Taux recouvrement:', tauxRecouvrement + '%');
-        
+
+        console.log('📊 Stats crédits API:', stats);
+
+        // Mettre à jour les widgets avec les vraies données
+        const totalCredits = parseInt(stats.nombre_credits) || 0;
+        const creditsImpayes = parseInt(stats.credits_impayés) || 0;
+        const creditsSaldés = parseInt(stats.credits_saldés) || 0;
+        const montantTotalDu = parseFloat(stats.montant_total_dû) || 0;
+        const montantRestantDu = parseFloat(stats.montant_restant_dû) || 0;
+        const montantTotalPaye = parseFloat(stats.montant_total_payé) || 0;
+
+        const tauxRecouvrement = montantTotalDu > 0 ? Math.round((montantTotalPaye / montantTotalDu) * 100) : 0;
+
         // Mettre à jour les widgets
-        document.getElementById('stat-total-montant').textContent = montantTotal.toLocaleString() + ' FCFA';
+        document.getElementById('stat-total-montant').textContent = montantTotalDu.toLocaleString() + ' FCFA';
         document.getElementById('stat-total-nombre').textContent = totalCredits + ' crédit' + (totalCredits > 1 ? 's' : '');
-        
-        document.getElementById('stat-impayés-montant').textContent = montantRestant.toLocaleString() + ' FCFA';
-        document.getElementById('stat-impayés-nombre').textContent = creditsEnCours + ' crédit' + (creditsEnCours > 1 ? 's' : '');
-        
-        document.getElementById('stat-remboursés-montant').textContent = montantRembourse.toLocaleString() + ' FCFA';
-        document.getElementById('stat-remboursés-nombre').textContent = creditsSoldes + ' crédit' + (creditsSoldes > 1 ? 's' : '');
-        
+
+        document.getElementById('stat-impayés-montant').textContent = montantRestantDu.toLocaleString() + ' FCFA';
+        document.getElementById('stat-impayés-nombre').textContent = creditsImpayes + ' crédit' + (creditsImpayes > 1 ? 's' : '');
+
+        document.getElementById('stat-remboursés-montant').textContent = montantTotalPaye.toLocaleString() + ' FCFA';
+        document.getElementById('stat-remboursés-nombre').textContent = creditsSaldés + ' crédit' + (creditsSaldés > 1 ? 's' : '');
+
         document.getElementById('stat-taux-pourcent').textContent = tauxRecouvrement + '%';
         const tauxDescription = tauxRecouvrement >= 80 ? '✅ Excellent' : tauxRecouvrement >= 60 ? '⚠️ Correct' : '❌ À améliorer';
         document.getElementById('stat-taux-description').textContent = tauxDescription;
-        
-        console.log('✅ Dashboard crédits mis à jour');
+
+        console.log('✅ Dashboard crédits mis à jour avec vraies données');
     } catch (error) {
         console.error('❌ Erreur mise à jour dashboard:', error);
     }
@@ -321,3 +307,70 @@ async function afficherTopClientsCredit() {
         console.error('❌ Erreur affichage top clients:', error);
     }
 }
+
+/**
+ * Relancer un client par WhatsApp avec un message de rappel
+ */
+function relancerClientWhatsapp(creditId, clientNom, montantRestant, whatsappNumber) {
+    console.log('📱 Relance WhatsApp:', {creditId, clientNom, montantRestant, whatsappNumber});
+    
+    if (!whatsappNumber) {
+        afficherNotification('Aucun numéro WhatsApp enregistré pour ce client', 'warning');
+        return;
+    }
+    
+    // Formater le montant
+    const montantFormate = parseFloat(montantRestant).toLocaleString('fr-FR', {
+        style: 'currency',
+        currency: 'XOF',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+    
+    // Créer le message de rappel
+    const messageWA = `Bonjour ${clientNom},\n\nNotre système indique que vous avez un solde impayé de ${montantFormate} en crédit.\n\nMerci de vous rapprocher pour effectuer le remboursement.\n\nCordialement.`;
+    
+    // Encoder le message pour l'URL
+    const messageEncode = encodeURIComponent(messageWA);
+    
+    // Construire l'URL WhatsApp
+    const urlWhatsapp = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${messageEncode}`;
+    
+    console.log('🔗 URL WhatsApp:', urlWhatsapp);
+    
+    // Ouvrir dans un nouvel onglet
+    window.open(urlWhatsapp, '_blank');
+}
+
+/**
+ * Afficher les WhatsApp des crédits
+ */
+function afficherWhatsappCredits() {
+    console.log('📱 Affichage des numéros WhatsApp...');
+    
+    if (!creditsData || creditsData.length === 0) {
+        console.log('❌ Aucun crédit à traiter');
+        return;
+    }
+    
+    // Filtrer les crédits avec WhatsApp et montant restant
+    const creditsAvecWhatsapp = creditsData.filter(c => c.whatsapp && c.montant_restant > 0);
+    console.log(`📱 ${creditsAvecWhatsapp.length}/${creditsData.length} crédits avec WhatsApp et solde impayé`);
+    
+    return creditsAvecWhatsapp;
+}
+
+// ====================================================================
+// EXPORT DES FONCTIONS POUR LES AUTRES MODULES
+// ====================================================================
+
+window.chargerCreditsAPI = chargerCreditsAPI;
+window.relancerClientWhatsapp = relancerClientWhatsapp;
+window.afficherWhatsappCredits = afficherWhatsappCredits;
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  / /   E X P O R T   D E S   F O N C T I O N S   P O U R   L E S   A U T R E S   M O D U L E S 
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  
+//  w i n d o w . c h a r g e r C r e d i t s A P I   =   c h a r g e r C r e d i t s A P I ; 
+//  
+//  
