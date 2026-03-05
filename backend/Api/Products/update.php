@@ -37,6 +37,34 @@ try {
         exit;
     }
 
+    // ✅ VALIDATION CRITIQUE: Si le prix est modifié, il doit être positif
+    if (isset($data['prix_vente'])) {
+        $prix = floatval($data['prix_vente']);
+        if ($prix <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'code' => 400,
+                'message' => 'Le prix de vente doit être positif (> 0 FCFA)'
+            ]);
+            exit;
+        }
+    }
+    
+    // ✅ VALIDATION: Le stock ne peut pas être négatif
+    if (isset($data['stock'])) {
+        $stock = intval($data['stock']);
+        if ($stock < 0) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'code' => 400,
+                'message' => 'Le stock ne peut pas être négatif'
+            ]);
+            exit;
+        }
+    }
+
     // Mettre à jour le produit
     $product->update($id, $data);
 
