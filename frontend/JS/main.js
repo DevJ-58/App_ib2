@@ -2637,6 +2637,27 @@ async function validerVente() {
         return;
     }
     
+    // ✅ VALIDATION CRITIQUE: Vérifier que tous les produits ont un stock suffisant
+    const errorsStock = [];
+    panierItems.forEach((item, idx) => {
+        const produitActuel = produitsData.find(p => parseInt(p.id) === parseInt(item.id));
+        
+        if (!produitActuel) {
+            errorsStock.push(`${item.nom} n'existe plus dans la base de données`);
+        } else if (parseInt(produitActuel.stock) <= 0) {
+            errorsStock.push(`${item.nom} est en rupture de stock`);
+        } else if (item.quantite > parseInt(produitActuel.stock)) {
+            errorsStock.push(`${item.nom}: quantité demandée (${item.quantite}) dépasse le stock disponible (${produitActuel.stock})`);
+        }
+    });
+    
+    if (errorsStock.length > 0) {
+        afficherNotification('Erreurs de stock:\n' + errorsStock.join('\n'), 'error');
+        // Rafraîchir l'affichage du panier pour nettoyer les articles problématiques
+        afficherPanier();
+        return;
+    }
+    
     if (typePaiementActuel === 'credit') {
         const clientNom = document.getElementById('nomClient')?.value;
         if (!clientNom) {
