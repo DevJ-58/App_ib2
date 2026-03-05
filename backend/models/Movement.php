@@ -32,9 +32,17 @@ class Movement {
                 return ['success' => false, 'message' => 'Produit introuvable'];
             }
             
-            // Vérifier les mouvements de sortie
-            if (in_array($type, ['sortie', 'perte']) && $quantite > $produit['stock']) {
-                return ['success' => false, 'message' => 'Stock insuffisant pour ce mouvement'];
+            // Calculer le nouveau stock selon le type de mouvement
+            if ($type === 'entree' || $type === 'ajustement') {
+                $nouveau_stock = $produit['stock'] + $quantite;
+            } else {
+                // Sortie, perte, ou autre type = soustraction
+                $nouveau_stock = $produit['stock'] - $quantite;
+            }
+            
+            // ✅ VALIDATION CRITIQUE: Le stock ne peut jamais être négatif
+            if ($nouveau_stock < 0) {
+                return ['success' => false, 'message' => 'Stock insuffisant pour ce mouvement (stock actuel: ' . $produit['stock'] . ', demandé: ' . $quantite . ')'];
             }
             
             // Enregistrer le mouvement
@@ -45,11 +53,7 @@ class Movement {
             $stmt->execute([$produit_id, $type, $quantite, $motif, $commentaire, $utilisateur_id]);
             
             // Mettre à jour le stock du produit
-            if ($type === 'entree' || $type === 'ajustement') {
-                $nouveau_stock = $produit['stock'] + $quantite;
-            } else {
-                $nouveau_stock = $produit['stock'] - $quantite;
-            }
+
             
             $sql_update = "UPDATE produits SET stock = ? WHERE id = ?";
             $stmt_update = $this->db->prepare($sql_update);
