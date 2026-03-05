@@ -12,19 +12,51 @@
     <!-- Conteneur des notifications (toasts) -->
     <div id="notificationsContainer" class="notifications-container"></div>
     
-    <!-- Modal de choix format export (PDF/Excel) -->
-    <div id="modalChoixExport" class="modal-export" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div class="modal-contenu-export" style="background: white; border-radius: 8px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 400px; min-width: 320px;">
-            <h3 style="margin-top: 0; color: #333; text-align: center;">Choisir le format d'export</h3>
-            <p style="text-align: center; color: #666; margin-bottom: 25px;" id="messageChoixExport"></p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="btn-modal-export btn-pdf" onclick="confirmerExport('pdf')" style="flex: 1; padding: 12px 20px; background: #D32F2F; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">
-                    <i class="fa-solid fa-file-pdf"></i> PDF
+    <!-- Modal de configuration de rapport (Date + Modèle + Format) -->
+    <div id="modalConfigurationRapport" class="modal-export" style="display:none; position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+        <div class="modal-contenu-export" style="background:white;border-radius:8px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.3);max-width:500px;min-width:380px;">
+            <h3 style="margin-top:0;color:#333;text-align:center;">Télécharger un Rapport</h3>
+            
+            <!-- Date -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-weight:500;margin-bottom:8px;color:#333;">Date du rapport:</label>
+                <input id="inputDateConfigRapport" type="date" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:0.95rem;box-sizing:border-box;" />
+            </div>
+            
+            <!-- Modèle/Type de rapport -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-weight:500;margin-bottom:8px;color:#333;">Type de rapport:</label>
+                <select id="selectModeleRapport" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:0.95rem;box-sizing:border-box;">
+                    <option value="journalier">Rapport Journalier</option>
+                    <option value="hebdomadaire">Rapport Hebdomadaire</option>
+                    <option value="mensuel">Rapport Mensuel</option>
+                    <option value="stock">Etat des Stocks</option>
+                    <option value="credits">Rapport Credits</option>
+                    <option value="top-produits">Top Produits</option>
+                </select>
+            </div>
+            
+            <!-- Format -->
+            <div style="margin-bottom:25px;">
+                <label style="display:block;font-weight:500;margin-bottom:8px;color:#333;">Format d'export:</label>
+                <div style="display:flex;gap:10px;">
+                    <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border:2px solid #ddd;border-radius:4px;cursor:pointer;">
+                        <input type="radio" name="formatRapport" value="pdf" checked style="cursor:pointer;" /> 
+                        <i class="fa-solid fa-file-pdf" style="color:#D32F2F;"></i> PDF
+                    </label>
+                    <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border:2px solid #ddd;border-radius:4px;cursor:pointer;">
+                        <input type="radio" name="formatRapport" value="excel" style="cursor:pointer;" /> 
+                        <i class="fa-solid fa-file-excel" style="color:#1976D2;"></i> Excel
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button onclick="telechargerRapportConfig()" style="flex:1;padding:12px 20px;background:#1976D2;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.95rem;">
+                    <i class="fa-solid fa-download"></i> Telecharger
                 </button>
-                <button class="btn-modal-export btn-excel" onclick="confirmerExport('excel')" style="flex: 1; padding: 12px 20px; background: #1976D2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">
-                    <i class="fa-solid fa-file-excel"></i> Excel
-                </button>
-                <button class="btn-modal-export btn-annuler" onclick="annulerExport()" style="flex: 1; padding: 12px 20px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">
+                <button onclick="fermerModalConfigurationRapport()" style="flex:1;padding:12px 20px;background:#999;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.95rem;">
                     Annuler
                 </button>
             </div>
@@ -52,7 +84,6 @@
             <div class="indicateur-scanner" id="indicateurScanner" title="État du scanner de code-barre" style="margin-right: 20px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f5f5f5; border-radius: 20px;">
                 <div class="point-scanner" id="pointScanner" style="width: 10px; height: 10px; border-radius: 50%; background: #d32f2f; animation: pulse 2s infinite;"></div>
                 <span id="textScanner" style="font-size: 0.85rem; color: #666; font-weight: 500;">Scanner</span>
-                <button onclick="console.log('🔘 Bouton Test cliqué directement dans HTML'); testScannerConnection()" style="font-size: 0.7rem; padding: 2px 6px; background: #2196f3; color: white; border: none; border-radius: 3px; cursor: pointer;">Test</button>
             </div>
             <!-- Icon de notifications -->
             <div class="notification-header" onclick="afficherSection('alertes')" style="cursor: pointer; position: relative; margin-right: 20px;">
@@ -271,6 +302,10 @@
                         <div class="carte-contenu" id="carteActivitesRecentes">
                             <div class="entete-carte">
                                 <h2><i class="fa-solid fa-history"></i> Activités récentes</h2>
+                                <!-- Bouton de test pour la modale -->
+                                <button onclick="ouvrirModalConfigurationRapport()" style="padding: 8px 16px; background: #1976D2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                                    <i class="fa-solid fa-file-pdf"></i> Test Rapport
+                                </button>
                             </div>
                             <ul class="liste-activites" id="liste-activites">
                                 <!-- Rempli dynamiquement par JavaScript -->
@@ -297,37 +332,8 @@
                         <div class="entete-carte">
                             <h2><i class="fa-solid fa-fire"></i> Top Produits (Aujourd'hui)</h2>
                         </div>
-                        <ul class="liste-activites">
-                            <li>
-                                <strong>1. Coca-Cola 50cl</strong>
-                                <span class="heure">
-                                    <i class="fa-solid fa-box"></i> 24 unités vendues
-                                </span>
-                            </li>
-                            <li>
-                                <strong>2. Pain</strong>
-                                <span class="heure">
-                                    <i class="fa-solid fa-box"></i> 18 unités vendues
-                                </span>
-                            </li>
-                            <li>
-                                <strong>3. Eau minérale 50cl</strong>
-                                <span class="heure">
-                                    <i class="fa-solid fa-box"></i> 15 unités vendues
-                                </span>
-                            </li>
-                            <li>
-                                <strong>4. Jus Youki</strong>
-                                <span class="heure">
-                                    <i class="fa-solid fa-box"></i> 12 unités vendues
-                                </span>
-                            </li>
-                            <li>
-                                <strong>5. Biscuits</strong>
-                                <span class="heure">
-                                    <i class="fa-solid fa-box"></i> 10 unités vendues
-                                </span>
-                            </li>
+                        <ul class="liste-activites" id="listeTopProduits">
+                            <!-- Données chargées dynamiquement -->
                         </ul>
                     </div>                
                 </section>
@@ -462,7 +468,7 @@
                     <div class="conteneur-produits">
                         <div class="entete-tableau">
                             <h3><i class="fa-solid fa-box-open"></i> Liste des Produits</h3>
-                            <span class="info-total">Affichage de <strong>1-10</strong> sur <strong>24</strong> produits</span>
+                            <span class="info-total" id="infoTotalProduits">Affichage de <strong>1-10</strong> sur <strong>0</strong> produits</span>
                         </div>
 
                         <table class="tableau-produits">
@@ -591,6 +597,14 @@
                                 <label>Nom du client *</label>
                                 <input type="text" id="nomClient" placeholder="Entrez le nom du client">
                             </div>
+                            <div class="champ-whatsapp" id="champWhatsapp" style="display: none;">
+                                <label>Numéro WhatsApp (optionnel)</label>
+                                <div class="input-whatsapp">
+                                    <span class="prefix-whatsapp">+225</span>
+                                    <input type="tel" id="whatsappClient" placeholder="Ex: 05 12 34 56 78" maxlength="13">
+                                </div>
+                                <small>Numéro ivoirien (10 chiffres) - Pour les relances de crédit par WhatsApp</small>
+                            </div>
                         </div>
                         <div class="zone-montant-recu visible" id="zoneMontantRecu">
                             <label>Montant reçu</label>
@@ -633,15 +647,14 @@
                         <input type="text" id="rechercheStock" placeholder="Rechercher un produit...">
                     </div>
                     <div class="actions-rapides">
-                        <button class="btn-action primaire" onclick="ouvrirModalMouvementStock('entree')">
+                        <!-- le bouton rouge doit correspondre à une sortie, le blanc à une entrée -->
+                        <button class="btn-action secondaire" onclick="ouvrirModalMouvementStock('entree')">
                             <i class="fa-solid fa-arrow-up"></i> Entrée de Stock
                         </button>
-                        <button class="btn-action secondaire" onclick="ouvrirModalMouvementStock('sortie')">
+                        <button class="btn-action primaire" onclick="ouvrirModalMouvementStock('sortie')">
                             <i class="fa-solid fa-arrow-down"></i> Sortie de Stock
                         </button>
-                        <button class="btn-action tertiaire" onclick="ouvrirModalPerte()">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Déclarer Perte
-                        </button>
+
                     </div>
                 </div>
 
@@ -1101,34 +1114,12 @@
                     </div>
                 </div>
 
-                <!-- Boutons d'actions rapides -->
-                <div class="barre-actions">
-                    <div class="actions-rapides">
-                        <button class="btn-action primaire" onclick="genererRapportComplet()">
-                            <i class="fa-solid fa-file-pdf"></i> Rapport Complet PDF
+                <!-- Bouton principal de téléchargement de rapport -->
+                <div class="barre-actions" style="justify-content: center; margin-bottom: 30px;">
+                    <div class="actions-rapides" style="justify-content: center;">
+                        <button class="btn-action primaire btn-telecharger-rapport" onclick="ouvrirModalConfigurationRapport()" style="padding: 15px 30px; font-size: 1.1rem; font-weight: 600; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);">
+                            <i class="fa-solid fa-file-pdf" style="margin-right: 10px;"></i> Télécharger un Rapport
                         </button>
-                        <div class="dropdown-export" style="position: relative; display: inline-block;">
-                            <button class="btn-action secondaire" onclick="toggleDropdownExport()">
-                                <i class="fa-solid fa-file-excel"></i> Exporter Excel <i class="fa-solid fa-chevron-down"></i>
-                            </button>
-                            <div id="dropdownExportMenu" class="dropdown-menu-export" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; top: 100%; right: 0; min-width: 200px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000;">
-                                <a href="#" onclick="exporterRapportCompletExcel(); return false;" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-chart-line"></i> Rapport Complet (5 feuilles)
-                                </a>
-                                <a href="#" onclick="exporterProduitsExcel(); return false;" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-box"></i> Produits
-                                </a>
-                                <a href="#" onclick="exporterVentesExcel(); return false;" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-cart-shopping"></i> Ventes
-                                </a>
-                                <a href="#" onclick="exporterCreditsExcel(); return false;" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-credit-card"></i> Crédits
-                                </a>
-                                <a href="#" onclick="exporterMouvementsExcel(); return false;" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-arrows-alt"></i> Mouvements Stock
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1139,30 +1130,12 @@
                             <h2><i class="fa-solid fa-file-lines"></i> Rapports Prédéfinis</h2>
                         </div>
                         <div class="liste-rapports-rapides">
-                            <button class="btn-rapport" onclick="telechargerRapport('journalier')">
-                                <i class="fa-solid fa-calendar-day"></i>
-                                <span>Rapport Journalier</span>
-                            </button>
-                            <button class="btn-rapport" onclick="telechargerRapport('hebdomadaire')">
-                                <i class="fa-solid fa-calendar-week"></i>
-                                <span>Rapport Hebdomadaire</span>
-                            </button>
-                            <button class="btn-rapport" onclick="telechargerRapport('mensuel')">
-                                <i class="fa-solid fa-calendar"></i>
-                                <span>Rapport Mensuel</span>
-                            </button>
-                            <button class="btn-rapport" onclick="telechargerRapport('stock')">
-                                <i class="fa-solid fa-cubes"></i>
-                                <span>État des Stocks</span>
-                            </button>
-                            <button class="btn-rapport" onclick="telechargerRapport('credits')">
-                                <i class="fa-solid fa-credit-card"></i>
-                                <span>Rapport Crédits</span>
-                            </button>
-                            <button class="btn-rapport" onclick="telechargerRapport('top-produits')">
-                                <i class="fa-solid fa-fire"></i>
-                                <span>Top Produits</span>
-                            </button>
+                            <div class="carte-info" style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+                                <i class="fa-solid fa-info-circle" style="font-size: 2rem; color: #6c757d; margin-bottom: 10px;"></i>
+                                <p style="margin: 0; color: #6c757d; font-size: 0.95rem;">
+                                    Utilisez le bouton "Télécharger un Rapport" ci-dessus pour choisir le type, la date et le format de votre rapport.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -1407,7 +1380,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2 id="titreCategorie">
-                    <i class="fa-solid fa-box-open"></i> Ajouter une Catégorie
+                    <i class="fa-solid fa-box-open"></i> Gestion des Catégories
                 </h2>
                 <button class="btn-fermer-modal" onclick="fermerModalCategorie()">
                     <i class="fa-solid fa-times"></i>
@@ -1426,10 +1399,17 @@
 
                 <!-- Onglet Ajouter -->
                 <div id="tabAjouter" class="categorie-tab-content active">
-                    <form id="formCategorie">
+                    <form id="formCategorie" onsubmit="ajouterCategorie(event)">
                         <div class="form-group">
-                            <label>Nom de la catégorie</label>
-                            <input type="text" id="nomCategorie" required>
+                            <label>Nom de la catégorie *</label>
+                            <input type="text" id="nomCategorie" placeholder="Ex: Boissons, Snacks, Alimentaire..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="categorieActive" checked>
+                                Catégorie active
+                            </label>
                         </div>
 
                         <div class="modal-actions">
@@ -1448,7 +1428,21 @@
                     <h3 style="margin-bottom: 15px; color: #09093A;">
                         <i class="fa-solid fa-list"></i> Liste des catégories
                     </h3>
-                    <div id="listeCategories" class="liste-categories"></div>
+                    <div id="conteneurTableauCategories" style="overflow-x: auto;">
+                        <table class="tableau-categories" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f5f5f5; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 12px; text-align: left;">ID</th>
+                                    <th style="padding: 12px; text-align: left;">Nom</th>
+                                    <th style="padding: 12px; text-align: center;">Statut</th>
+                                    <th style="padding: 12px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listeCategories" style="color: #333;">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">Chargement des catégories...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
                         <button type="button" class="btn-action secondaire" onclick="fermerModalCategorie()" style="width: 100%;">
@@ -1516,7 +1510,82 @@
         </div>
     </div>
 
-    <!-- Modal Déclaration Perte -->
+    <!-- Modal Historique Produit -->
+    <div class="modal-overlay" id="modalHistoriqueProduit">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-history"></i> Historique du Produit
+                </h2>
+                <button class="btn-fermer-modal" onclick="fermerModalHistoriqueProduit()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="historiqueContent" style="max-height: 500px; overflow-y: auto;">
+                    <!-- Contenu chargé dynamiquement -->
+                    <p style="text-align: center; color: #999;">Chargement de l'historique...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajustement Stock -->
+    <div class="modal-overlay" id="modalAjustementStock">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-balance-scale"></i> Ajuster le Stock
+                </h2>
+                <button class="btn-fermer-modal" onclick="fermerModalAjustementStock()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formAjustementStock">
+                    <div class="form-group">
+                        <label>Produit</label>
+                        <input type="text" id="produitAjustement" disabled style="background: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock actuel</label>
+                        <input type="text" id="stockActuelAjustement" disabled style="background: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type de mouvement *</label>
+                        <select id="typeMouvementAjustement" required>
+                            <option value="">Sélectionner</option>
+                            <option value="entree">Entrée (augmenter)</option>
+                            <option value="sortie">Sortie (diminuer)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantité à ajuster *</label>
+                        <input type="number" id="quantiteAjustement" min="0" required placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Motif *</label>
+                        <input type="text" id="motifAjustement" required placeholder="Ex: Correction d'inventaire">
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-action secondaire" onclick="fermerModalAjustementStock()">
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn-action primaire">
+                            <i class="fa-solid fa-save"></i> Valider
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     <div class="modal-overlay" id="modalPerte">
         <div class="modal-container">
             <div class="modal-header">
@@ -1598,7 +1667,7 @@
 
                     <div class="form-group">
                         <label>Montant remboursé (FCFA) *</label>
-                        <input type="number" id="montantRembourse" min="1" max="0" step="0.01" required onchange="validerMontantRembours()">
+                        <input type="number" id="montantRembourse" min="0.01" step="0.01" required onchange="validerMontantRembours()">
                         <small id="avertissementMontant" style="color: red; display: none;"></small>
                     </div>
 
@@ -1782,6 +1851,43 @@
         </div>
     </div>
 
+    <!-- Modal Format Export -->
+    <div class="modal-overlay" id="modalFormatExport">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-file-export"></i> Choisir le Format d'Export
+                </h2>
+                <button class="btn-fermer-modal" onclick="fermerModalFormatExport()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="options-format">
+                    <button class="btn-format-option btn-pdf" onclick="selectionnerFormat('pdf')">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <div class="format-info">
+                            <h3>PDF</h3>
+                            <p>Document professionnel stylisé</p>
+                        </div>
+                    </button>
+                    <button class="btn-format-option btn-excel" onclick="selectionnerFormat('excel')">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <div class="format-info">
+                            <h3>Excel</h3>
+                            <p>Feuille de calcul modifiable</p>
+                        </div>
+                    </button>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-action secondaire" onclick="fermerModalFormatExport()">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modale Profil -->
     <div id="modalProfil" class="modal">
         <div class="modal-contenu">
@@ -1912,8 +2018,8 @@
     <script src="../JS/reports-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="../JS/pdf-reports.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="../JS/export-excel.js"></script>
+    <script src="../JS/rapport-complet.js"></script>
+    <script src="../JS/excel-exports.js"></script>
     <script src="../JS/main.js"></script>
     <script>
         console.log('✅ Script inline test - tous les scripts chargés');
