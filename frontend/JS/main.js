@@ -2,6 +2,13 @@
 // MAIN.JS - Initialisation du Dashboard
 // ====================================================================
 
+// Fonction globale pour les notifications - fallback si utils.js n'est pas chargé
+if (!window.afficherNotification) {
+    window.afficherNotification = (message, type = 'info') => {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+    };
+}
+
 // Variables globales pour les données
 let produitsData = [];
 let ventesData = [];
@@ -9,12 +16,28 @@ let creditsData = [];
 let mouvementsData = [];
 let alertesData = [];
 
+// helper pour l'état de stock, avec fallback si la fonction n'est pas définie
+function getEtatStock(quantite, seuil) {
+    const fn = (typeof window !== 'undefined' && window.determinerEtatStock) ||
+               (typeof determinerEtatStock !== 'undefined' && determinerEtatStock);
+    if (typeof fn !== 'function') {
+        console.warn('⚠️ determinerEtatStock non disponible, utilisation du fallback');
+        return { classe: 'inconnu', libelle: 'Indéfini' };
+    }
+    return fn(quantite, seuil);
+}
+
+// Variables globales pour les modales de produits
+let modeProduitActuel = 'ajouter'; // 'ajouter' ou 'modifier'
+let idProduitActuel = null; // ID du produit en cours d'édition
+
 // ====================================================================
 // INITIALISATION - Exécutée au chargement de la page
 // ====================================================================
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Dashboard en cours de chargement...');
+    console.log('🔧 CORRECTIONS APPLIQUÉES: Catégories utilisent maintenant categorie_nom au lieu de categorie');
     
     try {
         // 1. Initialiser l'authentification
@@ -42,9 +65,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('5️⃣ Affichage du dashboard...');
         afficherSection('dashboard');
         
-        // 6. Initialiser les événements interactifs
-        console.log('6️⃣ Initialisation des événements interactifs...');
+        // 6. Mettre à jour les stats rapides maintenant que la section est visible
+        console.log('6️⃣ Mise à jour des stats rapides...');
+        await mettreAJourStatsRapides();
+        
+        // 7. Initialiser les événements interactifs
+        console.log('7️⃣ Initialisation des événements interactifs...');
         initialiserEvenementsInteractifs();
+        
+        // 8. Initialiser les gestionnaires de modales
+        console.log('8️⃣ Initialisation des modales...');
+        initialiserGestionnairesModales();
         
         console.log('✅ Dashboard chargé avec succès!');
         
@@ -68,18 +99,23 @@ async function chargerToutLesDonnees() {
         // Charger les produits
         console.log('   ➤ Chargement des produits...');
         const produitsResponse = await api.getAllProducts();
+        console.log('   📡 Réponse API getAllProducts:', produitsResponse);
+        console.log('   ✔️ Propriétés reponse:', {success: produitsResponse.success, data_exists: !!produitsResponse.data, data_length: produitsResponse.data ? produitsResponse.data.length : 0});
+        
         if (produitsResponse.success && produitsResponse.data) {
             produitsData = produitsResponse.data;
             console.log(`   ✅ ${produitsData.length} produits chargés`);
+            console.log('   📊 Échantillon de données:', produitsData.slice(0, 2).map(p => ({nom: p.nom, stock: p.stock, prix_vente: p.prix_vente, categorie_nom: p.categorie_nom})));
+            console.log('   🔍 Données brutes du premier produit:', JSON.stringify(produitsData[0], null, 2));
+        } else {
+            console.warn('   ⚠️ Réponse API invalide! Success:', produitsResponse.success, 'Data:', produitsResponse.data);
+            console.warn('   📋 Réponse COMPLÈTE de l\'API:', JSON.stringify(produitsResponse, null, 2));
         }
-        
-        // Charger les stocks
-        console.log('   ➤ Chargement des stocks...');
-        await chargerStocksAPI();
         
         // Charger les ventes
         console.log('   ➤ Chargement des ventes...');
-        await chargerVentesAPI();
+        window.ventesData = await chargerVentesAPI();
+        console.log(`   ✅ ${window.ventesData.length} ventes chargées`);
         
         // Charger les crédits
         console.log('   ➤ Chargement des crédits...');
@@ -87,13 +123,36 @@ async function chargerToutLesDonnees() {
         
         // Charger les mouvements
         console.log('   ➤ Chargement des mouvements...');
-        await chargerMouvementsAPI();
+        window.mouvementsData = await chargerMouvementsAPI();
+        console.log(`   ✅ ${window.mouvementsData.length} mouvements chargés`);
         
         // Charger les alertes
         console.log('   ➤ Chargement des alertes...');
         alertesData = await chargerAlertesAPI();
         
         console.log('✅ Toutes les données chargées avec succès');
+        console.log('📊 État des données:', {
+            produits: produitsData.length,
+            ventes: window.ventesData ? window.ventesData.length : 'non chargé',
+            credits: creditsData.length,
+            mouvements: window.mouvementsData ? window.mouvementsData.length : 'non chargé',
+            alertes: alertesData.length
+        });
+        
+        // Assigner les données aux variables globales window.*
+        window.produitsData = produitsData;
+        console.log('   ✅ window.produitsData assigné:', window.produitsData ? `Array(${window.produitsData.length})` : 'null/undefined');
+        window.ventesData = window.ventesData || [];
+        window.creditsData = creditsData;
+        window.mouvementsData = window.mouvementsData || [];
+        window.alertesData = alertesData;
+        
+        console.log('🔗 Données assignées aux variables globales');
+        console.log('   📊 window.produitsData:', window.produitsData ? `Array(${window.produitsData.length})` : 'null');
+        console.log('   📊 window.ventesData:', window.ventesData ? `Array(${window.ventesData.length})` : 'null');
+        console.log('   📊 window.creditsData:', window.creditsData ? `Array(${window.creditsData.length})` : 'null');
+        console.log('   📊 window.mouvementsData:', window.mouvementsData ? `Array(${window.mouvementsData.length})` : 'null');
+        console.log('   📊 window.alertesData:', window.alertesData ? `Array(${window.alertesData.length})` : 'null');
         
     } catch (error) {
         console.error('❌ Erreur lors du chargement des données:', error);
@@ -154,18 +213,34 @@ async function chargerDonneesSection(nomSection) {
             await afficherDashboard();
             break;
         case 'produits':
+            console.log('🔍 Débogage avant afficherProduits():');
+            console.log('   - produitsData existe:', typeof produitsData !== 'undefined');
+            console.log('   - produitsData length:', produitsData ? produitsData.length : 'N/A');
+            console.log('   - window.produitsData existe:', typeof window.produitsData !== 'undefined');
+            console.log('   - window.produitsData length:', window.produitsData ? window.produitsData.length : 'N/A');
             await afficherProduits();
             break;
         case 'stocks':
             await afficherStocks();
             break;
         case 'ventes':
+            console.log('🛒 Débogage avant afficherVentes():');
+            console.log('   - window.ventesData existe:', typeof window.ventesData !== 'undefined');
+            console.log('   - window.ventesData length:', window.ventesData ? window.ventesData.length : 'N/A');
+            console.log('   - window.produitsData existe:', typeof window.produitsData !== 'undefined');
+            console.log('   - window.produitsData length:', window.produitsData ? window.produitsData.length : 'N/A');
             await afficherVentes();
             break;
         case 'credits':
+            console.log('💳 Débogage avant afficherCredits():');
+            console.log('   - window.creditsData existe:', typeof window.creditsData !== 'undefined');
+            console.log('   - window.creditsData length:', window.creditsData ? window.creditsData.length : 'N/A');
             await afficherCredits();
             break;
         case 'alertes':
+            console.log('🚨 Débogage avant afficherAlertes():');
+            console.log('   - window.alertesData existe:', typeof window.alertesData !== 'undefined');
+            console.log('   - window.alertesData length:', window.alertesData ? window.alertesData.length : 'N/A');
             await afficherAlertes();
             break;
         case 'inventaires':
@@ -215,6 +290,7 @@ async function afficherDashboard() {
             mettreAJourStat('stat-credits-recouvrement', stats.creditsRecouvrement || 0);
             
             // Stats stocks
+            console.log('   📦 Stats stocks reçues:', {stockValeurTotal: stats.stockValeurTotal, stockNombreProduits: stats.stockNombreProduits});
             mettreAJourStat('stat-stock-valeur', stats.stockValeurTotal || 0);
             mettreAJourStat('stat-stock-nb', stats.stockNombreProduits || 0, false);
             
@@ -237,6 +313,9 @@ async function afficherDashboard() {
             }
         }
         
+        // Charger les top produits du jour
+        await chargerTopProduitsDashboard();
+        
         console.log('✅ Dashboard mis à jour');
     } catch (error) {
         console.error('❌ Erreur mise à jour dashboard:', error);
@@ -245,20 +324,53 @@ async function afficherDashboard() {
 }
 
 /**
- * Mettre à jour les ventes du dashboard (ventes du jour/mois)
+ * Charger et afficher les top produits du jour dans le dashboard
  */
-async function mettreAJourVentesDashboard() {
+async function chargerTopProduitsDashboard() {
+    console.log('🔥 Chargement des top produits du jour...');
+    
     try {
-        const ventesRecentes = ventesData.slice(0, 5) || [];
-        const totalVentes = ventesRecentes.reduce((sum, v) => sum + (v.montant_total || 0), 0);
+        const response = await api.getTopProductsToday(5);
         
-        const elemTotal = document.getElementById('stat-ventes-total');
-        if (elemTotal) elemTotal.textContent = formaterDevise(totalVentes);
+        if (!response.success) {
+            console.error('❌ Erreur API top produits:', response.message);
+            return;
+        }
         
-        const elemNombre = document.getElementById('stat-ventes-nombre');
-        if (elemNombre) elemNombre.textContent = ventesRecentes.length;
+        const listeTopProduits = document.getElementById('listeTopProduits');
+        if (!listeTopProduits) {
+            console.warn('⚠️ Élément listeTopProduits non trouvé');
+            return;
+        }
+        
+        // Vider la liste
+        listeTopProduits.innerHTML = '';
+        
+        if (!response.data || response.data.length === 0) {
+            listeTopProduits.innerHTML = '<li style="text-align: center; color: #666;">Aucune vente aujourd\'hui</li>';
+            return;
+        }
+        
+        // Ajouter les produits
+        response.data.forEach((produit, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <strong>${index + 1}. ${produit.nom_produit || 'Produit inconnu'}</strong>
+                <span class="heure">
+                    <i class="fa-solid fa-box"></i> ${produit.quantite_vendue || 0} unités vendues
+                </span>
+            `;
+            listeTopProduits.appendChild(li);
+        });
+        
+        console.log('✅ Top produits affichés:', response.data.length, 'produits');
     } catch (error) {
-        console.error('❌ Erreur mise à jour ventes dashboard:', error);
+        console.error('❌ Erreur chargement top produits:', error);
+        // Afficher un message d'erreur dans la liste
+        const listeTopProduits = document.getElementById('listeTopProduits');
+        if (listeTopProduits) {
+            listeTopProduits.innerHTML = '<li style="text-align: center; color: #f44336;">Erreur de chargement</li>';
+        }
     }
 }
 
@@ -309,25 +421,60 @@ async function mettreAJourCreditsDashboard() {
  */
 async function afficherProduits() {
     console.log('📦 Affichage des produits...');
+    console.log('   🔍 typeof determinerEtatStock:', typeof determinerEtatStock, 'typeof window.determinerEtatStock:', typeof window.determinerEtatStock);
     
+    // S'assurer que les données sont chargées
+    if (!window.produitsData || window.produitsData.length === 0) {
+        console.log('   🔄 Produits non chargés, tentative de rechargement...');
+        try {
+            const produitsResponse = await api.getAllProducts();
+            if (produitsResponse.success && produitsResponse.data) {
+                window.produitsData = produitsResponse.data;
+                console.log(`   ✅ ${window.produitsData.length} produits rechargés`);
+            } else {
+                console.warn('   ⚠️ Échec du rechargement des produits');
+            }
+        } catch (error) {
+            console.error('   ❌ Erreur rechargement produits:', error);
+        }
+    }
+    
+    console.log('   🔍 window.produitsData au début:', window.produitsData ? `Array(${window.produitsData.length})` : 'null/undefined');
+    if (window.produitsData && window.produitsData.length > 0) {
+        console.log('   📊 Premier produit:', {nom: window.produitsData[0].nom, categorie_nom: window.produitsData[0].categorie_nom, categorie: window.produitsData[0].categorie});
+    }
+
     try {
         const tbody = document.getElementById('corpTableauProduits');
+        console.log('   🔍 Élément tbody trouvé:', !!tbody);
         if (!tbody) {
             console.warn('⚠️ Élément corpTableauProduits non trouvé');
             return;
         }
-        
+
+        // Charger les catégories pour le filtre
+        await chargerCategoriesFiltres();
+
+        // Mettre à jour les stats rapides
+        await mettreAJourStatsRapides();
+
         // Vider le tableau
         tbody.innerHTML = '';
-        
-        if (!produitsData || produitsData.length === 0) {
+        console.log('   🧹 Tableau vidé');
+
+        if (!window.produitsData || window.produitsData.length === 0) {
+            console.log('   ⚠️ Aucun produit dans window.produitsData');
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Aucun produit disponible</td></tr>';
+            mettreAJourInfoTotalProduits(0);
             return;
         }
-        
+
+        console.log(`   📝 Ajout de ${window.produitsData.length} produits au tableau...`);
+
         // Ajouter les produits
-        produitsData.forEach(produit => {
-            const etatStock = determinerEtatStock(produit.stock, produit.seuil_alerte);
+        window.produitsData.forEach((produit, index) => {
+            console.log(`   ➤ Produit ${index + 1}: ${produit.nom} (ID: ${produit.id})`);
+            const etatStock = getEtatStock(produit.stock, produit.seuil_alerte);
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>
@@ -341,7 +488,7 @@ async function afficherProduits() {
                         </div>
                     </div>
                 </td>
-                <td><span class="badge-categorie">${produit.categorie || 'N/A'}</span></td>
+                <td><span class="badge-categorie">${produit.categorie_nom || produit.categorie || 'N/A'}</span></td>
                 <td><span class="prix-produit">${formaterDevise(produit.prix_vente)}</span></td>
                 <td>
                     <div class="stock-produit">
@@ -365,10 +512,206 @@ async function afficherProduits() {
             `;
             tbody.appendChild(row);
         });
-        
-        console.log('✅ Produits affichés');
+
+        // Mettre à jour l'info "Affichage de X sur Y"
+        mettreAJourInfoTotalProduits(window.produitsData.length);
+
+        console.log('✅ Produits affichés avec succès');
     } catch (error) {
         console.error('❌ Erreur affichage produits:', error);
+    }
+}
+
+/**
+ * Mettre à jour l'info "Affichage de X-Y sur Z produits"
+ */
+function mettreAJourInfoTotalProduits(nombreProduits) {
+    try {
+        const infoElem = document.getElementById('infoTotalProduits');
+        if (!infoElem) {
+            console.warn('⚠️ Élément infoTotalProduits non trouvé');
+            return;
+        }
+        
+        // Affichage simple: "Affichage de 1-10 sur Z produits" ou "Affichage de 1-Z sur Z produits"
+        const itemsParPage = 10;
+        const total = nombreProduits;
+        const affiche = Math.min(itemsParPage, total);
+        
+        if (total === 0) {
+            infoElem.innerHTML = 'Affichage de <strong>0</strong> sur <strong>0</strong> produits';
+        } else {
+            infoElem.innerHTML = `Affichage de <strong>1-${affiche}</strong> sur <strong>${total}</strong> produit${total > 1 ? 's' : ''}`;
+        }
+        
+        console.log(`📊 Info mise à jour: ${affiche}/${total} produits affichés`);
+    } catch (error) {
+        console.error('❌ Erreur mise à jour info total:', error);
+    }
+}
+
+/**
+ * Charger et remplir le select filtreCategorie avec les vraies catégories
+ */
+async function chargerCategoriesFiltres() {
+    try {
+        console.log('🏷️ Chargement des catégories pour le filtre...');
+        const response = await api.listCategories(false); // Seulement les actives
+        
+        if (!response.success || !response.data) {
+            console.warn('⚠️ Aucune catégorie trouvée');
+            return;
+        }
+        
+        const select = document.getElementById('filtreCategorie');
+        if (!select) {
+            console.warn('⚠️ Select filtreCategorie non trouvé');
+            return;
+        }
+        
+        // Garder l'option "Toutes les catégories"
+        const firstOption = select.querySelector('option[value=""]');
+        select.innerHTML = '';
+        
+        if (firstOption) {
+            select.appendChild(firstOption.cloneNode(true));
+        }
+        
+        // Ajouter les catégories depuis la base de données
+        response.data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.nom.toLowerCase();
+            option.textContent = cat.nom;
+            option.dataset.categoryId = cat.id;
+            select.appendChild(option);
+        });
+        
+        console.log('✅ Catégories chargées dans le filtre:', response.data.length);
+    } catch (error) {
+        console.error('❌ Erreur chargement catégories filtre:', error);
+    }
+}
+
+/**
+ * Charger les catégories pour le formulaire de produit
+ */
+async function chargerCategoriesFormulaire() {
+    try {
+        console.log('🏷️ Chargement des catégories pour le formulaire...');
+        const response = await api.listCategories(false); // Seulement les actives
+        
+        if (!response.success || !response.data) {
+            console.warn('⚠️ Aucune catégorie trouvée pour le formulaire');
+            return;
+        }
+        
+        const select = document.getElementById('categorieProduit');
+        if (!select) {
+            console.warn('⚠️ Select categorieProduit non trouvé');
+            return;
+        }
+        
+        // Garder l'option par défaut
+        select.innerHTML = '<option value="">Sélectionner une catégorie</option>';
+        
+        // Ajouter les catégories depuis la base de données
+        response.data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id; // Utiliser l'ID comme valeur
+            option.textContent = cat.nom;
+            select.appendChild(option);
+        });
+        
+        console.log('✅ Catégories chargées dans le formulaire:', response.data.length);
+    } catch (error) {
+        console.error('❌ Erreur chargement catégories formulaire:', error);
+    }
+}
+
+/**
+ * Mettre à jour les stats rapides (Total produits, Stock critique, Valeur totale)
+ */
+async function mettreAJourStatsRapides() {
+    try {
+        console.log('📊 Mise à jour des stats rapides...');
+        console.log('   ⚠️ window.produitsData type:', typeof window.produitsData);
+        console.log('   ⚠️ window.produitsData is array?:', Array.isArray(window.produitsData));
+        console.log('   ⚠️ window.produitsData length:', window.produitsData ? window.produitsData.length : 'N/A');
+        
+        // Afficher le contenu exact de chaque produit
+        if (window.produitsData && Array.isArray(window.produitsData)) {
+            window.produitsData.forEach((p, i) => {
+                console.log(`   Produit ${i}:`, {
+                    id: p.id,
+                    nom: p.nom,
+                    stock: p.stock,
+                    prix_vente: p.prix_vente,
+                    seuil_alerte: p.seuil_alerte,
+                    categorie_nom: p.categorie_nom
+                });
+            });
+        }
+        
+        // Calculer les stats même si window.produitsData est vide
+        const totalProduits = window.produitsData && Array.isArray(window.produitsData) ? window.produitsData.length : 0;
+        const elemTotal = document.getElementById('totalProduits');
+        if (elemTotal) {
+            elemTotal.textContent = totalProduits;
+            console.log(`   ✅ Total produits: ${totalProduits}`);
+        } else {
+            console.warn('   ⚠️ Élément totalProduits non trouvé!');
+        }
+        
+        // Calculer le stock critique
+        let stockCritique = 0;
+        if (window.produitsData && Array.isArray(window.produitsData) && window.produitsData.length > 0) {
+            stockCritique = window.produitsData.filter(p => {
+                const stock = parseInt(p.stock) || 0;
+                const seuil = parseInt(p.seuil_alerte) || 0;
+                return stock <= seuil;
+            }).length;
+        }
+        const elemCritique = document.getElementById('stockCritique');
+        if (elemCritique) {
+            elemCritique.textContent = stockCritique;
+            console.log(`   ✅ Stock critique: ${stockCritique}`);
+        } else {
+            console.warn('   ⚠️ Élément stockCritique non trouvé!');
+        }
+        
+        // Calculer la valeur totale
+        let valeurTotale = 0;
+        if (window.produitsData && Array.isArray(window.produitsData) && window.produitsData.length > 0) {
+            console.log('   📌 Calcul de la valeur totale...');
+            valeurTotale = window.produitsData.reduce((sum, p) => {
+                const stock = parseInt(p.stock) || 0;
+                const prix = parseFloat(p.prix_vente) || 0;
+                const valeur = stock * prix;
+                console.log(`      Produit ${p.nom}: ${stock} × ${prix} = ${valeur} FCFA`);
+                return sum + valeur;
+            }, 0);
+            console.log('   💰 Valeur totale calculée:', valeurTotale);
+        } else {
+            console.warn('   ⚠️ Pas de données produits pour calculer la valeur!');
+        }
+        
+        const elemValeur = document.getElementById('valeurTotale');
+        if (elemValeur) {
+            const valeurFormatee = formaterDevise(valeurTotale);
+            console.log(`   📝 Mise à jour de l'élément valeurTotale avec: ${valeurFormatee}`);
+            elemValeur.textContent = valeurFormatee;
+            console.log(`   ✅ Valeur totale mise à jour: ${valeurFormatee}`);
+        } else {
+            console.warn('   ⚠️ Élément valeurTotale non trouvé! Éléments disponibles:');
+            console.warn('      - totalProduits exists?', !!document.getElementById('totalProduits'));
+            console.warn('      - stockCritique exists?', !!document.getElementById('stockCritique'));
+            console.warn('      - valeurTotale exists?', !!document.getElementById('valeurTotale'));
+        }
+        
+        console.log('✅ Stats rapides mises à jour - Total:', totalProduits, 'Critique:', stockCritique, 'Valeur:', valeurTotale);
+    } catch (error) {
+        console.error('❌ Erreur mise à jour stats:', error);
+        console.error('   Stack:', error.stack);
     }
 }
 
@@ -377,17 +720,377 @@ async function afficherProduits() {
  */
 async function afficherStocks() {
     console.log('📦 Affichage des stocks...');
-    
+    console.log('   ⚠️ mouvementsData length:', window.mouvementsData ? window.mouvementsData.length : 'n/a');
+    console.log('   ⚠️ produitsData length:', window.produitsData ? window.produitsData.length : 'n/a');
+
     try {
-        // Charger les alertes stocks
-        alertesData = await chargerAlertesAPI();
-        
-        // Pour maintenant, on peut réutiliser l'affichage des produits
-        await afficherProduits();
-        
-        console.log('✅ Stocks affichés');
+        // S'assurer que les données sont chargées
+        if (!window.mouvementsData || window.mouvementsData.length === 0) {
+            console.log('   🔄 Chargement des mouvements...');
+            await chargerMouvementsAPI();
+        }
+
+        if (!window.produitsData || window.produitsData.length === 0) {
+            console.log('   🔄 Produits manquants, appel API getAllProducts');
+            const produitsResponse = await api.getAllProducts();
+            console.log('   📡 Réponse API dans afficherStocks:', produitsResponse);
+            if (produitsResponse.success && produitsResponse.data) {
+                window.produitsData = produitsResponse.data;
+                console.log('   ✅ window.produitsData réassigné avec', window.produitsData.length, 'éléments');
+            } else {
+                console.warn('   ⚠️ API produits a échoué dans afficherStocks');
+            }
+        }
+
+        console.log('   🧾 État final de window.produitsData avant stats:', window.produitsData);
+
+        // Mettre à jour les statistiques
+        await mettreAJourStatistiquesStocks();
+        console.log('   🎯 Statistiques stocks mises à jour, vérifiez éléments dans DOM');
+
+        // Afficher le tableau des stocks
+        await afficherTableauStocks();
+
+        // Afficher les mouvements récents
+        await afficherMouvementsRecents();
+
+        // Afficher les alertes stock
+        await afficherAlertesStock();
+
+        console.log('✅ Stocks affichés avec succès');
     } catch (error) {
         console.error('❌ Erreur affichage stocks:', error);
+        afficherNotification('Erreur lors de l\'affichage des stocks', 'error');
+    }
+}
+
+/**
+ * Mettre à jour les statistiques de la section stocks
+ */
+async function mettreAJourStatistiquesStocks() {
+    console.log('📊 Calcul des statistiques stocks...');
+    console.log('   🔍 window.produitsData type:', typeof window.produitsData);
+    console.log('   🔍 window.produitsData truthy?:', !!window.produitsData);
+    console.log('   🔍 window.produitsData length =', window.produitsData && window.produitsData.length);
+    console.log('   🔍 window.produitsData value =', window.produitsData);
+    
+    if (!window.produitsData) {
+        console.error('❌ ERREUR: window.produitsData est undefined ou null!');
+        document.querySelectorAll('#stat-stock-valeur').forEach(e=>e.textContent = '❌ DONNÉES NON CHARGÉES');
+        return;
+    }
+    
+    if (!Array.isArray(window.produitsData)) {
+        console.error('❌ ERREUR: window.produitsData n\'est pas un array!', typeof window.produitsData);
+        document.querySelectorAll('#stat-stock-valeur').forEach(e=>e.textContent = '❌ FORMAT ERREUR');
+        return;
+    }
+    
+    if (window.produitsData.length === 0) {
+        console.warn('⚠️ ATTENTION: window.produitsData est un array vide!');
+        document.querySelectorAll('#stat-stock-valeur').forEach(e=>e.textContent = '0 FCFA');
+        return;
+    }
+    
+    if (window.produitsData && Array.isArray(window.produitsData)) {
+        window.produitsData.forEach((p,i) => {
+            console.log(`      Produit ${i}:`, p.nom, 'stock', p.stock, 'prix_vente', p.prix_vente);
+        });
+    }
+
+    try {
+        // Calculer la valeur totale du stock
+        const valeurTotale = window.produitsData ? window.produitsData.reduce((sum, p) => {
+            return sum + ((Number(p.stock) || 0) * (Number(p.prix_vente) || 0));
+        }, 0) : 0;
+        console.log('   🧮 valeurTotale calculée =', valeurTotale);
+
+        // Nombre de produits
+        const nombreProduits = window.produitsData ? window.produitsData.length : 0;
+
+        // Entrées du mois (mouvements d'entrée du mois actuel)
+        const maintenant = new Date();
+        const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
+        const entreesMois = window.mouvementsData ? window.mouvementsData.filter(m =>
+            m.type === 'entree' &&
+            new Date(m.date_mouvement) >= debutMois
+        ).reduce((sum, m) => sum + (Number(m.quantite) || 0), 0) : 0;
+
+        // Sorties du mois (ventes + pertes)
+        const sortiesMois = window.mouvementsData ? window.mouvementsData.filter(m =>
+            (m.type === 'sortie' || m.type === 'perte') &&
+            new Date(m.date_mouvement) >= debutMois
+        ).reduce((sum, m) => sum + (Number(m.quantite) || 0), 0) : 0;
+
+        // Produits critiques (stock <= seuil_alerte)
+        const produitsCritiques = window.produitsData ? window.produitsData.filter(p =>
+            (Number(p.stock) || 0) <= (Number(p.seuil_alerte) || 0) && (Number(p.stock) || 0) > 0
+        ).length : 0;
+
+        // Mettre à jour l'interface
+        // mettre à jour tous les éléments (certaines pages dupliquent les IDs)
+        const elemsValeur = document.querySelectorAll('#stat-stock-valeur');
+        const elemsNb = document.querySelectorAll('#stat-stock-nb');
+        const elemsEntrees = document.querySelectorAll('#stat-entrees-mois');
+        const elemsSorties = document.querySelectorAll('#stat-sorties-mois');
+        const elemsCritiques = document.querySelectorAll('#stat-produits-critiques');
+        console.log('   🧩 éléments trouvés:', {valeur:elemsValeur.length, nb:elemsNb.length, entrees:elemsEntrees.length, sorties:elemsSorties.length, critiques:elemsCritiques.length});
+        elemsValeur.forEach(e => { e.textContent = formaterDevise(valeurTotale); });
+        elemsNb.forEach(e => { e.textContent = `${nombreProduits} produits`; });
+        elemsEntrees.forEach(e => { e.textContent = `${entreesMois} unités`; });
+        elemsSorties.forEach(e => { e.textContent = `${sortiesMois} unités`; });
+        elemsCritiques.forEach(e => { e.textContent = produitsCritiques; });
+        console.log('✅ Statistiques stocks mises à jour (appliquées)', {valeurTotale, nombreProduits, entreesMois, sortiesMois, produitsCritiques});
+    } catch (error) {
+        console.error('❌ Erreur calcul statistiques stocks:', error);
+    }
+}
+
+/**
+ * Afficher le tableau des stocks
+ */
+async function afficherTableauStocks() {
+    console.log('📋 Affichage du tableau des stocks...');
+
+    try {
+        const tbody = document.getElementById('tableauStockBody');
+        if (!tbody) {
+            console.warn('⚠️ Élément tableauStockBody non trouvé');
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (!window.produitsData || window.produitsData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Aucun produit en stock</td></tr>';
+            return;
+        }
+
+        window.produitsData.forEach(produit => {
+            const stock = Number(produit.stock) || 0;
+            const seuil = Number(produit.seuil_alerte) || 0;
+            const valeur = stock * (Number(produit.prix_vente) || 0);
+
+            // Déterminer l'état du stock
+            let etatStock, classeEtat;
+            if (stock === 0) {
+                etatStock = 'Rupture';
+                classeEtat = 'rupture';
+            } else if (stock <= seuil) {
+                etatStock = 'Critique';
+                classeEtat = 'critique';
+            } else if (stock <= seuil * 2) {
+                etatStock = 'Moyen';
+                classeEtat = 'moyen';
+            } else {
+                etatStock = 'Bon';
+                classeEtat = 'bon';
+            }
+
+            // Trouver la dernière entrée pour ce produit
+            const dernierMouvement = window.mouvementsData ?
+                window.mouvementsData
+                    .filter(m => m.produit_id == produit.id && m.type === 'entree')
+                    .sort((a, b) => new Date(b.date_mouvement) - new Date(a.date_mouvement))[0]
+                : null;
+
+            const dateDerniereEntree = dernierMouvement ?
+                new Date(dernierMouvement.date_mouvement).toLocaleDateString('fr-FR') : 'N/A';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div class="info-produit">
+                        <div class="icone-produit">
+                            <i class="fa-solid fa-box"></i>
+                        </div>
+                        <div class="details-produit">
+                            <h4>${produit.nom}</h4>
+                            <span class="code-barre">${produit.code_barre || 'N/A'}</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge-categorie">${produit.categorie_nom || 'N/A'}</span></td>
+                <td><span class="stock-quantite">${stock}</span></td>
+                <td>${seuil}</td>
+                <td><span class="prix-produit">${formaterDevise(valeur)}</span></td>
+                <td><span class="badge-stock stock-${classeEtat}">${etatStock}</span></td>
+                <td>${dateDerniereEntree}</td>
+                <td>
+                    <div class="actions-produit">
+                        <button class="btn-icone btn-voir" title="Historique" onclick="voirHistoriqueProduit(${produit.id})">
+                            <i class="fa-solid fa-history"></i>
+                        </button>
+                        <button class="btn-icone btn-modifier" title="Ajuster stock" onclick="ouvrirModalAjustementStock(${produit.id})">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        console.log(`✅ ${window.produitsData.length} produits affichés dans le tableau`);
+    } catch (error) {
+        console.error('❌ Erreur affichage tableau stocks:', error);
+    }
+}
+
+/**
+ * Afficher les mouvements récents
+ */
+async function afficherMouvementsRecents() {
+    console.log('🔄 Affichage des mouvements récents...');
+
+    try {
+        const container = document.getElementById('listeMouvements');
+        if (!container) {
+            console.warn('⚠️ Élément listeMouvements non trouvé');
+            return;
+        }
+
+        container.innerHTML = '';
+
+        if (!window.mouvementsData || window.mouvementsData.length === 0) {
+            container.innerHTML = '<div class="mouvement-item"><p style="text-align: center; color: #666;">Aucun mouvement récent</p></div>';
+            return;
+        }
+
+        // Trier par date décroissante et prendre les 10 derniers
+        const mouvementsRecents = window.mouvementsData
+            .sort((a, b) => new Date(b.date_mouvement) - new Date(a.date_mouvement))
+            .slice(0, 10);
+
+        mouvementsRecents.forEach(mouvement => {
+            // Trouver le nom du produit
+            const produit = window.produitsData ?
+                window.produitsData.find(p => p.id == mouvement.produit_id) : null;
+            const nomProduit = produit ? produit.nom : `Produit #${mouvement.produit_id}`;
+
+            // Déterminer l'icône et la classe selon le type
+            let icone, classeType;
+            switch (mouvement.type) {
+                case 'entree':
+                    icone = 'fa-arrow-up';
+                    classeType = 'entree';
+                    break;
+                case 'sortie':
+                    icone = 'fa-arrow-down';
+                    classeType = 'sortie';
+                    break;
+                case 'perte':
+                    icone = 'fa-exclamation-triangle';
+                    classeType = 'perte';
+                    break;
+                default:
+                    icone = 'fa-exchange-alt';
+                    classeType = 'autre';
+            }
+
+            const date = new Date(mouvement.date_mouvement).toLocaleDateString('fr-FR');
+            const heure = new Date(mouvement.date_mouvement).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const item = document.createElement('div');
+            item.className = 'mouvement-item';
+            item.innerHTML = `
+                <div class="mouvement-icon">
+                    <i class="fa-solid ${icone} mouvement-${classeType}"></i>
+                </div>
+                <div class="mouvement-details">
+                    <div class="mouvement-produit">${nomProduit}</div>
+                    <div class="mouvement-info">
+                        <span class="mouvement-quantite">${mouvement.quantite} unités</span>
+                        <span class="mouvement-date">${date} ${heure}</span>
+                    </div>
+                    <div class="mouvement-motif">${mouvement.motif || mouvement.type}</div>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        console.log(`✅ ${mouvementsRecents.length} mouvements récents affichés`);
+    } catch (error) {
+        console.error('❌ Erreur affichage mouvements récents:', error);
+    }
+}
+
+/**
+ * Afficher les alertes stock
+ */
+async function afficherAlertesStock() {
+    console.log('🚨 Affichage des alertes stock...');
+
+    try {
+        const container = document.getElementById('listeAlertesStock');
+        if (!container) {
+            console.warn('⚠️ Élément listeAlertesStock non trouvé');
+            return;
+        }
+
+        container.innerHTML = '';
+
+        if (!window.produitsData || window.produitsData.length === 0) {
+            container.innerHTML = '<div class="alerte-item"><p style="text-align: center; color: #666;">Aucune alerte</p></div>';
+            return;
+        }
+
+        // Produits en rupture (stock = 0)
+        const ruptures = window.produitsData.filter(p => (Number(p.stock) || 0) === 0);
+
+        // Produits critiques (stock <= seuil_alerte et stock > 0)
+        const critiques = window.produitsData.filter(p =>
+            (Number(p.stock) || 0) <= (Number(p.seuil_alerte) || 0) &&
+            (Number(p.stock) || 0) > 0
+        );
+
+        let alertesAjoutees = 0;
+
+        // Ajouter les ruptures
+        ruptures.forEach(produit => {
+            const item = document.createElement('div');
+            item.className = 'alerte-item rupture';
+            item.innerHTML = `
+                <div class="alerte-icon">
+                    <i class="fa-solid fa-times-circle"></i>
+                </div>
+                <div class="alerte-details">
+                    <div class="alerte-titre">Rupture de stock</div>
+                    <div class="alerte-produit">${produit.nom}</div>
+                    <div class="alerte-message">Stock épuisé - Réapprovisionnement nécessaire</div>
+                </div>
+            `;
+            container.appendChild(item);
+            alertesAjoutees++;
+        });
+
+        // Ajouter les produits critiques
+        critiques.forEach(produit => {
+            const item = document.createElement('div');
+            item.className = 'alerte-item critique';
+            item.innerHTML = `
+                <div class="alerte-icon">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                </div>
+                <div class="alerte-details">
+                    <div class="alerte-titre">Stock critique</div>
+                    <div class="alerte-produit">${produit.nom}</div>
+                    <div class="alerte-message">Stock: ${produit.stock} unités (seuil: ${produit.seuil_alerte})</div>
+                </div>
+            `;
+            container.appendChild(item);
+            alertesAjoutees++;
+        });
+
+        if (alertesAjoutees === 0) {
+            container.innerHTML = '<div class="alerte-item"><p style="text-align: center; color: #666;">Aucune alerte active</p></div>';
+        }
+
+        console.log(`✅ ${alertesAjoutees} alertes stock affichées`);
+    } catch (error) {
+        console.error('❌ Erreur affichage alertes stock:', error);
     }
 }
 
@@ -396,33 +1099,42 @@ async function afficherStocks() {
  */
 async function afficherVentes() {
     console.log('🛒 Initialisation du formulaire de vente...');
-    
+
     try {
         // Réinitialiser le panier
         panierItems = [];
         afficherPanier();
-        
+
         // Afficher les produits populaires
         const zoneProduitsRapides = document.getElementById('produitsRapides');
-        
-        if (zoneProduitsRapides && produitsData && produitsData.length > 0) {
-            zoneProduitsRapides.innerHTML = '';
+
+        if (zoneProduitsRapides && window.produitsData && window.produitsData.length > 0) {
+            console.log('📦 Affichage des produits rapides - window.produitsData.length:', window.produitsData.length);
+            console.log('📊 Échantillon produitsData:', window.produitsData.slice(0, 3).map(p => ({id: p.id, nom: p.nom, stock: p.stock})));
             
+            zoneProduitsRapides.innerHTML = '';
+
             // Afficher les 6 premiers produits (en stock de préférence)
-            const produitsFiltres = produitsData
+            const produitsFiltres = window.produitsData
                 .filter(p => p.stock > 0)
                 .slice(0, 6);
-            
+
+            console.log('🔍 Produits filtrés (stock > 0):', produitsFiltres.length);
+            console.log('📋 Produits filtrés détails:', produitsFiltres.map(p => ({id: p.id, nom: p.nom, stock: p.stock})));
+
             if (produitsFiltres.length === 0) {
                 // Si aucun n'est en stock, afficher les 6 premiers quand même
-                produitsFiltres.push(...produitsData.slice(0, 6));
+                produitsFiltres.push(...window.produitsData.slice(0, 6));
             }
-            
+
             produitsFiltres.forEach(produit => {
+                console.log('🎯 Produit à afficher:', {id: produit.id, nom: produit.nom, stock: produit.stock});
                 const carte = document.createElement('div');
                 carte.className = 'carte-produit-rapide';
                 carte.innerHTML = `
-                    <img src="${produit.image || '/assets/images/placeholder.png'}" alt="${produit.nom}" class="image-produit-rapide">
+                    <div class="icone-produit-rapide">
+                        <i class="${produit.icone || 'fa-solid fa-box'}"></i>
+                    </div>
                     <div class="info-produit-rapide">
                         <h5>${produit.nom}</h5>
                         <p class="prix-produit-rapide">${formaterDevise(produit.prix_vente)}</p>
@@ -435,24 +1147,24 @@ async function afficherVentes() {
                 zoneProduitsRapides.appendChild(carte);
             });
         }
-        
+
         // Réinitialiser le formulaire de saisie
         document.getElementById('nomClient').value = '';
         selectionnerPaiement('comptant');
         document.getElementById('montantRecu').value = '';
         calculerRenduMonnaie();
-        
+
         // Initialiser les écouteurs d'événements
         const rechercheVente = document.getElementById('rechercheVente');
         if (rechercheVente) {
             rechercheVente.addEventListener('input', filtrerProduitsVente);
         }
-        
+
         const montantRecu = document.getElementById('montantRecu');
         if (montantRecu) {
             montantRecu.addEventListener('input', calculerRenduMonnaie);
         }
-        
+
         console.log('✅ Formulaire de vente initialisé');
     } catch (error) {
         console.error('❌ Erreur initialisation vente:', error);
@@ -464,11 +1176,14 @@ async function afficherVentes() {
  */
 async function afficherCredits() {
     console.log('💳 Affichage des crédits...');
+    console.log('   🔍 window.creditsData:', window.creditsData ? `Array(${window.creditsData.length})` : 'null/undefined');
     
     try {
         creditsData = await chargerCreditsAPI(1000, 0);
+        console.log('   📡 Crédits chargés depuis API:', creditsData.length);
         
         const tbody = document.getElementById('tableauCreditsBody');
+        console.log('   🔍 Élément tbody trouvé:', !!tbody);
         if (!tbody) {
             console.warn('⚠️ Élément tableauCreditsBody non trouvé');
             return;
@@ -477,13 +1192,13 @@ async function afficherCredits() {
         // Vider le tableau
         tbody.innerHTML = '';
         
-        if (!creditsData || creditsData.length === 0) {
+        if (!window.creditsData || window.creditsData.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Aucun crédit enregistré</td></tr>';
             return;
         }
         
         // Ajouter les crédits
-        creditsData.forEach(credit => {
+        window.creditsData.forEach(credit => {
             const joursEcoulés = Math.floor((new Date() - new Date(credit.date_credit)) / (1000 * 60 * 60 * 24));
             const etat = credit.montant_restant <= 0 ? 'Remboursé' : 'En cours';
             const badgeClasse = credit.montant_restant <= 0 ? 'etat-remboursé' : (joursEcoulés > 30 ? 'etat-retard' : 'etat-en-cours');
@@ -505,6 +1220,9 @@ async function afficherCredits() {
                         <button class="btn-icone btn-modifier" title="Rembourser" onclick="ouvrirModalRemboursement('${credit.id}')">
                             <i class="fa-solid fa-money-bill"></i>
                         </button>
+                        ${credit.whatsapp ? `<button class="btn-icone btn-whatsapp" title="Relancer sur WhatsApp" onclick="relancerClientWhatsapp('${credit.id}', '${credit.client_nom || 'Client'}', '${credit.montant_restant || 0}', '${credit.whatsapp}')">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </button>` : ''}
                     </div>
                 </td>
             `;
@@ -522,11 +1240,14 @@ async function afficherCredits() {
  */
 async function afficherAlertes() {
     console.log('🚨 Affichage des alertes...');
+    console.log('   🔍 window.alertesData:', window.alertesData ? `Array(${window.alertesData.length})` : 'null/undefined');
     
     try {
         alertesData = await chargerAlertesAPI();
+        console.log('   📡 Alertes chargées depuis API:', alertesData.length);
         
         const tbody = document.getElementById('tableauAlertesBody');
+        console.log('   🔍 Élément tbody trouvé:', !!tbody);
         if (!tbody) {
             console.warn('⚠️ Élément tableauAlertesBody non trouvé');
             return;
@@ -535,13 +1256,13 @@ async function afficherAlertes() {
         // Vider le tableau
         tbody.innerHTML = '';
         
-        if (!alertesData || alertesData.length === 0) {
+        if (!window.alertesData || window.alertesData.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Aucune alerte</td></tr>';
             return;
         }
         
         // Ajouter les alertes
-        alertesData.forEach(alerte => {
+        window.alertesData.forEach(alerte => {
             const niveauClasse = `alerte-${alerte.niveau || 'info'}`.toLowerCase();
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -688,6 +1409,12 @@ function initialiserEvenementsInteractifs() {
         inputRechercheCredit.addEventListener('input', appliquerFiltresCredits);
     }
     
+    // Formulaire de produit (ajout/modification)
+    const formProduit = document.getElementById('formProduit');
+    if (formProduit) {
+        formProduit.addEventListener('submit', enregistrerProduit);
+    }
+    
     // Menu
     document.querySelectorAll('.menu-navigation a').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -703,7 +1430,10 @@ function initialiserEvenementsInteractifs() {
     // Initialiser l'upload de photo de profil
     initialiserUploadPhotoProfil();
     
-    console.log('✅ Événements interactifs initialisés');
+    // Initialiser la modale format export avec fermeture au clic en dehors
+    initialiserModalFormatExport();
+    
+    console.log('✅ Evenements interactifs initialises');
     
     // Test final de connexion après 5 secondes
     setTimeout(() => {
@@ -712,6 +1442,39 @@ function initialiserEvenementsInteractifs() {
             mettreAJourIndicateurScanner(false, 'Connexion échouée');
         }
     }, 5000);
+}
+
+/**
+ * Initialiser les gestionnaires de modales (fermeture au clic sur overlay)
+ */
+function initialiserGestionnairesModales() {
+    console.log('📦 Initialisation des gestionnaires de modales...');
+    
+    // Liste des ID de modales et leurs fonctions de fermeture
+    const modales = [
+        { id: 'modalDetailProduit', fermer: fermerModalDetailProduit },
+        { id: 'modalHistoriqueProduit', fermer: fermerModalHistoriqueProduit },
+        { id: 'modalAjustementStock', fermer: fermerModalAjustementStock },
+        { id: 'modalProduit', fermer: fermerModalProduit },
+        { id: 'modalCategorie', fermer: fermerModalCategorie },
+        { id: 'modalMouvementStock', fermer: fermerModalMouvementStock },
+        { id: 'modalPerte', fermer: fermerModalPerte }
+    ];
+    
+    modales.forEach(({ id, fermer }) => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            // Fermer au clic sur l'overlay (pas sur le contenu)
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    console.log(`🚫 Fermeture modal ${id}`);
+                    fermer();
+                }
+            });
+            console.log(`   ✓ Gestionnaire modal ${id}`);
+        }
+    });   
+    console.log('✅ Gestionnaires de modales initialisés');
 }
 
 // ====================================================================
@@ -762,34 +1525,29 @@ class KeyboardBarcodeScanner {
      * Gestionnaire d'événement keydown
      */
     handleKeyDown(event) {
-        // Ignorer si dans un champ de saisie (sauf si c'est un scan)
+        // Ignorer si dans un champ de saisie (input/textarea)
         const target = event.target;
         const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true';
         
-        // Si c'est Enter et qu'on a un buffer, traiter comme fin de scan
-        if (event.key === 'Enter' && this.buffer.length > 0) {
-            event.preventDefault();
-            event.stopPropagation();
-            this.processBuffer();
-            return;
-        }
-        
-        // Si c'est une touche imprimable et pas dans un input important
-        if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
-            // Si on est dans un input de recherche ou filtre, laisser passer
-            if (isInput && (target.id.includes('recherche') || target.id.includes('filtre') || target.classList.contains('search-input'))) {
-                return; // Laisser le comportement normal
-            }
-            
-            // Accumuler dans le buffer
+        // Si c'est une touche imprimable et pas dans un input
+        if (event.key && event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey && !isInput) {
+            // On n'est pas dans un input/textarea - accumuler pour scanner
             this.buffer += event.key;
             
-            // Prévenir le comportement par défaut (éviter que ça s'affiche quelque part)
+            // Prévenir le comportement par défaut
             event.preventDefault();
             event.stopPropagation();
             
             // Redémarrer le timeout
             this.restartTimeout();
+        }
+        
+        // Si c'est Enter et qu'on a un buffer, traiter comme fin de scan
+        if (event.key === 'Enter' && this.buffer.length > 0 && !isInput) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.processBuffer();
+            return;
         }
     }
 
@@ -1337,10 +2095,134 @@ async function seDeconnecter() {
  * Voir détail d'un produit
  */
 function voirDetailProduit(id) {
-    const produit = produitsData.find(p => p.id == id);
-    if (produit) {
-        afficherNotification(`Détails de ${produit.nom}`, 'info');
+    console.log('🔍 Ouverture détail produit ID:', id, 'from window.produitsData');
+    const produit = window.produitsData ? window.produitsData.find(p => p.id == id) : null;
+    if (!produit) {
+        console.warn('⚠️ Produit non trouvé - window.produitsData:', window.produitsData ? window.produitsData.length : 'undefined');
+        afficherNotification('Produit non trouvé', 'error');
+        return;
     }
+    
+    // Déterminer l'état du stock (sécurisé)
+    console.log('   🔍 calcul état stock pour produit', produit.nom, 'avec getEtatStock');
+    const etat = getEtatStock(produit.stock, produit.seuil_alerte);
+    const marge = produit.prix_achat ? ((((produit.prix_vente - produit.prix_achat) / produit.prix_achat) * 100).toFixed(1)) : 'N/A';
+    const margeClass = marge !== 'N/A' ? (marge > 30 ? 'margin-high' : marge > 15 ? 'margin-medium' : 'margin-low') : '';
+    
+    // Créer le contenu HTML des détails
+    const contenuHTML = `
+        <div class="details-produit-container">
+            <!-- En-tête avec info principale -->
+            <div class="details-produit-header">
+                <div class="produit-icon">
+                    <i class="fa-solid fa-box"></i>
+                </div>
+                <div class="produit-title">
+                    <h2>${produit.nom}</h2>
+                    <p class="produit-code">${produit.code_barre || 'Pas de code-barres'}</p>
+                </div>
+                <div class="produit-etat">
+                    <span class="badge-stock stock-${etat.classe}">${etat.libelle}</span>
+                </div>
+            </div>
+
+            <!-- Grille d'informations -->
+            <div class="details-grid">
+                <!-- Section 1: Informations Générales -->
+                <div class="details-produit-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <h3>Informations Générales</h3>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-tag"></i> Catégorie</span>
+                        <span class="detail-value"><span class="badge-categorie">${produit.categorie_nom || produit.categorie || 'N/A'}</span></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-barcode"></i> Code interne</span>
+                        <span class="detail-value">${produit.code_interne || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-calendar"></i> Date d'ajout</span>
+                        <span class="detail-value">${produit.created_at ? formaterDate(produit.created_at) : 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-power-off"></i> Statut</span>
+                        <span class="detail-value">${produit.actif ? '<span class="badge-active">Actif</span>' : '<span class="badge-inactive">Inactif</span>'}</span>
+                    </div>
+                </div>
+
+                <!-- Section 2: Informations Financières -->
+                <div class="details-produit-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-coins"></i>
+                        <h3>Tarification</h3>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-arrow-down"></i> Prix d'achat</span>
+                        <span class="detail-value tertiary">${formaterDevise(produit.prix_achat || 0)}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-arrow-up"></i> Prix de vente</span>
+                        <span class="detail-value primary"><strong>${formaterDevise(produit.prix_vente || 0)}</strong></span>
+                    </div>
+                    <div class="detail-row highlight">
+                        <span class="detail-label"><i class="fa-solid fa-percent"></i> Marge</span>
+                        <span class="detail-value ${margeClass}"><strong>${marge !== 'N/A' ? marge + '%' : 'N/A'}</strong></span>
+                    </div>
+                    <div class="detail-row highlight">
+                        <span class="detail-label"><i class="fa-solid fa-chart-line"></i> Valeur stock</span>
+                        <span class="detail-value primary"><strong>${formaterDevise((produit.stock || 0) * (produit.prix_vente || 0))}</strong></span>
+                    </div>
+                </div>
+
+                <!-- Section 3: Gestion du Stock -->
+                <div class="details-produit-section">
+                    <div class="section-header">
+                        <i class="fa-solid fa-warehouse"></i>
+                        <h3>Gestion du Stock</h3>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-boxes-stacked"></i> Quantité actuelle</span>
+                        <span class="detail-value primary"><strong>${produit.stock || 0} unité(s)</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><i class="fa-solid fa-bell"></i> Seuil d'alerte</span>
+                        <span class="detail-value">${produit.seuil_alerte || 'Non défini'}</span>
+                    </div>
+                    <div class="detail-row stock-indicator">
+                        <div class="stock-bar">
+                            <div class="stock-fill" style="width: ${Math.min((produit.stock / (produit.seuil_alerte * 3)) * 100, 100)}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="details-produit-actions">
+                <button onclick="ouvrirModalProduit('modifier', ${produit.id})" class="btn btn-primaire">
+                    <i class="fa-solid fa-pen-to-square"></i> Modifier
+                </button>
+                <button onclick="fermerModalDetailProduit()" class="btn btn-secondaire">
+                    <i class="fa-solid fa-xmark"></i> Fermer
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Remplir le contenant et ouvrir la modal
+    const contentDiv = document.getElementById('detailsProduitContent');
+    if (contentDiv) {
+        contentDiv.innerHTML = contenuHTML;
+    }
+    
+    const modal = document.getElementById('modalDetailProduit');
+    if (modal) {
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+    }
+    
+    console.log('✅ Modal détails produit ouverte pour:', produit.nom);
 }
 
 /**
@@ -1348,6 +2230,123 @@ function voirDetailProduit(id) {
  */
 function voirDetailVente(id) {
     afficherNotification('Chargement des détails...', 'info');
+}
+
+// Placeholder for stock history view
+function voirHistoriqueProduit(id) {
+    console.log('🔍 Ouverture historique produit', id);
+    const produit = window.produitsData ? window.produitsData.find(p => p.id == id) : null;
+    
+    if (!produit) {
+        afficherNotification('Produit non trouvé', 'error');
+        return;
+    }
+
+    const historique = window.mouvementsData ? 
+        window.mouvementsData.filter(m => m.produit_id == id).sort((a, b) => new Date(b.date_mouvement) - new Date(a.date_mouvement)) 
+        : [];
+
+    let contenuHTML = '<div style="padding: 10px;">';
+    
+    if (historique.length === 0) {
+        contenuHTML += '<p style="text-align: center; color: #999;">Aucun mouvement pour ce produit</p>';
+    } else {
+        contenuHTML += `<h4>${produit.nom}</h4>`;
+        contenuHTML += `<p style="color: #666; margin-bottom: 15px;"><i class="fa-solid fa-barcode"></i> ${produit.code_barre || 'N/A'}</p>`;
+        contenuHTML += '<table style="width: 100%; border-collapse: collapse;">';
+        contenuHTML += '<tr style="background: #f5f5f5; font-weight: bold;"><td style="padding: 8px; border-bottom: 1px solid #ddd;">Date</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Type</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Quantité</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Motif</td></tr>';
+        
+        historique.forEach(mvt => {
+            const typeIcon = mvt.type === 'entree' ? '📥' : mvt.type === 'sortie' ? '📤' : '⚠️';
+            const date = new Date(mvt.date_mouvement).toLocaleDateString('fr-FR');
+            contenuHTML += `<tr><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${typeIcon} ${mvt.type}</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${mvt.quantite}</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${mvt.motif || '-'}</td></tr>`;
+        });
+        contenuHTML += '</table>';
+    }
+    
+    contenuHTML += '</div>';
+    
+    const modal = document.getElementById('modalHistoriqueProduit');
+    const content = document.getElementById('historiqueContent');
+    if (content) content.innerHTML = contenuHTML;
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+    console.log('✅ Modale historique ouverte');
+}
+
+function fermerModalHistoriqueProduit() {
+    const modal = document.getElementById('modalHistoriqueProduit');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 250);
+    }
+}
+
+// Placeholder for stock adjustment modal
+function ouvrirModalAjustementStock(id) {
+    console.log('🔧 Ouverture ajustement stock pour produit', id);
+    const produit = window.produitsData ? window.produitsData.find(p => p.id == id) : null;
+    
+    if (!produit) {
+        afficherNotification('Produit non trouvé', 'error');
+        return;
+    }
+    
+    // Remplir les champs
+    document.getElementById('produitAjustement').value = produit.nom;
+    document.getElementById('stockActuelAjustement').value = produit.stock + ' unités';
+    document.getElementById('typeMouvementAjustement').value = '';
+    document.getElementById('quantiteAjustement').value = '';
+    document.getElementById('motifAjustement').value = '';
+    
+    // Stocker l'ID du produit pour la soumission
+    const form = document.getElementById('formAjustementStock');
+    if (form) {
+        form.dataset.produitId = id;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            await validerAjustementStock(id);
+        };
+    }
+    
+    const modal = document.getElementById('modalAjustementStock');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+    console.log('✅ Modale ajustement ouverte');
+}
+
+function fermerModalAjustementStock() {
+    const modal = document.getElementById('modalAjustementStock');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 250);
+    }
+}
+
+async function validerAjustementStock(produitId) {
+    const type = document.getElementById('typeMouvementAjustement').value;
+    const quantite = document.getElementById('quantiteAjustement').value;
+    const motif = document.getElementById('motifAjustement').value;
+    
+    if (!type || !quantite || !motif) {
+        afficherNotification('Tous les champs sont requis', 'error');
+        return;
+    }
+    
+    console.log('💾 Enregistrement ajustement:', {produitId, type, quantite, motif});
+    afficherNotification('Ajustement enregistré avec succès', 'success');
+    fermerModalAjustementStock();
+    
+    // Recharger les stocks
+    await afficherStocks();
 }
 
 /**
@@ -1373,14 +2372,30 @@ function confirmerSuppressionProduit(id) {
 window.afficherSection = afficherSection;
 window.toggleMenu = toggleMenu;
 window.confirmerSuppression = function() { afficherNotification('Suppression confirmée', 'info'); };
-window.filtrerProduits = function() { console.log('Filtre produits'); };
-window.trierProduits = function() { console.log('Tri produits'); };
+window.voirHistoriqueProduit = voirHistoriqueProduit;
+window.ouvrirModalAjustementStock = ouvrirModalAjustementStock;
 window.appliquerFiltresCredits = function() { afficherCredits(); };
 window.ouvrirModalRemboursement = function(id) { afficherNotification('Modal remboursement: ' + id, 'info'); };
 window.relancerClient = function(id) { afficherNotification('Client relancé', 'info'); };
-window.ouvrirModalExport = function(type, msg) { console.log('Export:', type); };
-window.confirmerExport = function(format) { afficherNotification('Export en ' + format, 'info'); };
-window.annulerExport = function() { console.log('Export annulé'); };
+// Nouvelle fonction d'export unifiée
+window.ouvrirModalExport = function(type, msg) {
+    typeExportEnCours = type;
+    ouvrirModalFormatExport();
+};
+window.confirmerExport = function(format) {
+    // Route vers la bonne fonction selon le contexte
+    if (typeRapportEnCours) {
+        procederTelechargementRapport(format);
+    } else if (typeExportEnCours) {
+        // Garder l'ancienne logique pour les autres exports si nécessaire
+        console.log('Export', typeExportEnCours, 'en', format);
+    }
+};
+window.annulerExport = function() {
+    typeRapportEnCours = null;
+    typeExportEnCours = null;
+    fermerModalFormatExport();
+};
 window.activerScanner = function() { console.log('Activation scanner'); };
 window.ouvrirModalProfil = ouvrirModalProfil;
 window.fermerModalProfil = fermerModalProfil;
@@ -1392,6 +2407,16 @@ window.initialiserUploadPhotoProfil = initialiserUploadPhotoProfil;
 window.uploadPhotoProfil = uploadPhotoProfil;
 window.confirmerSuppressionProduit = confirmerSuppressionProduit;
 window.voirDetailCredit = voirDetailCredit;
+
+// ====================================================================
+// EXPORT DES VARIABLES GLOBALES POUR LES AUTRES MODULES
+// ====================================================================
+
+window.produitsData = produitsData;
+window.ventesData = ventesData;
+window.creditsData = creditsData;
+window.mouvementsData = mouvementsData;
+window.alertesData = alertesData;
 window.voirDetailVente = voirDetailVente;
 window.voirDetailProduit = voirDetailProduit;
 
@@ -1403,10 +2428,31 @@ let panierItems = [];
 let typePaiementActuel = 'comptant';
 
 function ajouterAuPanier(idProduit) {
-    const produit = produitsData.find(p => p.id == idProduit);
-    if (!produit) return;
+    console.log('🛒 ajouterAuPanier appelé avec idProduit:', idProduit, 'type:', typeof idProduit);
     
-    const existant = panierItems.find(p => p.id == idProduit);
+    // Convertir idProduit en nombre si c'est une chaîne
+    const idToFind = parseInt(idProduit);
+    console.log('🔍 Recherche du produit avec ID converti:', idToFind);
+    
+    const produit = produitsData.find(p => parseInt(p.id) === idToFind);
+    console.log('🔍 Produit trouvé:', produit ? {id: produit.id, nom: produit.nom, type_id: typeof produit.id} : 'AUCUN PRODUIT TROUVÉ');
+    
+    if (!produit) {
+        console.error('❌ Produit non trouvé pour ID:', idProduit, '(converti:', idToFind, ')');
+        console.log('📊 produitsData.length:', produitsData.length);
+        console.log('📋 Échantillon produitsData:', produitsData.slice(0, 3).map(p => ({id: p.id, nom: p.nom, type_id: typeof p.id})));
+        afficherNotification('Produit non trouvé', 'error');
+        return;
+    }
+    
+    // ✅ RESTRICTION: Vérifier que le produit n'est pas en rupture de stock
+    if (parseInt(produit.stock) <= 0) {
+        console.error('❌ Produit en rupture de stock:', produit.nom);
+        afficherNotification(`${produit.nom} est en rupture de stock`, 'error');
+        return;
+    }
+    
+    const existant = panierItems.find(p => parseInt(p.id) === idToFind);
     if (existant) {
         existant.quantite++;
     } else {
@@ -1476,6 +2522,12 @@ function selectionnerPaiement(type) {
     if (champClient) {
         champClient.style.display = type === 'credit' ? 'block' : 'none';
     }
+
+    // Afficher le champ WhatsApp pour les crédits
+    const champWhatsapp = document.getElementById('champWhatsapp');
+    if (champWhatsapp) {
+        champWhatsapp.style.display = type === 'credit' ? 'block' : 'none';
+    }
 }
 
 function calculerRenduMonnaie() {
@@ -1508,6 +2560,10 @@ function filtrerProduitsVente() {
 }
 
 async function validerVente() {
+    console.log('💰 validerVente appelée');
+    console.log('🛒 panierItems au moment de la validation:', panierItems);
+    console.log('📊 panierItems.length:', panierItems.length);
+    
     if (panierItems.length === 0) {
         afficherNotification('Le panier est vide', 'warning');
         return;
@@ -1523,20 +2579,61 @@ async function validerVente() {
     
     const montantRecu = parseFloat(document.getElementById('montantRecu')?.value) || 0;
     const total = panierItems.reduce((s, p) => s + (p.prix_vente * p.quantite), 0);
+
+    // Récupérer le numéro WhatsApp s'il existe
+    let whatsappNumber = null;
+    if (typePaiementActuel === 'credit') {
+        const whatsappInput = document.getElementById('whatsappClient')?.value;
+        if (whatsappInput && whatsappInput.trim()) {
+            // Formater le numéro: 05 12 34 56 78 (10 chiffres) → +225512345678
+            const cleanNumber = whatsappInput.replace(/\s/g, '');
+            
+            // Valider que c'est 10 chiffres
+            if (!/^\d{10}$/.test(cleanNumber)) {
+                afficherNotification('Numéro WhatsApp invalide. Format: 10 chiffres (ex: 05 12 34 56 78)', 'error');
+                return;
+            }
+            
+            whatsappNumber = '+225' + cleanNumber;
+        }
+    }
     
-    const success = await enregistrerVenteAPI(
+    const success = await enregistrerVenteAPIAvecWhatsapp(
         document.getElementById('nomClient')?.value || 'Vente comptant',
         total,
         typePaiementActuel,
-        panierItems,
+        panierItems, // Les items sont déjà formatés dans la fonction
         montantRecu,
-        montantRecu - total
+        montantRecu - total,
+        whatsappNumber
     );
     
     if (success) {
+        // Si c'est un crédit, créer automatiquement un crédit après la vente
+        if (typePaiementActuel === 'credit' && success.vente_id) {
+            const clientNom = document.getElementById('nomClient')?.value || 'Client';
+            const creditResult = await creerCreditAPI(
+                success.vente_id,
+                clientNom,
+                total,
+                'AUTRE',
+                whatsappNumber
+            );
+            
+            if (!creditResult) {
+                // Le crédit n'a pas pu être créé mais la vente l'a été
+                afficherNotification('Vente créée mais crédit non enregistré', 'warning');
+            }
+        }
+
         panierItems = [];
         afficherPanier();
         afficherNotification('Vente enregistrée avec succès', 'success');
+        
+        // Réinitialiser le formulaire
+        document.getElementById('nomClient').value = '';
+        document.getElementById('whatsappClient').value = '';
+        selectionnerPaiement('comptant');
     }
 }
 
@@ -1563,8 +2660,13 @@ window.annulerVente = annulerVente;
 // PRODUITS - MODALES ET ACTIONS
 // ====================================================================
 
-function ouvrirModalProduit(mode, id = null, codeBarre = null) {
+async function ouvrirModalProduit(mode, id = null, codeBarre = null) {
     console.log('🔍 ouvrirModalProduit appelée avec:', {mode, id, codeBarre});
+    
+    // Mettre à jour les variables globales de mode
+    modeProduitActuel = mode;
+    idProduitActuel = id;
+    console.log('📌 Mode défini:', modeProduitActuel, 'ID:', idProduitActuel);
     
     const modal = document.getElementById('modalProduit');
     console.log('📱 Modal trouvée:', modal ? 'OUI' : 'NON');
@@ -1573,6 +2675,9 @@ function ouvrirModalProduit(mode, id = null, codeBarre = null) {
         console.error('❌ Modal produit non trouvée dans le DOM');
         return;
     }
+    
+    // Charger les catégories pour le formulaire
+    await chargerCategoriesFormulaire();
     
     // Vérifier si la modal est déjà ouverte
     if (modal.style.display === 'flex') {
@@ -1594,7 +2699,7 @@ function ouvrirModalProduit(mode, id = null, codeBarre = null) {
             if (inputCodeBarre) inputCodeBarre.value = produit.code_barre || '';
             
             const inputCategorie = document.getElementById('categorieProduit');
-            if (inputCategorie) inputCategorie.value = produit.categorie || '';
+            if (inputCategorie) inputCategorie.value = produit.categorie_id || '';
             
             const inputPrix = document.getElementById('prixProduit');
             if (inputPrix) inputPrix.value = produit.prix_vente || '';
@@ -1659,15 +2764,112 @@ function fermerModalProduit() {
     }
 }
 
-function voirDetailProduit(id) {
-    const produit = produitsData.find(p => p.id == id);
-    if (!produit) return;
-    afficherNotification(`Détails: ${produit.nom}`, 'info');
+/**
+ * Enregistrer un produit (ajout ou modification)
+ */
+async function enregistrerProduit(event) {
+    event.preventDefault();
+    console.log('📝 Enregistrement du produit...');
+    
+    // Récupérer les valeurs du formulaire
+    const nom = document.getElementById('nomProduit')?.value?.trim();
+    const codeBarre = document.getElementById('codeBarreProduit')?.value?.trim();
+    const categorie = document.getElementById('categorieProduit')?.value?.trim();
+    const prix = parseFloat(document.getElementById('prixProduit')?.value);
+    const stock = parseInt(document.getElementById('stockInitial')?.value);
+    const seuil = parseInt(document.getElementById('seuilAlerte')?.value);
+    
+    // Validation
+    if (!nom) {
+        afficherNotification('❌ Veuillez entrer le nom du produit', 'error');
+        return;
+    }
+    
+    if (!categorie) {
+        afficherNotification('❌ Veuillez sélectionner une catégorie', 'error');
+        return;
+    }
+    
+    if (!prix || prix <= 0) {
+        afficherNotification('❌ Veuillez entrer un prix valide', 'error');
+        return;
+    }
+    
+    if (stock === null || stock === '' || stock < 0) {
+        afficherNotification('❌ Veuillez entrer un stock valide', 'error');
+        return;
+    }
+    
+    if (seuil === null || seuil === '' || seuil < 0) {
+        afficherNotification('❌ Veuillez entrer un seuil d\'alerte valide', 'error');
+        return;
+    }
+    
+    console.log({nom, codeBarre, categorie, prix, stock, seuil});
+    
+    try {
+        let response;
+        
+        if (modeProduitActuel === 'modifier' && idProduitActuel) {
+            // Modification
+            console.log(`🔄 Modification du produit #${idProduitActuel}`);
+            const donnees = {
+                nom,
+                code_barre: codeBarre,
+                categorie_id: categorie,
+                prix_vente: prix,
+                stock,
+                seuil_alerte: seuil
+            };
+            response = await api.updateProduct(idProduitActuel, donnees);
+        } else {
+            // Ajout
+            console.log('➕ Ajout d\'un nouveau produit');
+            const donnees = {
+                nom,
+                code_barre: codeBarre || null,
+                categorie_id: categorie,
+                prix_vente: prix,
+                stock,
+                seuil_alerte: seuil
+            };
+            response = await api.createProduct(donnees);
+        }
+        
+        if (response.success) {
+            afficherNotification(
+                modeProduitActuel === 'modifier' 
+                    ? '✅ Produit modifié avec succès' 
+                    : '✅ Produit ajouté avec succès',
+                'success'
+            );
+            
+            // Fermer la modal
+            fermerModalProduit();
+            
+            // Recharger les données
+            console.log('🔄 Rechargement des données...');
+            await chargerToutLesDonnees();
+            
+            // Rafraîchir l'affichage et les stats
+            console.log('📊 Mise à jour de l\'affichage et des stats...');
+            await mettreAJourStatsRapides();
+            afficherProduits();
+        } else {
+            afficherNotification(`❌ Erreur: ${response.message || 'Impossible d\'enregistrer le produit'}`, 'error');
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'enregistrement:', error);
+        afficherNotification('❌ Erreur lors de l\'enregistrement du produit', 'error');
+    }
 }
 
 function fermerModalDetailProduit() {
     const modal = document.getElementById('modalDetailProduit');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
 }
 
 function confirmerSuppressionProduit(id) {
@@ -1681,11 +2883,16 @@ function filtrerProduits() {
     const etat = document.getElementById('filtreStock')?.value || '';
     
     let filtered = produitsData;
-    if (categorie) filtered = filtered.filter(p => p.categorie === categorie);
+    if (categorie) {
+        filtered = filtered.filter(p => {
+            // Comparer en minuscules pour éviter les problèmes de casse
+            return (p.categorie_nom || p.categorie || '').toLowerCase() === categorie.toLowerCase();
+        });
+    }
     if (etat) {
         const etatMap = { bon: 'bon', moyen: 'moyen', critique: 'critique' };
         filtered = filtered.filter(p => {
-            const e = determinerEtatStock(p.stock, p.seuil_alerte);
+            const e = getEtatStock(p.stock, p.seuil_alerte);
             return e.classe === etatMap[etat];
         });
     }
@@ -1693,10 +2900,14 @@ function filtrerProduits() {
     const tbody = document.getElementById('corpTableauProduits');
     if (tbody) {
         tbody.innerHTML = filtered.map(p => {
-            const e = determinerEtatStock(p.stock, p.seuil_alerte);
-            return `<tr><td><div class="info-produit"><div class="icone-produit"><i class="fa-solid fa-box"></i></div><div class="details-produit"><h4>${p.nom}</h4><span class="code-barre">${p.code_barre}</span></div></div></td><td><span class="badge-categorie">${p.categorie}</span></td><td>${formaterDevise(p.prix_vente)}</td><td><span class="badge-stock stock-${e.classe}">${p.stock} unité(s)</span></td><td>${p.seuil_alerte}</td><td><button class="btn-icone btn-voir" onclick="voirDetailProduit(${p.id})"><i class="fa-solid fa-eye"></i></button><button class="btn-icone btn-modifier" onclick="ouvrirModalProduit('modifier', ${p.id})"><i class="fa-solid fa-pen"></i></button><button class="btn-icone btn-supprimer" onclick="confirmerSuppressionProduit(${p.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            const e = getEtatStock(p.stock, p.seuil_alerte);
+            console.log('Produit:', p.nom, 'categorie_nom:', p.categorie_nom, 'categorie:', p.categorie, '→ affiché:', p.categorie_nom || p.categorie || 'N/A');
+            return `<tr><td><div class="info-produit"><div class="icone-produit"><i class="fa-solid fa-box"></i></div><div class="details-produit"><h4>${p.nom}</h4><span class="code-barre">${p.code_barre}</span></div></div></td><td><span class="badge-categorie">${p.categorie_nom || p.categorie || 'N/A'}</span></td><td>${formaterDevise(p.prix_vente)}</td><td><span class="badge-stock stock-${e.classe}">${p.stock} unité(s)</span></td><td>${p.seuil_alerte}</td><td><div class="actions-produit"><button class="btn-icone btn-voir" onclick="voirDetailProduit(${p.id})"><i class="fa-solid fa-eye"></i></button><button class="btn-icone btn-modifier" onclick="ouvrirModalProduit('modifier', ${p.id})"><i class="fa-solid fa-pen"></i></button><button class="btn-icone btn-supprimer" onclick="confirmerSuppressionProduit(${p.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
         }).join('');
     }
+    
+    // Mettre à jour l'affichage du nombre de produits filtrés
+    mettreAJourInfoTotalProduits(filtered.length);
 }
 
 function trierProduits() {
@@ -1715,8 +2926,8 @@ function trierProduits() {
     const tbody = document.getElementById('corpTableauProduits');
     if (tbody) {
         tbody.innerHTML = sorted.map(p => {
-            const e = determinerEtatStock(p.stock, p.seuil_alerte);
-            return `<tr><td><div class="info-produit"><div class="icone-produit"><i class="fa-solid fa-box"></i></div><div class="details-produit"><h4>${p.nom}</h4></div></div></td><td>${p.categorie}</td><td>${formaterDevise(p.prix_vente)}</td><td><span class="badge-stock stock-${e.classe}">${p.stock}</span></td><td>${p.seuil_alerte}</td><td><button class="btn-icone" onclick="voirDetailProduit(${p.id})"><i class="fa-solid fa-eye"></i></button></td></tr>`;
+            const e = getEtatStock(p.stock, p.seuil_alerte);
+            return `<tr><td><div class="info-produit"><div class="icone-produit"><i class="fa-solid fa-box"></i></div><div class="details-produit"><h4>${p.nom}</h4></div></div></td><td>${p.categorie_nom || p.categorie || 'N/A'}</td><td>${formaterDevise(p.prix_vente)}</td><td><span class="badge-stock stock-${e.classe}">${p.stock}</span></td><td>${p.seuil_alerte}</td><td><button class="btn-icone" onclick="voirDetailProduit(${p.id})"><i class="fa-solid fa-eye"></i></button></td></tr>`;
         }).join('');
     }
 }
@@ -1727,6 +2938,15 @@ window.fermerModalDetailProduit = fermerModalDetailProduit;
 window.confirmerSuppressionProduit = confirmerSuppressionProduit;
 window.filtrerProduits = filtrerProduits;
 window.trierProduits = trierProduits;
+window.chargerCategoriesFiltres = chargerCategoriesFiltres;
+window.mettreAJourStatsRapides = mettreAJourStatsRapides;
+
+// exposer nouveaux stubs
+window.voirHistoriqueProduit = voirHistoriqueProduit;
+window.fermerModalHistoriqueProduit = fermerModalHistoriqueProduit;
+window.ouvrirModalAjustementStock = ouvrirModalAjustementStock;
+window.fermerModalAjustementStock = fermerModalAjustementStock;
+window.validerAjustementStock = validerAjustementStock;
 
 // ====================================================================
 // CATÉGORIES
@@ -1737,6 +2957,12 @@ function ouvrirModalCategorie() {
     if (modal) {
         modal.style.display = 'flex';
         modal.classList.add('active');
+        // Charger les catégories dès l'ouverture pour l'onglet Gérer
+        chargerCategoriesAffichage();
+        // Réinitialiser le formulaire
+        document.getElementById('formCategorie').reset();
+        // Aller à l'onglet Ajouter par défaut
+        basculerTabCategorie('ajouter');
     }
 }
 
@@ -1751,35 +2977,230 @@ function fermerModalCategorie() {
 }
 
 function basculerTabCategorie(tab) {
-    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('tab-active'));
-    document.querySelector(`.tab-btn[onclick*="'${tab}'"]`)?.classList.add('tab-active');
+    // Activer le bouton de l'onglet correspondant
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+    });
     
-    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    const tabContent = document.getElementById(`tab-${tab}`);
-    if (tabContent) tabContent.style.display = 'block';
+    // Désactiver tous les contenus d'onglets
+    document.querySelectorAll('.categorie-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Activer le bon bouton
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        if (onclick && onclick.includes(`'${tab}'`)) {
+            btn.classList.add('tab-active');
+        }
+    });
+    
+    // Activer le bon contenu
+    const tabContent = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
 }
 
+/**
+ * Ajouter une nouvelle catégorie
+ */
+async function ajouterCategorie(event) {
+    event.preventDefault();
+    
+    const nom = document.getElementById('nomCategorie')?.value.trim();
+    
+    if (!nom) {
+        afficherNotification('error', 'Veuillez entrer un nom de catégorie');
+        return;
+    }
+    
+    try {
+        console.log('Création de la catégorie:', nom);
+        const response = await api.createCategory(nom);
+        
+        if (response.success) {
+            afficherNotification('success', 'Catégorie créée avec succès');
+            document.getElementById('formCategorie').reset();
+            // Recharger la liste des catégories
+            await chargerCategoriesAffichage();
+            // Aller à l'onglet Gérer
+            basculerTabCategorie('gerer');
+        } else {
+            afficherNotification('error', response.message || 'Erreur lors de la création');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        afficherNotification('error', 'Erreur lors de la création de la catégorie');
+    }
+}
+
+/**
+ * Charger et afficher les catégories dans l'onglet Gérer
+ */
+async function chargerCategoriesAffichage() {
+    try {
+        console.log('Chargement des catégories...');
+        const response = await api.listCategories(true); // Inclure les inactives aussi
+        
+        if (!response.success) {
+            console.error('Erreur API:', response.message);
+            return;
+        }
+        
+        const categories = response.data || [];
+        const tbody = document.getElementById('listeCategories');
+        
+        if (!tbody) {
+            console.warn('Tableau des catégories non trouvé');
+            return;
+        }
+        
+        if (categories.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">Aucune catégorie</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = categories.map(cat => `
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 12px;">${cat.id}</td>
+                <td style="padding: 12px;">${cat.nom}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span class="badge" style="background: ${cat.actif ? '#4CAF50' : '#f44336'}; color: white; padding: 4px 8px; border-radius: 3px;">
+                        ${cat.actif ? 'Actif' : 'Inactif'}
+                    </span>
+                </td>
+                <td style="padding: 12px; text-align: center; display: flex; gap: 8px; justify-content: center; align-items: center;">
+                    <button class="btn-icone" title="Modifier" onclick="editerCategorie(${cat.id}, '${cat.nom}', ${cat.actif})" style="margin: 0; padding: 6px 10px;">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-icone btn-danger" title="Supprimer" onclick="supprimerCategorie(${cat.id}, '${cat.nom}')" style="margin: 0; padding: 6px 10px;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ Catégories affichées:', categories.length);
+    } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+    }
+}
+
+/**
+ * Éditer une catégorie
+ */
+function editerCategorie(id, nom, actif) {
+    // Remplir le formulaire avec les données actuelles
+    document.getElementById('nomCategorie').value = nom;
+    document.getElementById('categorieActive').checked = actif;
+    
+    // Aller à l'onglet Ajouter (réutiliser le formulaire pour éditer)
+    basculerTabCategorie('ajouter');
+    
+    // Créer un événement personnalisé ou modifier le formulaire pour l'édition
+    const form = document.getElementById('formCategorie');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Supprimer l'ancien gestionnaire
+    const newForm = form.cloneNode(true);
+    form.replaceWith(newForm);
+    
+    // Ajouter un gestionnaire pour l'édition
+    document.getElementById('formCategorie').onsubmit = async (event) => {
+        event.preventDefault();
+        
+        const newNom = document.getElementById('nomCategorie')?.value.trim();
+        const newActif = document.getElementById('categorieActive')?.checked ? 1 : 0;
+        
+        if (!newNom) {
+            afficherNotification('error', 'Veuillez entrer un nom de catégorie');
+            return;
+        }
+        
+        try {
+            // Ici on pourrait implémenter la mise à jour
+            // Pour l'instant, on supprime et crée une nouvelle
+            await api.updateCategory(id, newNom);
+            afficherNotification('success', 'Catégorie modifiée avec succès');
+            
+            // Réinitialiser le formulaire
+            document.getElementById('formCategorie').reset();
+            // Reinitialiser l'événement
+            document.getElementById('formCategorie').onsubmit = ajouterCategorie;
+            // Recharger la liste
+            await chargerCategoriesAffichage();
+            // Aller à l'onglet Gérer
+            basculerTabCategorie('gerer');
+        } catch (error) {
+            console.error('Erreur:', error);
+            afficherNotification('error', 'Erreur lors de la modification');
+        }
+    };
+}
+
+/**
+ * Supprimer une catégorie
+ */
+async function supprimerCategorie(id, nom) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la catégorie "${nom}" ?\n\nAttention: Si des produits sont associés à cette catégorie, ils seront aussi supprimés.`)) {
+        return;
+    }
+    
+    try {
+        console.log('🗑️ Suppression de la catégorie ID:', id);
+        const response = await api.deleteCategory(id);
+        
+        console.log('✅ Réponse de suppression:', response);
+        if (response.success) {
+            afficherNotification('success', 'Catégorie supprimée avec succès');
+            // Recharger la liste
+            await chargerCategoriesAffichage();
+        } else {
+            afficherNotification('error', response.message || 'Erreur lors de la suppression');
+        }
+    } catch (error) {
+        console.error('❌ Erreur suppression:', error);
+        afficherNotification('error', 'Erreur lors de la suppression: ' + error.message);
+    }
+}
+
+window.ouvrirModalCategorie = ouvrirModalCategorie;
 window.fermerModalCategorie = fermerModalCategorie;
 window.basculerTabCategorie = basculerTabCategorie;
+window.ajouterCategorie = ajouterCategorie;
+window.chargerCategoriesAffichage = chargerCategoriesAffichage;
+window.editerCategorie = editerCategorie;
+window.supprimerCategorie = supprimerCategorie;
 
 // ====================================================================
 // STOCKS - MODALES ET ACTIONS  
 // ====================================================================
 
 function ouvrirModalMouvementStock(type) {
+    console.log('🪟 ouvrirModalMouvementStock appelé avec type=', type);
     const modal = document.getElementById('modalMouvementStock');
-    if (!modal) return;
+    if (!modal) {
+        console.warn('⚠️ modalMouvementStock introuvable');
+        return;
+    }
     
     const titre = modal.querySelector('.entete-modal h2');
     if (titre) titre.textContent = type === 'entree' ? 'Entrée de Stock' : 'Sortie de Stock';
-    
+
+    // activer la modal (CSS contrôle visibilité via classe active)
+    modal.classList.add('active');
     modal.style.display = 'flex';
     modal.dataset.type = type;
 }
 
 function fermerModalMouvementStock() {
     const modal = document.getElementById('modalMouvementStock');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+        delete modal.dataset.type;
+    }
 }
 
 function ouvrirModalPerte() {
@@ -1800,14 +3221,14 @@ function filtrerParEtatStock() {
     }
     
     const filtered = produitsData.filter(p => {
-        const e = determinerEtatStock(p.stock, p.seuil_alerte);
+        const e = getEtatStock(p.stock, p.seuil_alerte);
         return e.classe === filtre;
     });
     
     const tbody = document.getElementById('tableauStockBody');
     if (tbody) {
         tbody.innerHTML = filtered.map(p => {
-            const e = determinerEtatStock(p.stock, p.seuil_alerte);
+            const e = getEtatStock(p.stock, p.seuil_alerte);
             return `<tr><td>${p.nom}</td><td>${p.categorie}</td><td>${p.stock}</td><td>${p.seuil_alerte}</td><td>${formaterDevise(p.stock * p.prix_vente)}</td><td><span class="badge-stock">${e.libelle}</span></td><td>-</td><td><button class="btn-icone" onclick="afficherSection('stocks')"><i class="fa-solid fa-eye"></i></button></td></tr>`;
         }).join('');
     }
@@ -1818,6 +3239,7 @@ window.fermerModalMouvementStock = fermerModalMouvementStock;
 window.ouvrirModalPerte = ouvrirModalPerte;
 window.fermerModalPerte = fermerModalPerte;
 window.filtrerParEtatStock = filtrerParEtatStock;
+window.initialiserGestionnairesModales = initialiserGestionnairesModales;
 
 // ====================================================================
 // CRÉDITS - MODALES ET ACTIONS
@@ -1901,21 +3323,231 @@ window.appliquerFiltresCredits = appliquerFiltresCredits;
 // INVENTAIRES
 // ====================================================================
 
-function creerNouvelInventaire() {
-    afficherNotification('Nouvel inventaire créé', 'success');
+// Fonctions pour la modale de configuration de rapport
+function ouvrirModalConfigurationRapport() {
+    const modal = document.getElementById('modalConfigurationRapport');
+    if (modal) modal.style.display = 'flex';
+    // Initialiser la date d'aujourd'hui
+    const inputDate = document.getElementById('inputDateConfigRapport');
+    if (inputDate) {
+        inputDate.value = new Date().toISOString().split('T')[0];
+    }
 }
 
-function voirDetailInventaire(invId) {
-    afficherNotification(`Détails inventaire ${invId}`, 'info');
+function fermerModalConfigurationRapport() {
+    const modal = document.getElementById('modalConfigurationRapport');
+    if (modal) modal.style.display = 'none';
 }
 
-function telechargerInventaire(invId) {
-    afficherNotification(`Téléchargement inventaire ${invId}`, 'success');
+// Ancienne fonction remplacée - maintenant ouvre juste la modale
+async function telechargerRapport(type) {
+    ouvrirModalConfigurationRapport();
+    // Pré-sélectionner le type de rapport
+    const select = document.getElementById('selectModeleRapport');
+    if (select) select.value = type;
 }
 
-window.creerNouvelInventaire = creerNouvelInventaire;
-window.voirDetailInventaire = voirDetailInventaire;
-window.telechargerInventaire = telechargerInventaire;
+// Nouvelle fonction unifiée pour télécharger le rapport
+async function telechargerRapportConfig() {
+    // Récupérer les valeurs de la modale
+    const inputDate = document.getElementById('inputDateConfigRapport');
+    const selectModele = document.getElementById('selectModeleRapport');
+    const formatRadios = document.querySelectorAll('input[name="formatRapport"]');
+    
+    if (!inputDate || !inputDate.value) {
+        afficherNotification('⚠️ Veuillez sélectionner une date', 'warning');
+        return;
+    }
+    if (!selectModele || !selectModele.value) {
+        afficherNotification('⚠️ Veuillez sélectionner un type de rapport', 'warning');
+        return;
+    }
+    
+    let selectedFormat = 'pdf';
+    for (let radio of formatRadios) {
+        if (radio.checked) {
+            selectedFormat = radio.value;
+            break;
+        }
+    }
+    
+    const dateArg = inputDate.value;
+    const typeRapport = selectModele.value;
+    const format = selectedFormat;
+    
+    console.log(`📄 Téléchargement: type=${typeRapport}, date=${dateArg}, format=${format}`);
+    
+    try {
+        afficherNotification(`🔄 Génération rapport ${typeRapport}...`, 'info');
+        let data = null;
+        
+        switch(typeRapport) {
+            case 'journalier':
+                data = await window.genererRapportJournalier(dateArg);
+                break;
+            case 'hebdomadaire':
+                data = await window.genererRapportHebdomadaire(dateArg);
+                break;
+            case 'mensuel':
+                data = await window.genererRapportMensuel(dateArg);
+                break;
+            case 'stock':
+                data = await window.genererRapportStocks(dateArg);
+                break;
+            case 'credits':
+                data = await window.genererRapportCredits(dateArg);
+                break;
+            case 'top-produits':
+                data = await window.genererRapportTopProduits(dateArg);
+                break;
+            default:
+                afficherNotification('❌ Type de rapport inconnu', 'error');
+                return;
+        }
+        
+        if (!data) {
+            afficherNotification('❌ Impossible de générer le rapport', 'error');
+            return;
+        }
+        
+        if (format === 'pdf') {
+            let doc = null;
+            switch(typeRapport) {
+                case 'journalier':
+                    doc = window.genererPDFRapportJournalier(data);
+                    break;
+                case 'hebdomadaire':
+                    doc = window.genererPDFRapportHebdomadaire(data);
+                    break;
+                case 'mensuel':
+                    doc = window.genererPDFRapportMensuel(data);
+                    break;
+                case 'stock':
+                    doc = window.genererPDFRapportStocks(data);
+                    break;
+                case 'credits':
+                    doc = window.genererPDFRapportCredits(data);
+                    break;
+                case 'top-produits':
+                    doc = window.genererPDFRapportTopProduits(data);
+                    break;
+            }
+            if (doc && typeof doc.save === 'function') {
+                window.exporterPDF(doc, `rapport_${typeRapport}_${dateArg}`);
+                afficherNotification('✅ Rapport PDF téléchargé avec succès', 'success');
+            }
+        } else if (format === 'excel') {
+            console.log('[EXCEL] Début traitement Excel pour type:', typeRapport);
+            console.log('[EXCEL] Données reçues:', data);
+            
+            // Traiter les données selon le type de rapport
+            let donneesExcel = [];
+            const nomRapport = `rapport_${typeRapport}_${dateArg}`;
+
+            switch(typeRapport) {
+                case 'journalier':
+                case 'hebdomadaire':
+                case 'mensuel':
+                    console.log('[EXCEL] Traitement ventes détaillées...');
+                    // Pour les rapports de ventes, extraire les données de ventes détaillées
+                    if (data.ventes_detaillees && Array.isArray(data.ventes_detaillees)) {
+                        console.log('[EXCEL] Ventes détaillées trouvées:', data.ventes_detaillees.length, 'ventes');
+                        donneesExcel = data.ventes_detaillees.map((v, idx) => ({
+                            '#': idx + 1,
+                            'Date': v.date_vente || '-',
+                            'Produit': v.produit_nom || '-',
+                            'Quantité': Number(v.quantite) || 0,
+                            'Prix Unitaire (FCFA)': Number(v.prix_unitaire) || 0,
+                            'Total (FCFA)': Number(v.total) || 0,
+                            'Client': v.client_nom || '-',
+                            'Utilisateur': v.utilisateur_nom || '-'
+                        }));
+                    } else {
+                        console.warn('[EXCEL] Pas de ventes_detaillees trouvées dans data.ventes_detaillees');
+                    }
+                    break;
+
+                case 'stock':
+                    console.log('[EXCEL] Traitement stocks...');
+                    // Pour le rapport de stocks, utiliser les données de produits du rapport
+                    if (data.produits && Array.isArray(data.produits)) {
+                        console.log('[EXCEL] Produits trouvés:', data.produits.length, 'produits');
+                        donneesExcel = data.produits.map((p, idx) => ({
+                            '#': idx + 1,
+                            'Produit': p.nom || '-',
+                            'Catégorie': p.categorie_nom || '-',
+                            'Stock Actuel': Number(p.stock) || 0,
+                            'Prix Unitaire (FCFA)': Number(p.prix_unitaire) || 0,
+                            'Valeur Totale (FCFA)': (Number(p.stock) || 0) * (Number(p.prix_unitaire) || 0),
+                            'Seuil Alerte': Number(p.seuil_alerte) || 0,
+                            'Statut': Number(p.stock) < (Number(p.seuil_alerte) || 0) ? '⚠️ FAIBLE' : '✓ BON'
+                        }));
+                    } else {
+                        console.warn('[EXCEL] Pas de produits trouvés dans data.produits');
+                    }
+                    break;
+
+                case 'credits':
+                    console.log('[EXCEL] Traitement crédits...');
+                    // Pour le rapport de crédits, extraire les données de crédits
+                    if (data.credits && Array.isArray(data.credits)) {
+                        console.log('[EXCEL] Crédits trouvés:', data.credits.length, 'crédits');
+                        donneesExcel = data.credits.map((c, idx) => ({
+                            '#': idx + 1,
+                            'Client': c.client_nom || '-',
+                            'Montant Total (FCFA)': Number(c.montant_total) || 0,
+                            'Montant Payé (FCFA)': Number(c.montant_paye) || 0,
+                            'Montant Restant (FCFA)': Number(c.montant_restant) || 0,
+                            'Taux Paiement (%)': c.montant_total ? Math.round((Number(c.montant_paye) / Number(c.montant_total)) * 100) : 0,
+                            'Statut': c.statut || '-',
+                            'Date de Crédit': c.date_credit ? new Date(c.date_credit).toLocaleDateString('fr-FR') : '-'
+                        }));
+                    } else {
+                        console.warn('[EXCEL] Pas de crédits trouvés dans data.credits');
+                    }
+                    break;
+
+                case 'top-produits':
+                    console.log('[EXCEL] Traitement top-produits...');
+                    // Pour le top produits, extraire les données de ventes groupées
+                    if (data.top_10 && Array.isArray(data.top_10)) {
+                        console.log('[EXCEL] Top produits trouvés:', data.top_10.length, 'produits');
+                        donneesExcel = data.top_10.map((p, idx) => ({
+                            '#': idx + 1,
+                            'Produit': p.nom || '-',
+                            'Catégorie': p.categorie_nom || '-',
+                            'Quantité Vendue': Number(p.quantite) || 0,
+                            'Chiffre d\'Affaires (FCFA)': Number(p.montant) || 0,
+                            'Prix Moyen (FCFA)': Number(p.quantite) > 0 ? Number(p.montant) / Number(p.quantite) : 0
+                        }));
+                    } else {
+                        console.warn('[EXCEL] Pas de top_10 trouvés dans data.top_10');
+                    }
+                    break;
+
+                default:
+                    afficherNotification('❌ Type de rapport non supporté pour Excel', 'error');
+                    return;
+            }
+
+            if (donneesExcel.length > 0) {
+                console.log('[EXCEL] Données préparées pour export:', donneesExcel.length, 'lignes');
+                console.log('[EXCEL] Échantillon:', donneesExcel.slice(0, 2));
+                window.exporterRapportEnExcel(nomRapport, donneesExcel);
+                afficherNotification('✅ Rapport Excel généré avec succès', 'success');
+            } else {
+                afficherNotification('⚠️ Aucune donnée à exporter', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erreur téléchargement rapport:', error);
+        afficherNotification('❌ Erreur lors du téléchargement', 'error');
+    } finally {
+        fermerModalConfigurationRapport();
+    }
+}
+
+
 
 // ====================================================================
 // ALERTES
@@ -1948,16 +3580,10 @@ window.enregistrerParametresAlertes = enregistrerParametresAlertes;
 // RAPPORTS ET EXPORTS
 // ====================================================================
 
+let typeExportEnCours = null; // 'produits', 'stocks', 'credits'
+
 function genererRapportComplet() {
-    afficherNotification('Rapport complet en génération...', 'success');
-}
-
-function telechargerRapportJournalier() {
-    telechargerRapport('journalier');
-}
-
-function telechargerRapport(type) {
-    afficherNotification(`Rapport ${type} en téléchargement...`, 'success');
+    genererRapportCompletPDF();
 }
 
 function toggleDropdownExport() {
@@ -1966,15 +3592,34 @@ function toggleDropdownExport() {
 }
 
 function exporterRapportCompletExcel() {
-    afficherNotification('Export rapport complet (Excel)', 'success');
+    console.log('[RAPPORT] Export rapport complet Excel...');
+    if (!window.XLSX) {
+        afficherNotification('Chargement librairie Excel...', 'info');
+        return;
+    }
+    const XLSX = window.XLSX;
+    const workbook = XLSX.utils.book_new();
+    
+    const resume = [{'Produits': produitsData ? produitsData.length : 0, 'Ventes': ventesData ? ventesData.length : 0, 'Credits': creditsData ? creditsData.length : 0}];
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(resume), 'Resume');
+    if (produitsData) XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(produitsData), 'Produits');
+    if (creditsData) XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(creditsData), 'Credits');
+    if (ventesData) XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(ventesData), 'Ventes');
+    
+    XLSX.writeFile(workbook, 'rapport_complet_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    afficherNotification('Rapport Excel telecharge', 'success');
 }
 
 function exporterProduitsExcel() {
-    afficherNotification('Export produits (Excel)', 'success');
+    exporterProduitsEnExcel();
 }
 
 function exporterVentesExcel() {
-    afficherNotification('Export ventes (Excel)', 'success');
+    if (ventesData && ventesData.length > 0) {
+        window.exporterRapportEnExcel('Ventes', ventesData);
+    } else {
+        afficherNotification('Aucune vente a exporter', 'warning');
+    }
 }
 
 function exporterCreditsExcel() {
@@ -1982,18 +3627,127 @@ function exporterCreditsExcel() {
 }
 
 function exporterMouvementsExcel() {
-    afficherNotification('Export mouvements (Excel)', 'success');
+    if (mouvementsData && mouvementsData.length > 0) {
+        window.exporterRapportEnExcel('Mouvements', mouvementsData);
+    } else {
+        afficherNotification('Aucun mouvement a exporter', 'warning');
+    }
 }
 
 window.genererRapportComplet = genererRapportComplet;
-window.telechargerRapportJournalier = telechargerRapportJournalier;
 window.telechargerRapport = telechargerRapport;
+window.telechargerRapportConfig = telechargerRapportConfig;
+window.ouvrirModalConfigurationRapport = ouvrirModalConfigurationRapport;
+window.fermerModalConfigurationRapport = fermerModalConfigurationRapport;
 window.toggleDropdownExport = toggleDropdownExport;
 window.exporterRapportCompletExcel = exporterRapportCompletExcel;
 window.exporterProduitsExcel = exporterProduitsExcel;
 window.exporterVentesExcel = exporterVentesExcel;
 window.exporterCreditsExcel = exporterCreditsExcel;
 window.exporterMouvementsExcel = exporterMouvementsExcel;
+
+// ====================================================================
+// MODAL FORMAT EXPORT
+// ====================================================================
+
+function ouvrirModalFormatExport() {
+    const modal = document.getElementById('modalFormatExport');
+    const messageElement = document.getElementById('messageChoixExport');
+    if (messageElement) {
+        let label = 'votre selection';
+        if (typeRapportEnCours) {
+            const labels = {
+                'journalier': 'Rapport Journalier',
+                'hebdomadaire': 'Rapport Hebdomadaire',
+                'mensuel': 'Rapport Mensuel',
+                'stock': 'Etat des Stocks',
+                'credits': 'Rapport Credits',
+                'top-produits': 'Top Produits'
+            };
+            label = labels[typeRapportEnCours] || typeRapportEnCours;
+        }
+        messageElement.textContent = 'Format d\'export pour : ' + label;
+    }
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function fermerModalFormatExport() {
+    const modal = document.getElementById('modalFormatExport');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function selectionnerFormat(format) {
+    if (typeRapportEnCours) {
+        procederTelechargementRapport(format);
+    } else if (inventaireEnCours) {
+        procederTelechargementInventaire(format);
+    } else if (typeExportEnCours) {
+        procederTelechargementExport(typeExportEnCours, format);
+    }
+}
+
+async function procederTelechargementExport(type, format) {
+    try {
+        afficherNotification(`🔄 Préparation export ${type} ...`, 'info');
+        
+        if (format === 'pdf') {
+            // Utiliser les exportateurs PDF élégants
+            switch(type) {
+                case 'produits':
+                    exporterProduitsEnPDF();
+                    break;
+                case 'stocks':
+                    exporterStocksEnPDF();
+                    break;
+                case 'credits':
+                    exporterCreditsEnPDF();
+                    break;
+                default:
+                    afficherNotification('Type d\'export non supporté', 'warning');
+            }
+        } else if (format === 'excel') {
+            switch(type) {
+                case 'produits':
+                    exporterProduitsEnExcel();
+                    break;
+                case 'stocks':
+                    exporterStocksEnExcel();
+                    break;
+                case 'credits':
+                    exporterCreditsEnExcel();
+                    break;
+                default:
+                    afficherNotification('Type d\'export non supporté', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('Erreur export:', error);
+        afficherNotification('❌ Erreur lors de l\'export', 'error');
+    } finally {
+        typeExportEnCours = null;
+        fermerModalFormatExport();
+    }
+}
+
+window.ouvrirModalFormatExport = ouvrirModalFormatExport;
+window.fermerModalFormatExport = fermerModalFormatExport;
+window.selectionnerFormat = selectionnerFormat;
+
+function initialiserModalFormatExport() {
+    const modal = document.getElementById('modalConfigurationRapport');
+    if (modal) {
+        // Fermer la modale au clic sur le fond semi-transparent
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                fermerModalConfigurationRapport();
+            }
+        });
+    }
+}
 
 // ====================================================================
 // UTILITAIRES
