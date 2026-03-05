@@ -2446,7 +2446,6 @@ window.confirmerSuppression = function() { afficherNotification('Suppression con
 window.voirHistoriqueProduit = voirHistoriqueProduit;
 window.ouvrirModalAjustementStock = ouvrirModalAjustementStock;
 window.appliquerFiltresCredits = function() { afficherCredits(); };
-window.ouvrirModalRemboursement = function(id) { afficherNotification('Modal remboursement: ' + id, 'info'); };
 window.relancerClient = function(id) { afficherNotification('Client relancé', 'info'); };
 // Nouvelle fonction d'export unifiée
 window.ouvrirModalExport = function(type, msg) {
@@ -3438,46 +3437,62 @@ window.initialiserGestionnairesModales = initialiserGestionnairesModales;
 // ====================================================================
 
 function ouvrirModalRemboursement(creditId = null) {
-    const modal = document.getElementById('modalRemboursement');
-    if (!modal) return;
+    console.log('💰 Ouverture modale remboursement, creditId:', creditId);
     
-    // Charger les crédits dans le select
-    const selectCredit = document.getElementById('creditRemboursement');
-    if (selectCredit && creditsData && creditsData.length > 0) {
-        // Garder l'option par défaut
-        selectCredit.innerHTML = '<option value="">Sélectionner un crédit</option>';
-        
-        // Ajouter les crédits disponibles
-        creditsData.forEach(credit => {
-            if (credit.montant_restant > 0) { // Seulement les crédits non entièrement remboursés
-                const option = document.createElement('option');
-                option.value = credit.id;
-                option.textContent = `${credit.client_nom} - ${formaterDevise(credit.montant_restant)} restant`;
-                selectCredit.appendChild(option);
-            }
-        });
-        
-        // Si un crédit est spécifié, le pré-sélectionner
-        if (creditId) {
-            selectCredit.value = creditId;
-            afficherInfoCredit(); // Afficher les infos du crédit
-        }
+    const modal = document.getElementById('modalRemboursement');
+    if (!modal) {
+        console.error('❌ Modale modalRemboursement non trouvée');
+        afficherNotification('Erreur: Modale remboursement non trouvée', 'error');
+        return;
     }
     
-    // Réinitialiser le formulaire
-    const form = document.getElementById('formRemboursement');
-    if (form) form.reset();
-    
-    // Cacher l'avertissement montant
-    const avertissement = document.getElementById('avertissementMontant');
-    if (avertissement) avertissement.style.display = 'none';
-    
-    modal.style.display = 'flex';
+    try {
+        // Charger les crédits dans le select
+        const selectCredit = document.getElementById('creditRemboursement');
+        if (selectCredit && creditsData && creditsData.length > 0) {
+            // Garder l'option par défaut
+            selectCredit.innerHTML = '<option value="">Sélectionner un crédit</option>';
+            
+            // Ajouter les crédits disponibles
+            creditsData.forEach(credit => {
+                if (credit.montant_restant > 0) { // Seulement les crédits non entièrement remboursés
+                    const option = document.createElement('option');
+                    option.value = credit.id;
+                    option.textContent = `${credit.client_nom} - ${formaterDevise(credit.montant_restant)} restant`;
+                    selectCredit.appendChild(option);
+                }
+            });
+            
+            // Si un crédit est spécifié, le pré-sélectionner
+            if (creditId) {
+                selectCredit.value = creditId;
+                afficherInfoCredit(); // Afficher les infos du crédit
+            }
+        } else if (!creditsData || creditsData.length === 0) {
+            console.warn('⚠️ Aucund crédit disponible');
+            afficherNotification('Aucun crédit disponible', 'warning');
+        }
+        
+        // Réinitialiser le formulaire
+        const form = document.getElementById('formRemboursement');
+        if (form) form.reset();
+        
+        // Cacher l'avertissement montant
+        const avertissement = document.getElementById('avertissementMontant');
+        if (avertissement) avertissement.style.display = 'none';
+        
+        // Afficher la modale avec la classe active (cohérent avec le CSS)
+        modal.classList.add('active');
+        console.log('✅ Modale remboursement affichée');
+    } catch (error) {
+        console.error('❌ Erreur ouverture modale:', error);
+        afficherNotification('Erreur lors de l\'ouverture de la modale', 'error');
+    }
 }
 
 function fermerModalRemboursement() {
     const modal = document.getElementById('modalRemboursement');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('active');
     
     // Réinitialiser le formulaire
     const form = document.getElementById('formRemboursement');
@@ -3658,10 +3673,10 @@ function voirDetailCredit(creditId) {
             modalActions.insertBefore(btnRembourser, modalActions.firstChild);
         }
 
-        // Afficher la modale
+        // Afficher la modale avec la classe active
         const modal = document.getElementById('modalDetailsCredit');
         if (modal) {
-            modal.style.display = 'flex';
+            modal.classList.add('active');
         }
 
         console.log('✅ Détails crédit affichés');
@@ -3676,7 +3691,7 @@ function voirDetailCredit(creditId) {
  */
 function fermerModalDetailsCredit() {
     const modal = document.getElementById('modalDetailsCredit');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('active');
 }
 
 function relancerClient(creditId) {
