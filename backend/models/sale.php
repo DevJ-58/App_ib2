@@ -17,21 +17,57 @@ class Sale {
     /**
      * Créer une nouvelle vente avec ses détails
      */
-    public function create($client_nom, $total, $type_paiement, $items = [], $utilisateur_id = 1, $montant_recu = 0, $montant_rendu = 0) {
+    public function create($client_nom, $total, $type_paiement, $items = [], $utilisateur_id = 1, $montant_recu = 0, $montant_rendu = 0, $whatsapp = null) {
         try {
             $conn = $this->db->getConnection();
             
             // ✅ VALIDATION: Vérifier que tous les produits ont un stock suffisant AVANT de commencer
             foreach ($items as $item) {
-                $sql_check = "SELECT id, nom, stock FROM produits WHERE id = ?";
+                // Gérer les deux formats: produit_id (format API correct) ou id (format frontend brut)
+                $produit_id = $item['produit_id'] ?? $item['id'];
+                
+                // ✅ VALIDATION: Quantité doit être positive
+                if (empty($item['quantite']) || $item['quantite'] <= 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'Quantité invalide. Doit être > 0'
+                    ];
+                }
+                
+                // ✅ VALIDATION: Prix doit être positif
+                if (empty($item['prix_vente']) || $item['prix_vente'] < 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'Prix invalide. Le prix ne peut pas être négatif'
+                    ];
+                }
+                
+                $sql_check = "SELECT id, nom, stock, prix_vente FROM produits WHERE id = ?";
                 $stmt_check = $conn->prepare($sql_check);
-                $stmt_check->execute([$item['produit_id']]);
+                $stmt_check->execute([$produit_id]);
                 $produit = $stmt_check->fetch(\PDO::FETCH_ASSOC);
                 
                 if (!$produit) {
                     return [
                         'success' => false,
-                        'message' => 'Produit avec l\'ID ' . $item['produit_id'] . ' introuvable'
+                        'message' => 'Produit avec l\'ID ' . $produit_id . ' introuvable'
+                    ];
+                }
+                
+                // ✅ VALIDATION CRITIQUE: Rupture de stock - IMPOSSIBLE de vendre
+                if ($produit['stock'] <= 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'Le produit "' . $produit['nom'] . '" est en rupture de stock. Stock actuel: 0'
+                    ];
+                }
+                
+                // ✅ VALIDATION: Vérifier que le prix n'est pas aberrant (> 3x le prix normal)
+                $prix_max_autorise = $produit['prix_vente'] * 3;
+                if ($item['prix_vente'] > $prix_max_autorise) {
+                    return [
+                        'success' => false,
+                        'message' => 'Prix du produit "' . $produit['nom'] . '" trop élevé. Prix demandé: ' . $item['prix_vente'] . ' FCFA, Prix normal: ' . $produit['prix_vente'] . ' FCFA'
                     ];
                 }
                 
@@ -51,8 +87,8 @@ class Sale {
             $numero_vente = 'V' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
             // Insérer la vente
-            $sql = "INSERT INTO ventes (numero_vente, client_nom, total, montant_recu, montant_rendu, type_paiement, utilisateur_id, date_vente) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+            $sql = "INSERT INTO ventes (numero_vente, client_nom, whatsapp, total, montant_recu, montant_rendu, type_paiement, utilisateur_id, date_vente) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             $stmt = $conn->prepare($sql);
             
             // Log pour déboggage
@@ -61,6 +97,7 @@ class Sale {
             $stmt->execute([
                 $numero_vente, 
                 $client_nom, 
+                $whatsapp,
                 $total, 
                 ($montant_recu > 0 || $montant_recu === 0) ? $montant_recu : null,
                 ($montant_rendu > 0 || $montant_rendu === 0) ? $montant_rendu : null,
@@ -72,10 +109,13 @@ class Sale {
             
             // Insérer les détails de vente et mettre à jour les stocks
             foreach ($items as $item) {
+                // Gérer les deux formats: produit_id (format API correct) ou id (format frontend brut)
+                $produit_id = $item['produit_id'] ?? $item['id'];
+                
                 // Récupérer le nom du produit
                 $sql_prod = "SELECT nom FROM produits WHERE id = ?";
                 $stmt_prod = $conn->prepare($sql_prod);
-                $stmt_prod->execute([$item['produit_id']]);
+                $stmt_prod->execute([$produit_id]);
                 $produit = $stmt_prod->fetch(\PDO::FETCH_ASSOC);
                 $nom_produit = $produit['nom'] ?? 'Produit';
                 
@@ -86,7 +126,7 @@ class Sale {
                 $sous_total = $item['quantite'] * $item['prix_vente'];
                 $stmt_detail->execute([
                     $vente_id,
-                    $item['produit_id'],
+                    $produit_id,
                     $nom_produit,
                     $item['quantite'],
                     $item['prix_vente'],
@@ -96,13 +136,13 @@ class Sale {
                 // Mettre à jour le stock du produit
                 $sql_update = "UPDATE produits SET stock = stock - ? WHERE id = ?";
                 $stmt_update = $conn->prepare($sql_update);
-                $stmt_update->execute([$item['quantite'], $item['produit_id']]);
+                $stmt_update->execute([$item['quantite'], $produit_id]);
                 
                 // Créer un mouvement de stock
                 $sql_mouvement = "INSERT INTO mouvements_stock (produit_id, type, quantite, motif, date_mouvement, utilisateur_id) 
                                   VALUES (?, 'sortie', ?, 'vente', NOW(), ?)";
                 $stmt_mouvement = $conn->prepare($sql_mouvement);
-                $stmt_mouvement->execute([$item['produit_id'], $item['quantite'], $utilisateur_id]);
+                $stmt_mouvement->execute([$produit_id, $item['quantite'], $utilisateur_id]);
             }
             
             // Valider la transaction
