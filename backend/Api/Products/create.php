@@ -54,6 +54,18 @@ try {
     // ✅ VALIDATION: Stock initial et seuil d'alerte ne peuvent pas être négatifs
     $stock = intval($data['stock'] ?? 0);
     $seuil = intval($data['seuil_alerte'] ?? 5);
+    $prix = floatval($data['prix_vente'] ?? 0);
+    
+    // ✅ VALIDATION CRITIQUE: Le prix doit être positif
+    if ($prix <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'code' => 400,
+            'message' => 'Le prix de vente doit être positif (> 0 FCFA)'
+        ]);
+        exit;
+    }
     
     if ($stock < 0) {
         http_response_code(400);

@@ -239,14 +239,19 @@ class Sale {
                 $params[] = $date_fin;
             }
             
+            // We join the produits table in order to compute cost and margin as well as count
             $query = "SELECT 
                         COUNT(*) as nombre_ventes,
                         SUM(v.total) as total_montant,
                         AVG(v.total) as montant_moyen,
                         COUNT(DISTINCT v.type_paiement) as types_paiement,
-                        SUM(dv.quantite) as quantite_totale
+                        SUM(dv.quantite) as quantite_totale,
+                        COUNT(DISTINCT dv.produit_id) as produits_distincts,
+                        COALESCE(SUM(dv.quantite * p.prix_achat),0) as cout_total,
+                        COALESCE(SUM(v.total) - SUM(dv.quantite * p.prix_achat),0) as marge_brute
                       FROM ventes v
                       LEFT JOIN details_ventes dv ON v.id = dv.vente_id
+                      LEFT JOIN produits p ON dv.produit_id = p.id
                       WHERE $where";
             
             $stmt = $this->db->getConnection()->prepare($query);

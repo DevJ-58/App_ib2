@@ -69,17 +69,17 @@ async function chargerMouvementsAPI(limit = 1000) {
         
         if (!response.success) {
             console.error('❌ Erreur API mouvements:', response.message);
-            mouvementsData = [];
+            window.mouvementsData = [];
             return [];
         }
         
         // Remplir la variable globale mouvementsData avec TOUS les mouvements de la DB
-        mouvementsData = response.data || [];
-        console.log('✅ Mouvements chargés depuis DB:', mouvementsData.length, 'mouvements');
-        return mouvementsData;
+        window.mouvementsData = response.data || [];
+        console.log('✅ Mouvements chargés depuis DB:', window.mouvementsData.length, 'mouvements');
+        return window.mouvementsData;
     } catch (error) {
         console.error('❌ Erreur chargement mouvements:', error);
-        mouvementsData = [];
+        window.mouvementsData = [];
         return [];
     }
 }
@@ -175,114 +175,6 @@ async function chargerStatsStockAPI(date_debut = null, date_fin = null) {
 }
 
 /**
- * Mettre à jour les widgets de statistiques des stocks avec les vraies données
- */
-function mettreAJourStatistiquesStocks() {
-    console.log('📊 Mise à jour des statistiques stocks...');
-    
-    try {
-        // 1. Valeur totale du stock
-        let valeurTotalStock = 0;
-        let nombreProduits = 0;
-        
-        produitsData.forEach(p => {
-            const stock = p.stock || 0;
-            const prix = parseFloat(p.prix) || 0;
-            valeurTotalStock += stock * prix;
-            nombreProduits++;
-        });
-        
-        const elemValeur = document.getElementById('stat-stock-valeur');
-        if (elemValeur) {
-            elemValeur.textContent = valeurTotalStock.toLocaleString('fr-FR') + ' FCFA';
-        }
-        
-        const elemNb = document.getElementById('stat-stock-nb');
-        if (elemNb) {
-            elemNb.textContent = nombreProduits + ' produits';
-        }
-        
-        // 2. Entrées du mois
-        const maintenant = new Date();
-        const debut_mois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
-        
-        let entreesTotal = 0;
-        if (mouvementsData && mouvementsData.length > 0) {
-            mouvementsData.forEach(m => {
-                const dateMouvement = new Date(m.date_mouvement);
-                // Vérifier que la date est dans le mois courant
-                if (dateMouvement.getFullYear() === maintenant.getFullYear() && 
-                    dateMouvement.getMonth() === maintenant.getMonth() &&
-                    m.type === 'entree') {
-                    entreesTotal += parseInt(m.quantite) || 0;
-                }
-            });
-        }
-        
-        const elemEntrees = document.getElementById('stat-entrees-mois');
-        if (elemEntrees) {
-            elemEntrees.textContent = entreesTotal + ' unités';
-        }
-        
-        const elemPourcentageEntrees = document.getElementById('stat-entrees-pourcentage');
-        if (elemPourcentageEntrees) {
-            elemPourcentageEntrees.textContent = '(mois en cours)';
-        }
-        
-        // 3. Sorties du mois (ventes + pertes)
-        let sortiesTotal = 0;
-        if (mouvementsData && mouvementsData.length > 0) {
-            mouvementsData.forEach(m => {
-                const dateMouvement = new Date(m.date_mouvement);
-                // Vérifier que la date est dans le mois courant
-                if (dateMouvement.getFullYear() === maintenant.getFullYear() && 
-                    dateMouvement.getMonth() === maintenant.getMonth() &&
-                    (m.type === 'sortie' || m.type === 'perte')) {
-                    sortiesTotal += parseInt(m.quantite) || 0;
-                }
-            });
-        }
-        
-        const elemSorties = document.getElementById('stat-sorties-mois');
-        if (elemSorties) {
-            elemSorties.textContent = sortiesTotal + ' unités';
-        }
-        
-        // 4. Produits critiques
-        let produitsCritiques = 0;
-        produitsData.forEach(p => {
-            const seuil = p.seuil_alerte || p.seuilAlerte || 0;
-            const stock = p.stock || 0;
-            if (stock <= seuil && stock > 0) {
-                produitsCritiques++;
-            }
-        });
-        
-        const elemCritiques = document.getElementById('stat-produits-critiques');
-        if (elemCritiques) {
-            elemCritiques.textContent = produitsCritiques;
-        }
-        
-        const elemCritiquesLabel = document.getElementById('stat-critiques-label');
-        if (elemCritiquesLabel) {
-            elemCritiquesLabel.textContent = produitsCritiques === 0 ? 
-                'Aucun stock critique' : 
-                produitsCritiques + ' produit(s) critique(s)';
-        }
-        
-        console.log('✅ Statistiques stocks mises à jour:', {
-            valeurTotal: valeurTotalStock,
-            nombreProduits: nombreProduits,
-            entreesTotal: entreesTotal,
-            sortiesTotal: sortiesTotal,
-            produitsCritiques: produitsCritiques
-        });
-    } catch (error) {
-        console.error('❌ Erreur mise à jour statistiques stocks:', error);
-    }
-}
-
-/**
  * Mettre à jour la section Stocks du dashboard en temps réel
  */
 async function mettreAJourStocksDashboard() {
@@ -333,3 +225,9 @@ async function initialiserStocksAPI() {
         console.error('❌ Erreur initialisation stocks:', error);
     }
 }
+
+// ====================================================================
+// EXPORT DES FONCTIONS POUR LES AUTRES MODULES
+// ====================================================================
+
+window.chargerMouvementsAPI = chargerMouvementsAPI;

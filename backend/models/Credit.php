@@ -17,21 +17,23 @@ class Credit {
     /**
      * Créer un crédit pour une vente
      */
-    public function create($vente_id, $client_nom, $montant_total, $type_client = 'AUTRE') {
+    public function create($vente_id, $client_nom, $montant_total, $type_client = 'AUTRE', $client_telephone = null, $whatsapp = null) {
         try {
             $conn = $this->db->getConnection();
             
             // Générer une référence unique
             $reference = 'CR' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
-            $sql = "INSERT INTO credits (reference, vente_id, client_nom, type_client, montant_total, montant_paye, montant_restant, statut, date_credit) 
-                    VALUES (?, ?, ?, ?, ?, 0, ?, 'en_cours', NOW())";
+            $sql = "INSERT INTO credits (reference, vente_id, client_nom, client_telephone, whatsapp, type_client, montant_total, montant_paye, montant_restant, statut, date_credit) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 'en_cours', NOW())";
             
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 $reference,
                 $vente_id,
                 $client_nom,
+                $client_telephone,
+                $whatsapp,
                 $type_client,
                 $montant_total,
                 $montant_total

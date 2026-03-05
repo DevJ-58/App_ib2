@@ -15,6 +15,7 @@ let ventesData = [];
 let creditsData = [];
 let mouvementsData = [];
 let alertesData = [];
+let inventaireEnCours = null;
 
 // helper pour l'état de stock, avec fallback si la fonction n'est pas définie
 function getEtatStock(quantite, seuil) {
@@ -282,6 +283,7 @@ async function afficherDashboard() {
             // Stats ventes
             mettreAJourStat('stat-ventes-total', stats.ventesTotalMois || 0);
             mettreAJourStat('stat-ventes-nombre', stats.ventesNombre || 0, false);
+            mettreAJourStat('stat-ventes-nombre-variation', stats.ventesNombre || 0, false); // Afficher aussi dans la première carte
             mettreAJourStat('stat-ventes-panier', stats.ventesParnier || 0);
             
             // Stats crédits
@@ -315,6 +317,18 @@ async function afficherDashboard() {
         
         // Charger les top produits du jour
         await chargerTopProduitsDashboard();
+        
+        // Charger les ventes récentes
+        await chargerVentesRecentes();
+        
+        // Charger le résumé du jour
+        await chargerResumeDuJour();
+        
+        // Charger les statistiques détaillées du jour
+        await chargerStatsDetaillees();
+        
+        // Charger le graphique 7 jours
+        await afficherGraphique7Jours();
         
         console.log('✅ Dashboard mis à jour');
     } catch (error) {
@@ -371,6 +385,306 @@ async function chargerTopProduitsDashboard() {
         if (listeTopProduits) {
             listeTopProduits.innerHTML = '<li style="text-align: center; color: #f44336;">Erreur de chargement</li>';
         }
+    }
+}
+
+/**
+ * Charger et afficher les ventes récentes dans le tableau du dashboard
+ */
+async function chargerVentesRecentes() {
+    console.log('📊 Chargement des ventes récentes...');
+    
+    try {
+        const response = await api.getSalesRecent(10);
+        
+        if (!response.success) {
+            console.error('❌ Erreur API ventes récentes:', response.message);
+            return;
+        }
+        
+        const tableau = document.getElementById('tableau-ventes-recentes');
+        if (!tableau) {
+            console.warn('⚠️ Élément tableau-ventes-recentes non trouvé');
+            return;
+        }
+        
+        // Vider le tableau
+        tableau.innerHTML = '';
+        
+        if (!response.data || response.data.length === 0) {
+            tableau.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">Aucune vente récente</td></tr>';
+            return;
+        }
+        
+        // Remplir le tableau avec les ventes
+        response.data.forEach((vente) => {
+            const tr = document.createElement('tr');
+            
+            // Formater la date
+            const dateVente = new Date(vente.date_vente);
+            const dateFormatee = dateVente.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Déterminer la couleur du type de paiement
+            let classType = 'comptant';
+            if (vente.type && vente.type.toLowerCase().includes('credit')) {
+                classType = 'credit';
+            } else if (vente.type && vente.type.toLowerCase().includes('virement')) {
+                classType = 'virement';
+            }
+            
+            tr.innerHTML = `
+                <td><strong>${vente.numero_vente || 'N/A'}</strong></td>
+                <td>${vente.descriptions || 'Produit(s)'}</td>
+                <td>${vente.client_nom || 'Client anonyme'}</td>
+                <td class="montant"><strong>${formaterDevise(vente.montant_total || 0)}</strong></td>
+                <td><span class="badge badge-${classType}">${vente.type || 'N/A'}</span></td>
+                <td>${dateFormatee}</td>
+                <td>
+                    <button class="btn-action-mini" title="Voir détails" onclick="voirDetailsVente(${vente.id})">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableau.appendChild(tr);
+        });
+        
+        console.log('✅ Ventes récentes affichées:', response.data.length, 'ventes');
+    } catch (error) {
+        console.error('❌ Erreur chargement ventes récentes:', error);
+        const tableau = document.getElementById('tableau-ventes-recentes');
+        if (tableau) {
+            tableau.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #f44336;">Erreur de chargement</td></tr>';
+        }
+    }
+}
+
+/**
+ * Charger les statistiques détaillées du jour
+ */
+async function chargerStatsDetaillees() {
+    console.log('📊 Chargement des statistiques détaillées...');
+    
+    try {
+        // Charger les stats des ventes d'aujourd'hui
+        const today = new Date().toISOString().split('T')[0];
+        const response = await api.getSalesStats(today, today);
+        
+        if (!response.success || !response.data) {
+            console.warn('⚠️ Impossible de charger les stats détaillées');
+            return;
+        }
+        
+        const stats = response.data;
+        
+        // Calculer la marge brute et le pourcentage
+        const margeBrute = (stats.marge_brute || 0);
+        const montantVentes = (stats.total_montant || 0);
+        const margePourcentage = montantVentes > 0 ? ((margeBrute / montantVentes) * 100).toFixed(1) : 0;
+        
+        // Ticket moyen
+        const ticketMoyen = stats.nombre_ventes > 0 ? (montantVentes / stats.nombre_ventes).toFixed(0) : 0;
+        
+        // Nombre de produits distincts vendus
+        const produitsDistincts = stats.produits_distincts || 0;
+        const quantiteTotale = stats.quantite_totale || 0;
+        
+        // Mettre à jour les éléments du DOM
+        const updateElement = (elementId, valeur, isDevise = true) => {
+            const elem = document.getElementById(elementId);
+            if (elem) {
+                if (isDevise) {
+                    elem.textContent = formaterDevise(valeur || 0);
+                } else {
+                    elem.textContent = valeur || 0;
+                }
+            }
+        };
+        
+        updateElement('detailVentesMontant', montantVentes, true);
+        updateElement('detailVentesTransactions', stats.nombre_ventes, false);
+        updateElement('detailMargeBrute', margeBrute, true);
+        
+        const elemMargePct = document.getElementById('detailMargePourcentage');
+        if (elemMargePct) {
+            elemMargePct.textContent = `${margePourcentage}% de marge`;
+        }
+        
+        updateElement('detailTicketMoyen', ticketMoyen, true);
+        updateElement('detailProduitsUnites', quantiteTotale, false);
+        
+        const elemProduitsTypes = document.getElementById('detailProduitsTypes');
+        if (elemProduitsTypes) {
+            const word = produitsDistincts === 1 ? 'produit' : 'produits';
+            elemProduitsTypes.textContent = `${produitsDistincts} ${word} différent${produitsDistincts === 1 ? '' : 's'}`;
+        }
+        
+        console.log('✅ Statistiques détaillées mises à jour:', {
+            ventes: montantVentes,
+            marge: margeBrute,
+            ticket: ticketMoyen,
+            produits: produitsDistincts
+        });
+    } catch (error) {
+        console.error('❌ Erreur chargement stats détaillées:', error);
+    }
+}
+
+async function chargerResumeDuJour() {
+    console.log('📋 Chargement du résumé du jour...');
+    
+    try {
+        const response = await api.getRecapDay();
+        
+        if (!response.success) {
+            console.error('❌ Erreur API résumé du jour:', response.message);
+            return;
+        }
+        
+        const data = response.data;
+        
+        // Mettre à jour les éléments
+        const mettreAJourElement = (elementId, valeur) => {
+            const elem = document.getElementById(elementId);
+            if (elem) {
+                elem.textContent = formaterDevise(valeur || 0);
+            }
+        };
+        
+        mettreAJourElement('resumeRecettesTotal', data.recettesTotal || 0);
+        mettreAJourElement('resumeVentesComptant', data.ventesComptant || 0);
+        mettreAJourElement('resumeCreditsAccordes', data.creditsAccordes || 0);
+        mettreAJourElement('resumeRemboursements', data.remboursements || 0);
+        
+        console.log('✅ Résumé du jour mis à jour:', {
+            recettes: data.recettesTotal,
+            comptant: data.ventesComptant,
+            credits: data.creditsAccordes,
+            remboursements: data.remboursements
+        });
+    } catch (error) {
+        console.error('❌ Erreur chargement résumé du jour:', error);
+        // Afficher les valeurs par défaut visibles dans l'UI
+    }
+}
+
+/**
+ * Afficher les détails d'une vente dans une modale
+ */
+async function voirDetailsVente(vente_id) {
+    console.log('📋 Affichage détails vente ID:', vente_id);
+    
+    try {
+        // Récupérer les détails depuis l'API
+        const response = await api.getSaleDetails(vente_id);
+        
+        if (!response.success || !response.data) {
+            afficherNotification('Erreur: Impossible de charger les détails de la vente', 'error');
+            return;
+        }
+        
+        // Récupérer la modale
+        const modal = document.getElementById('modalDetailsVente');
+        if (!modal) {
+            console.error('⚠️ Modale modalDetailsVente non trouvée');
+            return;
+        }
+        
+        const container = modal.querySelector('.modal-container');
+        if (!container) {
+            console.error('⚠️ Conteneur de modale non trouvé');
+            return;
+        }
+        
+        // Récupérer la vente depuis le tableau affichageé
+        const ligneVente = document.querySelector(`[data-vente-id="${vente_id}"]`);
+        const numeroVente = ligneVente ? ligneVente.querySelector('strong')?.textContent : 'N/A';
+        const clientNom = ligneVente ? ligneVente.querySelectorAll('td')[2].textContent : 'Client';
+        const montantTotal = ligneVente ? ligneVente.querySelectorAll('td')[3].textContent : '0 FCFA';
+        
+        // Construire le HTML de la modale
+        let detailsHTML = `
+            <div class="modal-header">
+                <h3>Détails de la Vente #${numeroVente}</h3>
+                <button class="btn-fermer" onclick="fermerModalDetailsVente()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="font-weight: bold; color: #666;">Client:</label>
+                        <p style="margin: 5px 0; font-size: 1.1rem;">${clientNom}</p>
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; color: #666;">Montant Total:</label>
+                        <p style="margin: 5px 0; font-size: 1.1rem; color: var(--couleur-primaire); font-weight: bold;">${montantTotal}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="font-weight: bold; border-bottom: 2px solid var(--couleur-primaire); padding-bottom: 10px;">Produits achetés:</h4>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <thead>
+                            <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                                <th style="padding: 10px; text-align: left;">Produit</th>
+                                <th style="padding: 10px; text-align: center;">Quantité</th>
+                                <th style="padding: 10px; text-align: right;">Prix Unitaire</th>
+                                <th style="padding: 10px; text-align: right;">Sous-Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        // Ajouter les détails de produits
+        response.data.forEach((detail) => {
+            const sousTotal = detail.quantite * detail.prix_unitaire;
+            detailsHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">${detail.produit_nom || 'Produit inconnu'}</td>
+                    <td style="padding: 10px; text-align: center;">${detail.quantite}</td>
+                    <td style="padding: 10px; text-align: right;">${formaterDevise(detail.prix_unitaire)}</td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">${formaterDevise(sousTotal)}</td>
+                </tr>
+            `;
+        });
+        
+        detailsHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #eee; text-align: right;">
+                <button class="btn-action primaire" onclick="fermerModalDetailsVente()">
+                    <i class="fa-solid fa-check"></i> Fermer
+                </button>
+            </div>
+        `;
+        
+        // Afficher la modale
+        container.innerHTML = detailsHTML;
+        modal.style.display = 'flex';
+        
+        console.log('✅ Modale détails affichée avec', response.data.length, 'produits');
+    } catch (error) {
+        console.error('❌ Erreur affichage détails vente:', error);
+        afficherNotification('Erreur lors du chargement des détails', 'error');
+    }
+}
+
+/**
+ * Fermer la modale détails vente
+ */
+function fermerModalDetailsVente() {
+    const modal = document.getElementById('modalDetailsVente');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
@@ -1353,24 +1667,82 @@ async function afficherAlertes() {
 }
 
 /**
- * Afficher les inventaires
+ * Afficher les inventaires depuis l'API
  */
 async function afficherInventaires() {
     console.log('📋 Affichage des inventaires...');
     
     try {
-        const tbody = document.getElementById('tableauInventairesBody');
-        if (!tbody) {
-            console.warn('⚠️ Élément tableauInventairesBody non trouvé');
+        // Charger les inventaires depuis l'API
+        const response = await api.getAllInventories();
+        
+        if (!response.success) {
+            console.error('❌ Erreur API inventaires:', response.message);
+            afficherNotification('Erreur lors du chargement des inventaires', 'error');
             return;
         }
         
-        // Pour maintenant, afficher un message
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Fonctionnalité en cours de développement</td></tr>';
+        const inventaires = response.data || [];
+        const tbody = document.querySelector('table.tableau-inventaires tbody');
         
-        console.log('✅ Inventaires affichés');
+        if (!tbody) {
+            console.warn('⚠️ Élément tbody du tableau inventaires non trouvé');
+            return;
+        }
+        
+        // Vider le tableau
+        tbody.innerHTML = '';
+        
+        if (inventaires.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">Aucun inventaire enregistré</td></tr>';
+            return;
+        }
+        
+        // Chaque inventaire: charger les détails pour compter produits et écarts
+        for (const inv of inventaires) {
+            const detailsResponse = await api.getInventoryDetails(inv.id);
+            const details = (detailsResponse.success ? detailsResponse.data : []) || [];
+            
+            // Compter les écarts
+            const ecarts = details.filter(d => (d.ecart || 0) !== 0).length;
+            
+            // Calculer la valeur totale
+            let valeurTotale = 0;
+            details.forEach(d => {
+                valeurTotale += (d.stock_reel || 0) * (d.prix_unitaire || 0);
+            });
+            
+            // Formatage de la date
+            const dateObj = new Date(inv.date_inventaire);
+            const dateFormatee = dateObj.toLocaleDateString('fr-FR');
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>#INV-${inv.id}</strong></td>
+                <td>${dateFormatee}</td>
+                <td>${inv.utilisateur_nom || 'Utilisateur'}</td>
+                <td>${details.length} produits</td>
+                <td>${ecarts} écart${ecarts !== 1 ? 's' : ''}</td>
+                <td>${formaterDevise(valeurTotale)}</td>
+                <td><span class="badge-etat etat-${inv.statut?.toLowerCase() === 'termine' ? 'termine' : 'en-cours'}">${inv.statut || 'EN COURS'}</span></td>
+                <td>
+                    <div class="actions-inventaire">
+                        <button class="btn-icone btn-voir" title="Voir détails" onclick="voirDetailInventaire(${inv.id})">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button class="btn-icone btn-telecharger" title="Télécharger" onclick="telechargerInventaire(${inv.id})">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        console.log('✅ Inventaires affichés:', inventaires.length, 'inventaire(s)');
     } catch (error) {
         console.error('❌ Erreur affichage inventaires:', error);
+        afficherNotification('Erreur lors du chargement des inventaires', 'error');
     }
 }
 
@@ -1381,7 +1753,9 @@ async function afficherRapports() {
     console.log('📈 Affichage des rapports...');
     
     try {
-        // Générer les rapports
+        // Charger tous les graphiques
+        await chargerTousLesGraphiques();
+        
         console.log('✅ Rapports affichés');
     } catch (error) {
         console.error('❌ Erreur affichage rapports:', error);
@@ -3739,6 +4113,52 @@ window.appliquerFiltresCredits = appliquerFiltresCredits;
 // INVENTAIRES
 // ====================================================================
 
+/**
+ * Voir les détails d'un inventaire
+ */
+async function voirDetailInventaire(inventaireId) {
+    console.log('📋 Affichage détail inventaire:', inventaireId);
+    afficherNotification(`Affichage des détails de l'inventaire #${inventaireId}`, 'info');
+    // Pour l'instant juste rediriger au formulaire
+    window.location.href = `nouvel-inventaire.html?id=${inventaireId}&mode=continue`;
+}
+
+/**
+ * Télécharger un inventaire en PDF
+ */
+async function telechargerInventaire(inventaireId) {
+    console.log('📝 Téléchargement inventaire:', inventaireId);
+    try {
+        // Charger les détails
+        const response = await api.getInventoryDetails(inventaireId);
+        
+        if (!response.success || !response.data) {
+            afficherNotification('Erreur: Impossible de charger l\'inventaire', 'error');
+            return;
+        }
+        
+        // Exporter en PDF
+        window.exporterInventaireEnPDF(response.data);
+        afficherNotification('Inventaire téléchargé avec succès', 'success');
+    } catch (error) {
+        console.error('❌ Erreur téléchargement inventaire:', error);
+        afficherNotification('Erreur lors du téléchargement', 'error');
+    }
+}
+
+/**
+ * Créer un nouvel inventaire
+ */
+async function creerNouvelInventaire() {
+    console.log('🆕 Création nouveau inventaire...');
+    afficherNotification('Redirection...' , 'info');
+    window.location.href = 'nouvel-inventaire.html';
+}
+
+window.voirDetailInventaire = voirDetailInventaire;
+window.telechargerInventaire = telechargerInventaire;
+window.creerNouvelInventaire = creerNouvelInventaire;
+
 // Fonctions pour la modale de configuration de rapport
 function ouvrirModalConfigurationRapport() {
     const modal = document.getElementById('modalConfigurationRapport');
@@ -4145,6 +4565,41 @@ async function procederTelechargementExport(type, format) {
         afficherNotification('❌ Erreur lors de l\'export', 'error');
     } finally {
         typeExportEnCours = null;
+        fermerModalFormatExport();
+    }
+}
+
+/**
+ * Procéder au téléchargement de l'inventaire
+ */
+async function procederTelechargementInventaire(format) {
+    try {
+        afficherNotification(`🔄 Préparation export inventaire (${format})...`, 'info');
+        
+        // Charger les détails de l'inventaire en cours
+        if (!inventaireEnCours) {
+            afficherNotification('Aucun inventaire sélectionné', 'warning');
+            return;
+        }
+        
+        // Les données sont déjà chargées via chargerInventairesAPI()
+        // Exporter selon le format
+        if (format === 'pdf') {
+            window.exporterInventaireEnPDF(inventaireEnCours);
+            afficherNotification('✅ Inventaire exporté en PDF', 'success');
+        } else if (format === 'excel') {
+            if (window.exporterInventaireEnExcel) {
+                window.exporterInventaireEnExcel(inventaireEnCours);
+                afficherNotification('✅ Inventaire exporté en Excel', 'success');
+            } else {
+                afficherNotification('Fonction Excel non disponible', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('Erreur export inventaire:', error);
+        afficherNotification('❌ Erreur lors de l\'export', 'error');
+    } finally {
+        inventaireEnCours = null;
         fermerModalFormatExport();
     }
 }

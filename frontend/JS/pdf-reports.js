@@ -1,4 +1,4 @@
-// ====================================================================
+﻿// ====================================================================
 // PDF-REPORTS.JS - Generation de rapports PDF stylises
 // ====================================================================
 
@@ -91,6 +91,211 @@ function ajouterLigneInfo(doc, label, valeur, yPos, labelWidth = 70) {
     doc.text(String(valeur), 20 + labelWidth, yPos);
     
     return yPos + 6;
+}
+
+/**
+ * GÃ©nÃ©rer PDF avec tableau Ã©lÃ©gant FORMAT A4
+ */
+function exporterPDFAvecTableau(donnees, titre, colonnes, periodeInfo = '') {
+    if (!donnees || donnees.length === 0) {
+        window.afficherNotification?.('âš ï¸ Aucune donnÃ©e Ã  exporter', 'warning');
+        return;
+    }
+
+    console.log('[PDF] CrÃ©ation tableau A4 pour:', titre);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4'); // Portrait A4
+    let yPos = ajouterEnTetePDF(doc, titre, periodeInfo);
+    let pageNum = 1;
+
+    // Configuration du tableau
+    const startX = 12;
+    const margeRight = 12;
+    const largeurDisponible = 210 - startX - margeRight;
+    const colWidth = largeurDisponible / colonnes.length;
+    const rowHeight = 6.5;
+
+    // En-tÃªte du tableau
+    doc.setFillColor(211, 47, 47);
+    doc.rect(startX, yPos - 4, largeurDisponible, rowHeight, 'F');
+    
+    doc.setFont('times', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    
+    colonnes.forEach((col, idx) => {
+        const x = startX + (idx * colWidth) + 1;
+        doc.text(col.label, x, yPos + 1);
+    });
+    
+    yPos += rowHeight + 1;
+
+    // DonnÃ©es du tableau
+    doc.setFont('times', 'normal');
+    doc.setFontSize(8.5);
+    
+    donnees.forEach((row, rowIdx) => {
+        // Alternance de couleur pour les lignes
+        if (rowIdx % 2 === 0) {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(startX, yPos - 4, largeurDisponible, rowHeight, 'F');
+        } else {
+            doc.setDrawColor(230, 230, 230);
+            doc.setLineWidth(0.1);
+            doc.line(startX, yPos - 4, startX + largeurDisponible, yPos - 4);
+        }
+        
+        doc.setTextColor(0, 0, 0);
+        
+        colonnes.forEach((col, colIdx) => {
+            let valeur = row[col.key];
+            if (valeur == null) valeur = '';
+            
+            // Formater les montants en FCFA
+            if (col.format === 'currency' && valeur) {
+                valeur = formaterDevise(Number(valeur) || 0);
+            }
+            
+            const text = String(valeur).substring(0, col.maxLength || 30);
+            const x = startX + (colIdx * colWidth) + 1;
+            doc.text(text, x, yPos + 1);
+        });
+        
+        yPos += rowHeight;
+        
+        // Ajouter nouvelle page si nÃ©cessaire
+        if (yPos > 260) {
+            pageNum++;
+            doc.addPage();
+            doc.setFillColor(211, 47, 47);
+            doc.rect(startX, 15, largeurDisponible, rowHeight, 'F');
+            
+            doc.setFont('times', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(255, 255, 255);
+            
+            colonnes.forEach((col, idx) => {
+                const x = startX + (idx * colWidth) + 1;
+                doc.text(col.label, x, 16);
+            });
+            
+            yPos = 15 + rowHeight + 1;
+            doc.setFont('times', 'normal');
+            doc.setFontSize(8.5);
+            ajouterFooterPDF(doc, pageNum, pageNum);
+        }
+    });
+
+    ajouterFooterPDF(doc, pageNum, pageNum);
+    const nomFichier = titre.toLowerCase().replace(/\s+/g, '_');
+    doc.save(nomFichier + '_' + new Date().toISOString().split('T')[0] + '.pdf');
+    window.afficherNotification?.('âœ… PDF ' + titre + ' tÃ©lÃ©chargÃ©', 'success');
+}
+
+/**
+ * Exporter Produits en PDF avec donnÃ©es rÃ©elles
+ */
+function exporterProduitsEnPDF() {
+    console.log('[PDF] Export produits...');
+    
+    if (!produitsData || produitsData.length === 0) {
+        window.afficherNotification?.('âš ï¸ Aucun produit Ã  exporter', 'warning');
+        return;
+    }
+    
+    const colonnes = [
+        { key: 'nom', label: 'Produit', maxLength: 20 },
+        { key: 'categorie_nom', label: 'CatÃ©gorie', maxLength: 12 },
+        { key: 'prix_unitaire', label: 'P.U. (FCFA)', format: 'currency', maxLength: 12 },
+        { key: 'stock', label: 'Stock', maxLength: 8 }
+    ];
+    
+    exporterPDFAvecTableau(produitsData, 'LISTE DES PRODUITS', colonnes, new Date().toLocaleDateString('fr-FR'));
+}
+
+/**
+ * Exporter Stocks en PDF avec donnÃ©es rÃ©elles
+ */
+function exporterStocksEnPDF() {
+    console.log('[PDF] Export stocks...');
+    
+    if (!produitsData || produitsData.length === 0) {
+        window.afficherNotification?.('âš ï¸ Aucun stock Ã  exporter', 'warning');
+        return;
+    }
+    
+    const donneeStock = produitsData.map(p => {
+        const valeur = (Number(p.stock) || 0) * (Number(p.prix_unitaire) || 0);
+        return {
+            nom: p.nom,
+            categorie_nom: p.categorie_nom,
+            stock: p.stock,
+            seuil_alerte: p.seuil_alerte || '-',
+            valeur: valeur
+        };
+    });
+    
+    const colonnes = [
+        { key: 'nom', label: 'Produit', maxLength: 18 },
+        { key: 'categorie_nom', label: 'CatÃ©gorie', maxLength: 12 },
+        { key: 'stock', label: 'QuantitÃ©', maxLength: 8 },
+        { key: 'seuil_alerte', label: 'Seuil', maxLength: 6 },
+        { key: 'valeur', label: 'Valeur (FCFA)', format: 'currency', maxLength: 12 }
+    ];
+    
+    exporterPDFAvecTableau(donneeStock, 'Ã‰TAT DES STOCKS', colonnes, new Date().toLocaleDateString('fr-FR'));
+}
+
+/**
+ * Exporter CrÃ©dits en PDF avec donnÃ©es rÃ©elles
+ */
+function exporterCreditsEnPDF() {
+    console.log('[PDF] Export crÃ©dits...');
+    
+    if (!creditsData || creditsData.length === 0) {
+        window.afficherNotification?.('âš ï¸ Aucun crÃ©dit Ã  exporter', 'warning');
+        return;
+    }
+    
+    const colonnes = [
+        { key: 'client_nom', label: 'Client', maxLength: 18 },
+        { key: 'montant_total', label: 'Montant (FCFA)', format: 'currency', maxLength: 12 },
+        { key: 'montant_paye', label: 'PayÃ© (FCFA)', format: 'currency', maxLength: 12 },
+        { key: 'montant_restant', label: 'Restant (FCFA)', format: 'currency', maxLength: 12 },
+        { key: 'statut', label: 'Statut', maxLength: 10 }
+    ];
+    
+    exporterPDFAvecTableau(creditsData, 'SUIVI DES CRÃ‰DITS', colonnes, new Date().toLocaleDateString('fr-FR'));
+}
+
+/**
+ * Exporter Inventaire en PDF avec donnÃ©es rÃ©elles
+ */
+function exporterInventaireEnPDF(donnees) {
+    console.log('[PDF] Export inventaire...');
+    
+    if (!donnees || donnees.length === 0) {
+        window.afficherNotification?.('âš ï¸ Aucun inventaire Ã  exporter', 'warning');
+        return;
+    }
+    
+    const donneeFormatee = donnees.map(d => ({
+        produit_nom: d.produit_nom || d.nom_produit || '-',
+        date_mouvement: d.date_mouvement ? new Date(d.date_mouvement).toLocaleDateString('fr-FR') : '-',
+        type: d.type === 'entree' ? 'EntrÃ©e' : 'Sortie',
+        quantite: d.quantite || 0,
+        motif: d.motif || d.raison || '-'
+    }));
+    
+    const colonnes = [
+        { key: 'produit_nom', label: 'Produit', maxLength: 18 },
+        { key: 'date_mouvement', label: 'Date', maxLength: 12 },
+        { key: 'type', label: 'Type', maxLength: 8 },
+        { key: 'quantite', label: 'QtÃ©', maxLength: 6 },
+        { key: 'motif', label: 'Motif', maxLength: 15 }
+    ];
+    
+    exporterPDFAvecTableau(donneeFormatee, 'INVENTAIRE', colonnes, new Date().toLocaleDateString('fr-FR'));
 }
 
 /**
@@ -319,14 +524,14 @@ function genererPDFRapportTopProduits(rapport) {
     let yPos = ajouterEnTetePDF(doc, 'TOP 10 PRODUITS', rapport.date || new Date().toLocaleDateString('fr-FR'));
     let pageNum = 1;
     
-    // Vérifier s'il y a des données
+    // VÃ©rifier s'il y a des donnÃ©es
     if (!rapport.top_10 || rapport.top_10.length === 0) {
-        yPos = ajouterTitreSection(doc, 'AUCUNE DONNÉE', yPos);
+        yPos = ajouterTitreSection(doc, 'AUCUNE DONNÃ‰E', yPos);
         yPos += 10;
         doc.setFont('times', 'normal');
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
-        doc.text('Aucune vente enregistrée pour la période sélectionnée', 20, yPos);
+        doc.text('Aucune vente enregistrÃ©e pour la pÃ©riode sÃ©lectionnÃ©e', 20, yPos);
         ajouterFooterPDF(doc, pageNum, 1);
         return doc;
     }
@@ -396,17 +601,17 @@ function genererPDFRapportTopProduits(rapport) {
 function exporterPDF(doc, nom_fichier) {
     console.log('[PDF] Export:', nom_fichier);
     doc.save(nom_fichier + '.pdf');
-    afficherNotification('Rapport ' + nom_fichier + ' telecharge en PDF', 'success');
+    window.afficherNotification?.('Rapport ' + nom_fichier + ' telecharge en PDF', 'success');
 }
 
 /**
  * Formater une valeur en devise FCFA (format simple: 1 500 000 FCFA)
  */
 function formaterDevise(montant) {
-    // Formater le montant en nombre entier sans décimales
+    // Formater le montant en nombre entier sans dÃ©cimales
     const montantNum = Math.round(Number(montant) || 0);
     const montantStr = montantNum.toString();
-    // Ajouter des espaces simples comme séparateurs de milliers de droite à gauche
+    // Ajouter des espaces simples comme sÃ©parateurs de milliers de droite Ã  gauche
     const montantFormate = montantStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return montantFormate + ' FCFA';
 }
@@ -416,10 +621,10 @@ function formaterDevise(montant) {
  */
 function exporterPDFProduits() {
     console.log('[PDF] Export produits en PDF...');
-    afficherNotification('Generation PDF produits en cours...', 'info');
+    window.afficherNotification?.('Generation PDF produits en cours...', 'info');
     
     if (!produitsData || produitsData.length === 0) {
-        afficherNotification('Aucun produit a exporter', 'warning');
+        window.afficherNotification?.('Aucun produit a exporter', 'warning');
         return;
     }
     
@@ -467,7 +672,7 @@ function exporterPDFProduits() {
         doc.setTextColor(0, 0, 0);
         
         const nom = String(produit.nom).substring(0, 30);
-        const cat = String(produit.categorie).substring(0, 15);
+        const cat = String(produit.categorie_nom || produit.categorie).substring(0, 15);
         const stock = Number(produit.stock || 0);
         const prix = formaterDevise(Number(produit.prix_unitaire || 0));
         const total = formaterDevise(stock * Number(produit.prix_unitaire || 0));
@@ -484,7 +689,7 @@ function exporterPDFProduits() {
     
     ajouterFooterPDF(doc, pageNum, 1);
     doc.save('produits_' + new Date().toISOString().split('T')[0] + '.pdf');
-    afficherNotification('PDF produits telecharge', 'success');
+    window.afficherNotification?.('PDF produits telecharge', 'success');
 }
 
 /**
@@ -492,10 +697,10 @@ function exporterPDFProduits() {
  */
 function exporterPDFCredits() {
     console.log('[PDF] Export credits en PDF...');
-    afficherNotification('Generation PDF credits en cours...', 'info');
+    window.afficherNotification?.('Generation PDF credits en cours...', 'info');
     
     if (!creditsData || creditsData.length === 0) {
-        afficherNotification('Aucun credit a exporter', 'warning');
+        window.afficherNotification?.('Aucun credit a exporter', 'warning');
         return;
     }
     
@@ -560,7 +765,7 @@ function exporterPDFCredits() {
     
     ajouterFooterPDF(doc, pageNum, 1);
     doc.save('credits_' + new Date().toISOString().split('T')[0] + '.pdf');
-    afficherNotification('PDF credits telecharge', 'success');
+    window.afficherNotification?.('PDF credits telecharge', 'success');
 }
 
 /**
@@ -568,10 +773,10 @@ function exporterPDFCredits() {
  */
 function exporterPDFInventaire() {
     console.log('[PDF] Export inventaire en PDF...');
-    afficherNotification('Generation PDF inventaire en cours...', 'info');
+    window.afficherNotification?.('Generation PDF inventaire en cours...', 'info');
     
     if (!mouvementsData || mouvementsData.length === 0) {
-        afficherNotification('Aucun mouvement a exporter', 'warning');
+        window.afficherNotification?.('Aucun mouvement a exporter', 'warning');
         return;
     }
     
@@ -640,24 +845,24 @@ function exporterPDFInventaire() {
     
     ajouterFooterPDF(doc, pageNum, 1);
     doc.save('inventaire_' + new Date().toISOString().split('T')[0] + '.pdf');
-    afficherNotification('PDF inventaire telecharge', 'success');
+    window.afficherNotification?.('PDF inventaire telecharge', 'success');
 }
 
 /**
- * Exporter l'état des stocks en PDF
+ * Exporter l'Ã©tat des stocks en PDF
  */
 function exporterPDFStock() {
-    console.log('[PDF] Export état des stocks en PDF...');
-    afficherNotification('Generation PDF stocks en cours...', 'info');
+    console.log('[PDF] Export Ã©tat des stocks en PDF...');
+    window.afficherNotification?.('Generation PDF stocks en cours...', 'info');
     
     if (!produitsData || produitsData.length === 0) {
-        afficherNotification('Aucun produit a exporter', 'warning');
+        window.afficherNotification?.('Aucun produit a exporter', 'warning');
         return;
     }
     
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let yPos = ajouterEnTetePDF(doc, 'ÉTAT DES STOCKS', new Date().toLocaleDateString('fr-FR'));
+    let yPos = ajouterEnTetePDF(doc, 'Ã‰TAT DES STOCKS', new Date().toLocaleDateString('fr-FR'));
     let pageNum = 1;
     
     yPos = ajouterTitreSection(doc, 'INVENTAIRE STOCKS ACTUELS', yPos);
@@ -684,7 +889,7 @@ function exporterPDFStock() {
         if (yPos > 250) {
             doc.addPage();
             pageNum++;
-            yPos = ajouterEnTetePDF(doc, 'ÉTAT DES STOCKS (suite)', new Date().toLocaleDateString('fr-FR'));
+            yPos = ajouterEnTetePDF(doc, 'Ã‰TAT DES STOCKS (suite)', new Date().toLocaleDateString('fr-FR'));
             ajouterFooterPDF(doc, pageNum, 1);
         }
         
@@ -708,7 +913,7 @@ function exporterPDFStock() {
         
         doc.text((index + 1).toString(), 20, yPos);
         doc.text(produit.nom.substring(0, 25), 35, yPos);
-        doc.text(produit.categorie.substring(0, 12), 85, yPos);
+        doc.text((produit.categorie_nom || produit.categorie).substring(0, 12), 85, yPos);
         doc.text(stock.toString(), 120, yPos);
         doc.text(seuil.toString(), 140, yPos);
         doc.text(etat, 165, yPos);
@@ -725,7 +930,7 @@ function exporterPDFStock() {
     doc.setFont('times', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(33, 150, 243);
-    doc.text('RÉSUMÉ:', 15, yPos);
+    doc.text('RÃ‰SUMÃ‰:', 15, yPos);
     
     yPos += 6;
     doc.setFont('times', 'normal');
@@ -739,7 +944,43 @@ function exporterPDFStock() {
     
     ajouterFooterPDF(doc, pageNum, 1);
     doc.save('etat_stocks_' + new Date().toISOString().split('T')[0] + '.pdf');
-    afficherNotification('PDF état des stocks telecharge', 'success');
+    window.afficherNotification?.('PDF Ã©tat des stocks telecharge', 'success');
 }
 
+
+
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  / /   E X P O R T   D E S   F O N C T I O N S   D E   R A P P O R T   P D F   P O U R   L E S   A U T R E S   M O D U L E S 
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  
+//  w i n d o w . g e n e r e r P D F R a p p o r t J o u r n a l i e r   =   g e n e r e r P D F R a p p o r t J o u r n a l i e r ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t H e b d o m a d a i r e   =   g e n e r e r P D F R a p p o r t H e b d o m a d a i r e ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t M e n s u e l   =   g e n e r e r P D F R a p p o r t M e n s u e l ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t S t o c k s   =   g e n e r e r P D F R a p p o r t S t o c k s ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t C r e d i t s   =   g e n e r e r P D F R a p p o r t C r e d i t s ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t T o p P r o d u i t s   =   g e n e r e r P D F R a p p o r t T o p P r o d u i t s ; 
+//  
+//  
+//  w i n d o w . e x p o r t e r P D F   =   e x p o r t e r P D F ; 
+//  
+//  w i n d o w . g e n e r e r P D F R a p p o r t J o u r n a l i e r   =   g e n e r e r P D F R a p p o r t J o u r n a l i e r ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t H e b d o m a d a i r e   =   g e n e r e r P D F R a p p o r t H e b d o m a d a i r e ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t M e n s u e l   =   g e n e r e r P D F R a p p o r t M e n s u e l ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t S t o c k s   =   g e n e r e r P D F R a p p o r t S t o c k s ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t C r e d i t s   =   g e n e r e r P D F R a p p o r t C r e d i t s ; 
+//  w i n d o w . g e n e r e r P D F R a p p o r t T o p P r o d u i t s   =   g e n e r e r P D F R a p p o r t T o p P r o d u i t s ; 
+//  
+//  
+
+// ====================================================================
+// EXPORT DES FONCTIONS DE RAPPORT PDF POUR LES AUTRES MODULES
+// ====================================================================
+
+window.genererPDFRapportJournalier = genererPDFRapportJournalier;
+window.genererPDFRapportHebdomadaire = genererPDFRapportHebdomadaire;
+window.genererPDFRapportMensuel = genererPDFRapportMensuel;
+window.genererPDFRapportStocks = genererPDFRapportStocks;
+window.genererPDFRapportCredits = genererPDFRapportCredits;
+window.genererPDFRapportTopProduits = genererPDFRapportTopProduits;
+window.exporterPDF = exporterPDF;
 

@@ -22,7 +22,8 @@ try {
     }
 
     // Récupérer l'ID de la catégorie
-    $id = $_GET['id'] ?? $_POST['id'] ?? null;
+    $data = json_decode(file_get_contents('php://input'), true);
+    $id = $data['id'] ?? $_GET['id'] ?? $_POST['id'] ?? null;
     error_log("DELETE Categories/delete: ID récupéré = " . ($id ?? 'NULL'));
     
     if (!$id) {

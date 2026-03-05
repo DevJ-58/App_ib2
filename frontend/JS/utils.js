@@ -49,6 +49,17 @@ function afficherNotification(message, type = 'info') {
     }, 3000);
 }
 
+// ====================================================================
+// EXPORT DES FONCTIONS UTILITAIRES POUR LES AUTRES MODULES
+// ====================================================================
+
+window.afficherNotification = afficherNotification;
+window.afficherErreur = afficherErreur;
+window.sauvegarderDansLocalStorage = sauvegarderDansLocalStorage;
+window.obtenirDuLocalStorage = obtenirDuLocalStorage;
+window.supprimerDuLocalStorage = supprimerDuLocalStorage;
+window.determinerEtatStock = determinerEtatStock;
+
 /* ====================================================================
    FORMATAGE DE DONNÉES
    ==================================================================== */
@@ -288,6 +299,27 @@ function afficherDebogage(titre, donnees) {
 function afficherAlerte(titre, message) {
     console.warn(`⚠️ ${titre}: ${message}`);
 }
+
+// ====================================================================
+// EXPORT GLOBAL DE TOUTES LES FONCTIONS UTILITAIRES
+// ====================================================================
+
+window.afficherNotification = afficherNotification;
+window.afficherErreur = afficherErreur;
+window.afficherDebogage = afficherDebogage;
+window.afficherAlerte = afficherAlerte;
+window.sauvegarderDansLocalStorage = sauvegarderDansLocalStorage;
+window.obtenirDuLocalStorage = obtenirDuLocalStorage;
+window.supprimerDuLocalStorage = supprimerDuLocalStorage;
+window.viderLocalStorage = viderLocalStorage;
+window.determinerEtatStock = determinerEtatStock;
+window.trierTableau = trierTableau;
+window.rechercherDansTableau = rechercherDansTableau;
+// Export des fonctions de formatage
+window.formaterDevise = formaterDevise;
+window.formaterDate = formaterDate;
+window.formaterHeure = formaterHeure;
+window.formaterDateHeure = formaterDateHeure;
 
 function afficherErreur(titre, message) {
     console.error(`❌ ${titre}: ${message}`);

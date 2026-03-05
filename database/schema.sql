@@ -149,6 +149,8 @@ CREATE TABLE credits (
     reference VARCHAR(20) UNIQUE NOT NULL,
     vente_id INT NOT NULL,
     client_nom VARCHAR(200),
+    client_telephone VARCHAR(20),
+    whatsapp VARCHAR(20),
     type_client ENUM('ETUDIANT','PERSONNEL','AUTRE') DEFAULT 'AUTRE',
     montant_total DECIMAL(10,2) NOT NULL,
     montant_paye DECIMAL(10,2) DEFAULT 0,
@@ -162,6 +164,7 @@ CREATE TABLE credits (
     
     INDEX idx_reference (reference),
     INDEX idx_client (client_nom),
+    INDEX idx_client_telephone (client_telephone),
     INDEX idx_statut (statut)
 ) ENGINE=InnoDB COMMENT='Crédits clients';
 

@@ -20,7 +20,7 @@ function exporterProduitsExcel() {
     const donnees = produitsData.map((produit, index) => ({
         'N°': index + 1,
         'Nom': produit.nom,
-        'Categorie': produit.categorie,
+        'Categorie': produit.categorie_nom,
         'Prix Unitaire': formaterDeviseExcel(produit.prix_unitaire),
         'Stock Actuel': produit.stock || 0,
         'Seuil Alerte': produit.seuil_alerte || 0,
@@ -367,7 +367,7 @@ function exporterStockExcel() {
         return {
             'N°': index + 1,
             'Produit': produit.nom,
-            'Categorie': produit.categorie,
+            'Categorie': produit.categorie_nom,
             'Stock Actuel': stock,
             'Seuil Alerte': seuil,
             'État': etat,

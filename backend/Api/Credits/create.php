@@ -49,7 +49,9 @@ try {
         $data['vente_id'],
         $data['client_nom'],
         floatval($data['montant_total']),
-        $data['type_client'] ?? 'AUTRE'
+        $data['type_client'] ?? 'AUTRE',
+        isset($data['client_telephone']) ? $data['client_telephone'] : null,
+        isset($data['whatsapp']) ? $data['whatsapp'] : null
     );
     
     if ($result['success']) {

@@ -9,7 +9,32 @@ async function enregistrerVenteAPI(client_nom, total, type_paiement, items, mont
     console.log('💾 Enregistrement vente:', {client_nom, total, type_paiement, items_count: items.length, montant_recu, montant_rendu});
     
     try {
-        const response = await api.createSale(client_nom, total, type_paiement, items, montant_recu, montant_rendu);
+        // Vérifier que les items sont valides
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            console.error('❌ Items invalides:', items);
+            afficherNotification('Erreur: Panier vide ou invalide', 'error');
+            return false;
+        }
+
+        // Formater les items pour l'API
+        const itemsFormates = items.map(item => ({
+            produit_id: item.id,
+            quantite: item.quantite,
+            prix_vente: item.prix_vente
+        }));
+
+        const data = {
+            client_nom: client_nom,
+            total: total,
+            type_paiement: type_paiement,
+            items: itemsFormates,
+            montant_recu: montant_recu,
+            montant_rendu: montant_rendu
+        };
+
+        console.log('📤 Données envoyées à l\'API:', data);
+
+        const response = await api.createSaleWithData(data);
         
         if (!response.success) {
             console.error('❌ Erreur API vente:', response.message);
@@ -30,6 +55,110 @@ async function enregistrerVenteAPI(client_nom, total, type_paiement, items, mont
 }
 
 /**
+ * Enregistrer une vente avec numéro WhatsApp (pour crédits)
+ */
+async function enregistrerVenteAPIAvecWhatsapp(client_nom, total, type_paiement, items, montant_recu = 0, montant_rendu = 0, whatsapp = null) {
+    console.log('💾 Enregistrement vente avec WhatsApp:', {client_nom, total, type_paiement, items_count: items.length, whatsapp});
+    console.log('� Valeurs des paramètres:');
+    console.log('  client_nom:', client_nom, 'type:', typeof client_nom);
+    console.log('  total:', total, 'type:', typeof total);
+    console.log('  type_paiement:', type_paiement, 'type:', typeof type_paiement);
+    console.log('  montant_recu:', montant_recu, 'type:', typeof montant_recu);
+    console.log('  montant_rendu:', montant_rendu, 'type:', typeof montant_rendu);
+    console.log('  whatsapp:', whatsapp, 'type:', typeof whatsapp);
+    console.log('�📦 Items bruts du panier:', items);
+
+    try {
+        // Vérifier que les items sont valides
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            console.error('❌ Items invalides:', items);
+            afficherNotification('Erreur: Panier vide ou invalide', 'error');
+            return false;
+        }
+
+        console.log('🔍 Vérification des items du panier:');
+        items.forEach((item, index) => {
+            console.log(`   Item ${index}:`, {
+                id: item.id,
+                type_id: typeof item.id,
+                nom: item.nom,
+                quantite: item.quantite,
+                prix_vente: item.prix_vente,
+                keys: Object.keys(item)
+            });
+        });
+
+        const itemsFormates = items.map(item => ({
+            produit_id: item.id,  // L'ID du produit depuis le panier
+            quantite: item.quantite,  // La quantité depuis le panier
+            prix_vente: item.prix_vente  // Le prix depuis le panier
+        }));
+
+        console.log('📦 Items formatés pour l\'API:', itemsFormates);
+        console.log('🔍 Vérification items formatés:');
+        itemsFormates.forEach((item, index) => {
+            console.log(`   Item formaté ${index}:`, {
+                produit_id: item.produit_id,
+                type_produit_id: typeof item.produit_id,
+                quantite: item.quantite,
+                prix_vente: item.prix_vente
+            });
+        });
+
+        // Vérifier que tous les items ont un ID valide
+        const itemSansId = itemsFormates.find(item => !item.produit_id || item.produit_id === '');
+        if (itemSansId) {
+            console.error('❌ Item sans ID valide trouvé:', itemSansId);
+            afficherNotification('Erreur: Produit sans ID valide dans le panier', 'error');
+            return false;
+        }
+
+        // Vérifier que tous les IDs sont numériques
+        const itemIdNonNumerique = itemsFormates.find(item => isNaN(item.produit_id));
+        if (itemIdNonNumerique) {
+            console.error('❌ Item avec ID non numérique trouvé:', itemIdNonNumerique);
+            afficherNotification('Erreur: ID de produit invalide dans le panier', 'error');
+            return false;
+        }
+
+        const data = {
+            client_nom: client_nom,
+            total: total,
+            type_paiement: type_paiement,
+            items: itemsFormates,
+            montant_recu: montant_recu,
+            montant_rendu: montant_rendu,
+            whatsapp: whatsapp
+        };
+
+        console.log('📤 Données envoyées à l\'API:', data);
+        console.log('📤 Type de data:', typeof data);
+        console.log('📤 JSON stringifié:', JSON.stringify(data));
+
+        const response = await api.createSaleWithData(data);
+        
+        if (!response.success) {
+            console.error('❌ Erreur API vente:', response.message);
+            afficherNotification('Erreur: ' + response.message, 'error');
+            return false;
+        }
+        
+        console.log('✅ Vente enregistrée avec ID:', response.data.vente_id);
+        console.log('   Numéro vente:', response.data.numero_vente);
+        if (whatsapp) {
+            console.log('   WhatsApp enregistré:', whatsapp);
+        }
+        
+        afficherNotification(`Vente ${response.data.numero_vente} enregistrée avec succès`, 'success');
+        return response.data;
+    } catch (error) {
+        console.error('❌ Erreur enregistrement vente:', error);
+        afficherNotification('Erreur lors de l\'enregistrement de la vente', 'error');
+        return false;
+    }
+}
+
+/**
  * Charger les ventes depuis l'API ET remplir ventesData global
  */
 async function chargerVentesAPI(limit = 1000, offset = 0) {
@@ -39,17 +168,17 @@ async function chargerVentesAPI(limit = 1000, offset = 0) {
         
         if (!response.success) {
             console.error('❌ Erreur API ventes:', response.message);
-            ventesData = [];
+            window.ventesData = [];
             return [];
         }
         
         // Remplir la variable globale ventesData avec TOUTES les ventes de la DB
-        ventesData = response.data || [];
-        console.log('✅ Ventes chargées depuis DB:', ventesData.length, 'ventes');
-        return ventesData;
+        window.ventesData = response.data || [];
+        console.log('✅ Ventes chargées depuis DB:', window.ventesData.length, 'ventes');
+        return window.ventesData;
     } catch (error) {
         console.error('❌ Erreur chargement ventes:', error);
-        ventesData = [];
+        window.ventesData = [];
         return [];
     }
 }
@@ -197,3 +326,9 @@ async function afficherResumeDuJour() {
         console.error('❌ Erreur affichage résumé:', error);
     }
 }
+
+// ====================================================================
+// EXPORT DES FONCTIONS POUR LES AUTRES MODULES
+// ====================================================================
+
+window.chargerVentesAPI = chargerVentesAPI;

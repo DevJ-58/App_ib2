@@ -24,7 +24,21 @@ class APIClient {
 
         try {
             const response = await fetch(url, finalOptions);
-            const data = await response.json();
+            
+            // Vérifier si c'est du JSON avant de parser
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Réponse non-JSON (HTML error, etc.)
+                const text = await response.text();
+                console.error(`❌ Réponse non-JSON reçue de ${url}`);
+                console.error('Content-Type:', contentType);
+                console.error('Réponse:', text.substring(0, 500));
+                throw new Error(`Erreur API: Réponse non-JSON du serveur. Status ${response.status}`);
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || `Erreur HTTP: ${response.status}`);
@@ -191,9 +205,9 @@ class APIClient {
     }
 
     /**
-     * Créer une vente
+     * Créer une vente (avec objet data complet)
      */
-    async createSale(data) {
+    async createSaleWithData(data) {
         return this.request('/Api/Sales/create.php', {
             method: 'POST',
             body: JSON.stringify(data)
@@ -318,6 +332,30 @@ class APIClient {
     }
 
     /**
+     * Enregistrer une vente avec numéro WhatsApp
+     */
+    async createSaleWithWhatsapp(client_nom, total, type_paiement, items, montant_recu = 0, montant_rendu = 0, whatsapp = null) {
+        // Vérifier que l'utilisateur est authentifié
+        if (!utilisateurConnecte || !utilisateurConnecte.id) {
+            throw new Error('Utilisateur non authentifié');
+        }
+        
+        return this.request('/Api/Sales/create.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                client_nom: client_nom,
+                total: total,
+                type_paiement: type_paiement,
+                items: items,
+                montant_recu: montant_recu,
+                montant_rendu: montant_rendu,
+                whatsapp: whatsapp,
+                utilisateur_id: utilisateurConnecte.id
+            })
+        });
+    }
+
+    /**
      * Récupérer la liste des ventes
      */
     async getAllSales(limit = 50, offset = 0) {
@@ -346,14 +384,16 @@ class APIClient {
     /**
      * Créer un crédit
      */
-    async createCredit(vente_id, client_nom, montant_total, type_client = 'AUTRE') {
+    async createCredit(vente_id, client_nom, montant_total, type_client = 'AUTRE', whatsapp = null, client_telephone = null) {
         return this.request('/Api/Credits/create.php', {
             method: 'POST',
             body: JSON.stringify({
                 vente_id: vente_id,
                 client_nom: client_nom,
                 montant_total: montant_total,
-                type_client: type_client
+                type_client: type_client,
+                whatsapp: whatsapp,
+                client_telephone: client_telephone
             })
         });
     }
@@ -462,8 +502,123 @@ class APIClient {
     async getDashboardAlerts() {
         return this.request('/backend/Api/dashbord.php/alerts.php');
     }
+
+    /**
+     * Récupérer les top produits du jour
+     */
+    async getTopProductsToday(limit = 5) {
+        return this.request(`/backend/Api/Sales/top-products-today.php?limit=${limit}`);
+    }
+
+    /**
+     * Lister toutes les catégories
+     */
+    async listCategories(includeInactive = false) {
+        const params = includeInactive ? '?include_inactive=true' : '';
+        return this.request(`/backend/Api/Categories/list.php${params}`);
+    }
+
+    /**
+     * Créer une nouvelle catégorie
+     */
+    async createCategory(nom) {
+        return this.request('/backend/Api/Categories/create.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                nom: nom
+            })
+        });
+    }
+
+    /**
+     * Mettre à jour une catégorie
+     */
+    async updateCategory(id, nom) {
+        return this.request('/backend/Api/Categories/update.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                id: id,
+                nom: nom
+            })
+        });
+    }
+
+    /**
+     * Supprimer une catégorie
+     */
+    async deleteCategory(id) {
+        return this.request('/backend/Api/Categories/delete.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                id: id
+            })
+        });
+    }
+
+    /**
+     * Vérifier les dépendances d'une catégorie
+     */
+    async checkCategoryDeps(id) {
+        return this.request(`/backend/Api/Categories/check-deps.php?id=${id}`);
+    }
+
+    /**
+     * Récupérer les ventes récentes pour le dashboard
+     */
+    async getSalesRecent(limit = 10) {
+        return this.request(`/backend/Api/Sales/recent.php?limit=${limit}`);
+    }
+
+    /**
+     * Récupérer les détails d'une vente spécifique
+     */
+    async getSaleDetails(vente_id) {
+        return this.request(`/backend/Api/Sales/details.php?id=${vente_id}`);
+    }
+
+    /**
+     * Récupérer le résumé du jour
+     */
+    async getRecapDay() {
+        return this.request('/backend/Api/Sales/recap-day.php');
+    }
+
+    /**
+     * Récupérer les données pour le graphique 7 jours
+     */
+    async getChart7Days() {
+        return this.request('/backend/Api/Sales/chart-7days.php');
+    }
+
+    /**
+     * Récupérer les données pour le graphique CA
+     */
+    async getChartCA() {
+        return this.request('/backend/Api/Reports/chart-ca.php');
+    }
+
+    /**
+     * Récupérer les données pour le graphique catégories
+     */
+    async getChartCategories() {
+        return this.request('/backend/Api/Reports/chart-categories.php');
+    }
+
+    /**
+     * Récupérer les données pour le graphique top produits
+     */
+    async getChartTopProducts() {
+        return this.request('/backend/Api/Reports/chart-top-products.php');
+    }
 }
 
 // Instance globale du client API
 const api = new APIClient();
 console.log('✅ api-client.js chargé - api instance créée');
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  / /   E X P O R T   D E   L ' A P I   C L I E N T   P O U R   L E S   A U T R E S   M O D U L E S 
+//  / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+//  
+//  w i n d o w . a p i   =   a p i ; 
+//  
+//  

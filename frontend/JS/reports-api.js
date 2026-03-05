@@ -1,28 +1,35 @@
-// ====================================================================
-// REPORTS-API.JS - Intégration Rapports Frontend
+﻿// ====================================================================
+// REPORTS-API.JS - IntÃ©gration Rapports Frontend
 // ====================================================================
 
-console.log('✅ reports-api.js chargé');
+console.log('âœ… reports-api.js chargÃ©');
 
 /**
- * Générer rapport journalier
+ * GÃ©nÃ©rer rapport journalier
  */
-async function genererRapportJournalier() {
-    console.log('📋 Génération rapport journalier...');
+async function genererRapportJournalier(refDate = null) {
+    console.log('ðŸ“‹ GÃ©nÃ©ration rapport journalier...', refDate);
     try {
-        const aujourd_hui = new Date().toISOString().split('T')[0];
+        // VÃ©rifier que les donnÃ©es sont chargÃ©es
+        if (!window.ventesData || !Array.isArray(window.ventesData) || window.ventesData.length === 0) {
+            console.warn('âš ï¸ ventesData non chargÃ©, tentative de chargement...');
+            await window.chargerVentesAPI(1000, 0);
+        }
+        if (!window.creditsData || !Array.isArray(window.creditsData)) {
+            console.warn('âš ï¸ creditsData non chargÃ©, tentative de chargement...');
+            await window.chargerCreditsAPI();
+        }
         
-        // Filtrer les ventes d'aujourd'hui
-        const ventesAujourdhui = ventesData.filter(v => v.date_vente.startsWith(aujourd_hui));
+        const aujourd_hui = refDate || new Date().toISOString().split('T')[0];
+        
+        const ventesAujourdhui = window.ventesData.filter(v => v.date_vente.startsWith(aujourd_hui));
         const totalVentes = ventesAujourdhui.reduce((sum, v) => sum + parseFloat(v.montant_total), 0);
         const nombreVentes = ventesAujourdhui.length;
         
-        // Crédits accordés aujourd'hui
-        const creditsAujourdhui = creditsData.filter(c => c.date_credit.startsWith(aujourd_hui));
+        const creditsAujourdhui = window.creditsData.filter(c => c.date_credit.startsWith(aujourd_hui));
         const montantCreditsAccordes = creditsAujourdhui.reduce((sum, c) => sum + parseFloat(c.montant_total), 0);
         
-        // Remboursements aujourd'hui
-        const remboursementsAujourdhui = creditsData.filter(c => 
+        const remboursementsAujourdhui = window.creditsData.filter(c => 
             c.date_remboursement_complet && c.date_remboursement_complet.startsWith(aujourd_hui)
         );
         const montantRembourses = remboursementsAujourdhui.reduce((sum, c) => sum + parseFloat(c.montant_paye), 0);
@@ -35,6 +42,15 @@ async function genererRapportJournalier() {
                 montant: totalVentes,
                 panier_moyen: nombreVentes > 0 ? totalVentes / nombreVentes : 0
             },
+            ventes_detaillees: ventesAujourdhui.map(v => ({
+                date_vente: v.date_vente,
+                produit_nom: v.descriptions || v.produit_nom || v.nom_produit || 'Produit inconnu',
+                quantite: parseInt(v.quantite_totale) || parseInt(v.quantite) || 0,
+                prix_unitaire: parseFloat(v.prix_unitaire) || 0,
+                total: parseFloat(v.montant_total) || parseFloat(v.total) || 0,
+                client_nom: v.client_nom || '-',
+                utilisateur_nom: v.utilisateur_nom || '-'
+            })),
             credits: {
                 accordes: montantCreditsAccordes,
                 remboursements: montantRembourses
@@ -58,10 +74,24 @@ async function genererRapportJournalier() {
 /**
  * Generer rapport hebdomadaire
  */
-async function genererRapportHebdomadaire() {
-    console.log('[REPORT] Generation rapport hebdomadaire...');
+async function genererRapportHebdomadaire(refDate = null) {
+    console.log('[REPORT] Generation rapport hebdomadaire...', refDate);
     try {
-        const maintenant = new Date();
+        // VÃ©rifier que les donnÃ©es sont chargÃ©es
+        if (!window.ventesData || !Array.isArray(window.ventesData) || window.ventesData.length === 0) {
+            console.warn('âš ï¸ ventesData non chargÃ©, tentative de chargement...');
+            await window.chargerVentesAPI(1000, 0);
+        }
+        if (!window.creditsData || !Array.isArray(window.creditsData)) {
+            console.warn('âš ï¸ creditsData non chargÃ©, tentative de chargement...');
+            await window.chargerCreditsAPI();
+        }
+        if (!window.mouvementsData || !Array.isArray(window.mouvementsData)) {
+            console.warn('âš ï¸ mouvementsData non chargÃ©, tentative de chargement...');
+            await window.chargerMouvementsAPI();
+        }
+        
+        const maintenant = refDate ? new Date(refDate) : new Date();
         const jourSemaine = maintenant.getDay();
         const debut_semaine = new Date(maintenant);
         debut_semaine.setDate(maintenant.getDate() - jourSemaine + 1);
@@ -72,20 +102,17 @@ async function genererRapportHebdomadaire() {
         const dateDebut = debut_semaine.toISOString().split('T')[0];
         const dateFin = fin_semaine.toISOString().split('T')[0];
         
-        // Filtrer les ventes de la semaine
-        const ventesSemaine = ventesData.filter(v => v.date_vente >= dateDebut && v.date_vente <= dateFin);
+        const ventesSemaine = window.ventesData.filter(v => v.date_vente >= dateDebut && v.date_vente <= dateFin);
         const totalVentes = ventesSemaine.reduce((sum, v) => sum + parseFloat(v.montant_total), 0);
         const nombreVentes = ventesSemaine.length;
         
-        // Credits de la semaine
-        const creditsSemaine = creditsData.filter(c => c.date_credit >= dateDebut && c.date_credit <= dateFin);
+        const creditsSemaine = window.creditsData.filter(c => c.date_credit >= dateDebut && c.date_credit <= dateFin);
         const montantCredits = creditsSemaine.reduce((sum, c) => sum + parseFloat(c.montant_total), 0);
         
-        // Mouvements de stock de la semaine
         let entreesTotalSemaine = 0;
         let sortiesTotal = 0;
-        if (mouvementsData) {
-            mouvementsData.forEach(m => {
+        if (window.mouvementsData) {
+            window.mouvementsData.forEach(m => {
                 if (m.date_mouvement >= dateDebut && m.date_mouvement <= dateFin) {
                     if (m.type === 'entree') {
                         entreesTotalSemaine += parseInt(m.quantite) || 0;
@@ -104,6 +131,15 @@ async function genererRapportHebdomadaire() {
                 montant: totalVentes,
                 panier_moyen: nombreVentes > 0 ? totalVentes / nombreVentes : 0
             },
+            ventes_detaillees: ventesSemaine.map(v => ({
+                date_vente: v.date_vente,
+                produit_nom: v.descriptions || v.produit_nom || v.nom_produit || 'Produit inconnu',
+                quantite: parseInt(v.quantite_totale) || parseInt(v.quantite) || 0,
+                prix_unitaire: parseFloat(v.prix_unitaire) || 0,
+                total: parseFloat(v.montant_total) || parseFloat(v.total) || 0,
+                client_nom: v.client_nom || '-',
+                utilisateur_nom: v.utilisateur_nom || '-'
+            })),
             credits: {
                 accordes: montantCredits,
                 nombre: creditsSemaine.length
@@ -125,26 +161,37 @@ async function genererRapportHebdomadaire() {
 /**
  * Generer rapport mensuel
  */
-async function genererRapportMensuel() {
-    console.log('📋 Génération rapport mensuel...');
+async function genererRapportMensuel(refDate = null) {
+    console.log('ðŸ“‹ GÃ©nÃ©ration rapport mensuel...', refDate);
     try {
-        const maintenant = new Date();
-        const mois_courant = maintenant.getFullYear() + '-' + String(maintenant.getMonth() + 1).padStart(2, '0');
+        // VÃ©rifier que les donnÃ©es sont chargÃ©es
+        if (!window.ventesData || !Array.isArray(window.ventesData) || window.ventesData.length === 0) {
+            console.warn('âš ï¸ ventesData non chargÃ©, tentative de chargement...');
+            await window.chargerVentesAPI(1000, 0);
+        }
+        if (!window.creditsData || !Array.isArray(window.creditsData)) {
+            console.warn('âš ï¸ creditsData non chargÃ©, tentative de chargement...');
+            await window.chargerCreditsAPI();
+        }
+        if (!window.mouvementsData || !Array.isArray(window.mouvementsData)) {
+            console.warn('âš ï¸ mouvementsData non chargÃ©, tentative de chargement...');
+            await window.chargerMouvementsAPI();
+        }
         
-        // Filtrer les ventes du mois
-        const ventesMois = ventesData.filter(v => v.date_vente.startsWith(mois_courant));
+        const now = refDate ? new Date(refDate) : new Date();
+        const mois_courant = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        
+        const ventesMois = window.ventesData.filter(v => v.date_vente.startsWith(mois_courant));
         const totalVentes = ventesMois.reduce((sum, v) => sum + parseFloat(v.montant_total), 0);
         const nombreVentes = ventesMois.length;
         
-        // Crédits du mois
-        const creditsMois = creditsData.filter(c => c.date_credit.startsWith(mois_courant));
+        const creditsMois = window.creditsData.filter(c => c.date_credit.startsWith(mois_courant));
         const montantCredits = creditsMois.reduce((sum, c) => sum + parseFloat(c.montant_total), 0);
         
-        // Mouvements de stock du mois
         let entreesTotalMois = 0;
         let sortiesTotal = 0;
-        if (mouvementsData) {
-            mouvementsData.forEach(m => {
+        if (window.mouvementsData) {
+            window.mouvementsData.forEach(m => {
                 if (m.date_mouvement.startsWith(mois_courant)) {
                     if (m.type === 'entree') {
                         entreesTotalMois += parseInt(m.quantite) || 0;
@@ -163,6 +210,15 @@ async function genererRapportMensuel() {
                 montant: totalVentes,
                 panier_moyen: nombreVentes > 0 ? totalVentes / nombreVentes : 0
             },
+            ventes_detaillees: ventesMois.map(v => ({
+                date_vente: v.date_vente,
+                produit_nom: v.descriptions || v.produit_nom || v.nom_produit || 'Produit inconnu',
+                quantite: parseInt(v.quantite_totale) || parseInt(v.quantite) || 0,
+                prix_unitaire: parseFloat(v.prix_unitaire) || 0,
+                total: parseFloat(v.montant_total) || parseFloat(v.total) || 0,
+                client_nom: v.client_nom || '-',
+                utilisateur_nom: v.utilisateur_nom || '-'
+            })),
             credits: {
                 accordes: montantCredits,
                 nombre: creditsMois.length
@@ -173,27 +229,45 @@ async function genererRapportMensuel() {
             }
         };
         
-        console.log('✅ Rapport mensuel généré:', rapport);
+        console.log('âœ… Rapport mensuel gÃ©nÃ©rÃ©:', rapport);
         return rapport;
     } catch (error) {
-        console.error('❌ Erreur génération rapport mensuel:', error);
+        console.error('âŒ Erreur gÃ©nÃ©ration rapport mensuel:', error);
         return null;
     }
 }
 
 /**
- * Générer rapport stocks
+ * GÃ©nÃ©rer rapport stocks
  */
-async function genererRapportStocks() {
-    console.log('📋 Génération rapport stocks...');
+async function genererRapportStocks(refDate = null) {
+    console.log('ðŸ“‹ GÃ©nÃ©ration rapport stocks...', refDate);
     try {
+        // Vérifier que les données sont chargées
+        if (!window.produitsData || !Array.isArray(window.produitsData) || window.produitsData.length === 0) {
+            console.warn('⚠️ produitsData non chargé, tentative de chargement...');
+            try {
+                const produitsResponse = await api.getAllProducts();
+                if (produitsResponse.success && produitsResponse.data) {
+                    window.produitsData = produitsResponse.data;
+                    console.log(`✅ ${window.produitsData.length} produits chargés pour le rapport`);
+                } else {
+                    console.error('❌ Impossible de charger les produits');
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Erreur chargement produits:', error);
+                return null;
+            }
+        }
+        
         // Calculer la valeur totale
         let valeurTotal = 0;
-        let nombreProduits = produitsData.length;
+        let nombreProduits = window.produitsData.length;
         let produitsCritiques = 0;
         let produitRupture = 0;
         
-        produitsData.forEach(p => {
+        window.produitsData.forEach(p => {
             const stock = p.stock || 0;
             const prix = parseFloat(p.prix) || 0;
             valeurTotal += stock * prix;
@@ -208,7 +282,7 @@ async function genererRapportStocks() {
         
         const rapport = {
             type: 'stocks',
-            date: new Date().toISOString().split('T')[0],
+            date: refDate || new Date().toISOString().split('T')[0],
             resume: {
                 valeur_totale: valeurTotal,
                 nombre_produits: nombreProduits,
@@ -216,7 +290,14 @@ async function genererRapportStocks() {
                 rupture: produitRupture,
                 stock_sain: nombreProduits - produitsCritiques - produitRupture
             },
-            produits_critiques: produitsData
+            produits: window.produitsData.map(p => ({
+                nom: p.nom,
+                categorie_nom: p.categorie_nom,
+                stock: p.stock || 0,
+                prix_unitaire: parseFloat(p.prix) || 0,
+                seuil_alerte: p.seuil_alerte || p.seuilAlerte || 0
+            })),
+            produits_critiques: window.produitsData
                 .filter(p => {
                     const seuil = p.seuil_alerte || p.seuilAlerte || 0;
                     return (p.stock || 0) <= seuil && (p.stock || 0) > 0;
@@ -229,27 +310,33 @@ async function genererRapportStocks() {
                 }))
         };
         
-        console.log('✅ Rapport stocks généré:', rapport);
+        console.log('âœ… Rapport stocks gÃ©nÃ©rÃ©:', rapport);
         return rapport;
     } catch (error) {
-        console.error('❌ Erreur génération rapport stocks:', error);
+        console.error('âŒ Erreur gÃ©nÃ©ration rapport stocks:', error);
         return null;
     }
 }
 
 /**
- * Générer rapport crédits
+ * GÃ©nÃ©rer rapport crÃ©dits
  */
-async function genererRapportCredits() {
-    console.log('📋 Génération rapport crédits...');
+async function genererRapportCredits(refDate = null) {
+    console.log('ðŸ“‹ GÃ©nÃ©ration rapport crÃ©dits...', refDate);
     try {
+        // VÃ©rifier que les donnÃ©es sont chargÃ©es
+        if (!creditsData || !Array.isArray(creditsData) || creditsData.length === 0) {
+            console.warn('âš ï¸ creditsData non chargÃ©, tentative de chargement...');
+            await chargerCreditsAPI();
+        }
+        
         let montantTotal = 0;
         let montantRembourse = 0;
         let montantRestant = 0;
         let creditsEnCours = 0;
         let creditsSoldes = 0;
         
-        creditsData.forEach(c => {
+        window.creditsData.forEach(c => {
             montantTotal += parseFloat(c.montant_total) || 0;
             montantRembourse += parseFloat(c.montant_paye) || 0;
             montantRestant += parseFloat(c.montant_restant) || 0;
@@ -265,7 +352,7 @@ async function genererRapportCredits() {
         
         const rapport = {
             type: 'credits',
-            date: new Date().toISOString().split('T')[0],
+            date: refDate || new Date().toISOString().split('T')[0],
             resume: {
                 montant_total: montantTotal,
                 montant_rembourse: montantRembourse,
@@ -274,7 +361,15 @@ async function genererRapportCredits() {
                 credits_en_cours: creditsEnCours,
                 credits_soldes: creditsSoldes
             },
-            credits_impayees: creditsData
+            credits: window.creditsData.map(c => ({
+                client_nom: c.client_nom || '-',
+                montant_total: parseFloat(c.montant_total) || 0,
+                montant_paye: parseFloat(c.montant_paye) || 0,
+                montant_restant: parseFloat(c.montant_restant) || 0,
+                statut: c.statut || '-',
+                date_credit: c.date_credit ? new Date(c.date_credit).toLocaleDateString('fr-FR') : '-'
+            })),
+            credits_impayees: window.creditsData
                 .filter(c => c.statut !== 'solde' && c.montant_restant > 0)
                 .map(c => ({
                     client: c.client_nom,
@@ -283,28 +378,28 @@ async function genererRapportCredits() {
                 }))
         };
         
-        console.log('✅ Rapport crédits généré:', rapport);
+        console.log('âœ… Rapport crÃ©dits gÃ©nÃ©rÃ©:', rapport);
         return rapport;
     } catch (error) {
-        console.error('❌ Erreur génération rapport crédits:', error);
+        console.error('âŒ Erreur gÃ©nÃ©ration rapport crÃ©dits:', error);
         return null;
     }
 }
 
 /**
- * Générer rapport top produits
+ * GÃ©nÃ©rer rapport top produits
  */
-async function genererRapportTopProduits() {
-    console.log('📋 Génération rapport top produits...');
+async function genererRapportTopProduits(refDate = null) {
+    console.log('ðŸ“‹ GÃ©nÃ©ration rapport top produits...', refDate);
     try {
-        // S'assurer que les données sont chargées
-        if (!ventesData || ventesData.length === 0) {
-            console.warn('⚠️ ventesData vide, chargement des ventes...');
-            await chargerVentesAPI(1000, 0);
+        // S'assurer que les donnÃ©es sont chargÃ©es
+        if (!window.ventesData || window.ventesData.length === 0) {
+            console.warn('âš ï¸ ventesData vide, chargement des ventes...');
+            await window.chargerVentesAPI(1000, 0);
         }
         
-        if (!ventesData || ventesData.length === 0) {
-            console.error('❌ Aucune vente a traiter');
+        if (!window.ventesData || window.ventesData.length === 0) {
+            console.error('âŒ Aucune vente a traiter');
             return {
                 type: 'top_produits',
                 date: new Date().toISOString().split('T')[0],
@@ -315,15 +410,16 @@ async function genererRapportTopProduits() {
         // Compter les ventes par produit
         const ventesParProduit = {};
         
-        ventesData.forEach(v => {
-            // L'API retourne 'descriptions' qui contient les noms de produits séparés par des virgules
-            // et 'quantite_totale' pour la quantité
+        window.ventesData.forEach(v => {
+            if (refDate && !v.date_vente.startsWith(refDate)) return; // ignorer hors de la date sÃ©lectionnÃ©e
+            // L'API retourne 'descriptions' qui contient les noms de produits sÃ©parÃ©s par des virgules
+            // et 'quantite_totale' pour la quantitÃ©
             const descriptions = v.descriptions || v.produit_nom || v.nom_produit || 'Produit inconnu';
             
             // Si plusieurs produits, prendre le premier
             const produits = String(descriptions).split(',').map(p => p.trim());
             
-            // Créer une entrée par produit
+            // CrÃ©er une entrÃ©e par produit
             produits.forEach(nomProduit => {
                 if (nomProduit && nomProduit !== '') {
                     if (!ventesParProduit[nomProduit]) {
@@ -334,7 +430,7 @@ async function genererRapportTopProduits() {
                             nombre_ventes: 0
                         };
                     }
-                    // Partager la quantité et le montant entre les produits
+                    // Partager la quantitÃ© et le montant entre les produits
                     const qteProduit = (parseInt(v.quantite_totale) || parseInt(v.quantite) || 0) / produits.length;
                     const montantProduit = (parseFloat(v.montant_total) || parseFloat(v.total) || 0) / produits.length;
                     
@@ -350,8 +446,8 @@ async function genererRapportTopProduits() {
             .sort((a, b) => b.montant - a.montant)
             .slice(0, 10);
         
-        console.log('✅ Top produits généré:', topProduits.length, 'produits');
-        console.log('Détails:', topProduits);
+        console.log('âœ… Top produits gÃ©nÃ©rÃ©:', topProduits.length, 'produits');
+        console.log('DÃ©tails:', topProduits);
         
         const rapport = {
             type: 'top_produits',
@@ -361,7 +457,7 @@ async function genererRapportTopProduits() {
         
         return rapport;
     } catch (error) {
-        console.error('❌ Erreur génération top produits:', error);
+        console.error('âŒ Erreur gÃ©nÃ©ration top produits:', error);
         return {
             type: 'top_produits',
             date: new Date().toISOString().split('T')[0],
@@ -375,12 +471,12 @@ async function genererRapportTopProduits() {
  */
 async function afficherRapport(rapport) {
     if (!rapport) {
-        afficherNotification('Erreur: impossible de générer le rapport', 'error');
+        window.afficherNotification?.('Erreur: impossible de gÃ©nÃ©rer le rapport', 'error');
         return;
     }
     
-    console.log('📊 Affichage du rapport:', rapport);
-    afficherNotification(`Rapport ${rapport.type} généré avec succès`, 'success');
+    console.log('ðŸ“Š Affichage du rapport:', rapport);
+    window.afficherNotification?.(`Rapport ${rapport.type} gÃ©nÃ©rÃ© avec succÃ¨s`, 'success');
 }
 
 /**
@@ -395,14 +491,129 @@ function exporterRapportJSON(rapport, nom_fichier) {
     element.click();
     document.body.removeChild(element);
     
-    afficherNotification('Rapport exporté en JSON', 'success');
+    window.afficherNotification?.('Rapport exportÃ© en JSON', 'success');
 }
 
 /**
  * Exporter rapport en CSV
  */
 function exporterRapportCSV(donnees, nom_fichier) {
-    // À implémenter si nécessaire
-    console.log('Export CSV:', donnees);
-    afficherNotification('Export CSV en développement', 'info');
+    if (!donnees || !donnees.length) {
+        window.afficherNotification?.('âš ï¸ Aucune donnÃ©e Ã  exporter', 'warning');
+        return;
+    }
+    const keys = Object.keys(donnees[0]);
+    const rows = donnees.map(r => keys.map(k => {
+        // Ã©viter les virgules problÃ©matiques
+        let cell = r[k] == null ? '' : String(r[k]);
+        if (cell.includes(',')) cell = '"' + cell.replace(/"/g, '""') + '"';
+        return cell;
+    }).join(','));
+    const csv = [keys.join(','), ...rows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nom_fichier.endsWith('.csv') ? nom_fichier : nom_fichier + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    window.afficherNotification?.('âœ… Rapport exportÃ© en CSV', 'success');
 }
+
+/**
+ * Exporter en CSV Ã©purÃ© et Ã©lÃ©gant
+ */
+function exporterCSVEpure(donnees, nom_fichier) {
+    if (!donnees || !donnees.length) {
+        window.afficherNotification?.('âš ï¸ Aucune donnÃ©e Ã  exporter', 'warning');
+        return;
+    }
+
+    // Utiliser les clÃ©s du premier objet comme en-tÃªtes
+    const keys = Object.keys(donnees[0]);
+    
+    // CrÃ©er les lignes CSV
+    const rows = donnees.map(r => keys.map(k => {
+        let cell = r[k] == null ? '' : String(r[k]);
+        // Ã‰chapper les guillemets et envelopper les cellules contenant des virgules
+        if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+            cell = '"' + cell.replace(/"/g, '""') + '"';
+        }
+        return cell;
+    }).join(','));
+    
+    // CrÃ©er le CSV avec en-tÃªte
+    const csv = [keys.join(','), ...rows].join('\n');
+
+    // TÃ©lÃ©charger le fichier
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nom_fichier.endsWith('.csv') ? nom_fichier : nom_fichier + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    window.afficherNotification?.('âœ… Fichier ' + nom_fichier + ' tÃ©lÃ©chargÃ©', 'success');
+}
+
+// gÃ©nÃ©rique : exporter un tableau d'objets en PDF simple
+function exporterPDFFromArray(donnees, nom_fichier, titre = '') {
+    if (!donnees || !donnees.length) {
+        window.afficherNotification?.('âš ï¸ Aucune donnÃ©e Ã  exporter en PDF', 'warning');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 20;
+
+    if (titre) {
+        doc.setFontSize(16);
+        doc.text(titre, 15, y);
+        y += 10;
+    }
+
+    const keys = Object.keys(donnees[0]);
+    doc.setFontSize(10);
+    doc.setFont('times', 'bold');
+    // header row
+    let headerText = keys.join(' | ');
+    doc.text(headerText, 15, y);
+    y += 7;
+    doc.setFont('times', 'normal');
+
+    donnees.forEach(row => {
+        if (y > 280) {
+            doc.addPage();
+            y = 20;
+        }
+        const line = keys.map(k => {
+            let v = row[k];
+            if (v == null) v = '';
+            return String(v);
+        }).join(' | ');
+        doc.text(line, 15, y);
+        y += 6;
+    });
+
+    doc.save(nom_fichier + '.pdf');
+    window.afficherNotification?.('âœ… PDF ' + nom_fichier + ' tÃ©lÃ©chargÃ©', 'success');
+}
+
+// ====================================================================
+// EXPORT DES FONCTIONS DE RAPPORT POUR LES AUTRES MODULES
+// ====================================================================
+
+window.genererRapportJournalier = genererRapportJournalier;
+window.genererRapportHebdomadaire = genererRapportHebdomadaire;
+window.genererRapportMensuel = genererRapportMensuel;
+window.genererRapportStocks = genererRapportStocks;
+window.genererRapportCredits = genererRapportCredits;
+window.genererRapportTopProduits = genererRapportTopProduits;
+

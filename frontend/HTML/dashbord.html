@@ -75,7 +75,7 @@
         <div class="logo-navigation">
             <i class="fa-solid fa-store"></i>
             <div>
-                <h1>APP_IB</h1>
+                <h1>GESTION_STOCK</h1>
                 <div class="sous-titre">Application de Gestion de Stock</div>
             </div>
         </div>
@@ -204,7 +204,7 @@
                                 <p id="stat-ventes-total">0 FCFA</p>
                                 <div class="variation positive">
                                     <i class="fa-solid fa-arrow-up"></i>
-                                    <span id="stat-ventes-nombre">0 ventes</span>
+                                    <span id="stat-ventes-nombre-variation">0 ventes</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-chart-line icone-stat"></i>
@@ -1179,23 +1179,23 @@
                         <div class="stats-detaillees">
                             <div class="stat-detail">
                                 <h4>Ventes</h4>
-                                <div class="stat-valeur">350 000 FCFA</div>
-                                <div class="stat-info">156 transactions</div>
+                                <div class="stat-valeur" id="detailVentesMontant">350 000 FCFA</div>
+                                <div class="stat-info" id="detailVentesTransactions">156 transactions</div>
                             </div>
                             <div class="stat-detail">
                                 <h4>Marge Brute</h4>
-                                <div class="stat-valeur">105 000 FCFA</div>
-                                <div class="stat-info">30% de marge</div>
+                                <div class="stat-valeur" id="detailMargeBrute">105 000 FCFA</div>
+                                <div class="stat-info" id="detailMargePourcentage">30% de marge</div>
                             </div>
                             <div class="stat-detail">
                                 <h4>Ticket Moyen</h4>
-                                <div class="stat-valeur">2 244 FCFA</div>
-                                <div class="stat-info">Par transaction</div>
+                                <div class="stat-valeur" id="detailTicketMoyen">2 244 FCFA</div>
+                                <div class="stat-info" id="detailTicketInfo">Par transaction</div>
                             </div>
                             <div class="stat-detail">
                                 <h4>Produits Vendus</h4>
-                                <div class="stat-valeur">487 unités</div>
-                                <div class="stat-info">18 produits différents</div>
+                                <div class="stat-valeur" id="detailProduitsUnites">487 unités</div>
+                                <div class="stat-info" id="detailProduitsTypes">18 produits différents</div>
                             </div>
                         </div>
                     </div>
@@ -2016,6 +2016,7 @@
     <script src="../JS/inventaires-api.js"></script>
     <script src="../JS/alerts-api.js"></script>
     <script src="../JS/reports-api.js"></script>
+    <script src="../JS/charts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="../JS/pdf-reports.js"></script>
     <script src="../JS/rapport-complet.js"></script>
