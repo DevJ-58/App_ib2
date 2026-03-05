@@ -3441,15 +3441,36 @@ function ouvrirModalRemboursement(creditId = null) {
     const modal = document.getElementById('modalRemboursement');
     if (!modal) return;
     
-    if (creditId) {
-        const credit = creditsData.find(c => c.id == creditId);
-        if (credit) {
-            const creditInput = document.getElementById('creditIdRemboursement');
-            if (creditInput) creditInput.value = creditId;
-            const montantElem = document.getElementById('montantRestantAffiche');
-            if (montantElem) montantElem.textContent = formaterDevise(credit.montant_restant);
+    // Charger les crédits dans le select
+    const selectCredit = document.getElementById('creditRemboursement');
+    if (selectCredit && creditsData && creditsData.length > 0) {
+        // Garder l'option par défaut
+        selectCredit.innerHTML = '<option value="">Sélectionner un crédit</option>';
+        
+        // Ajouter les crédits disponibles
+        creditsData.forEach(credit => {
+            if (credit.montant_restant > 0) { // Seulement les crédits non entièrement remboursés
+                const option = document.createElement('option');
+                option.value = credit.id;
+                option.textContent = `${credit.client_nom} - ${formaterDevise(credit.montant_restant)} restant`;
+                selectCredit.appendChild(option);
+            }
+        });
+        
+        // Si un crédit est spécifié, le pré-sélectionner
+        if (creditId) {
+            selectCredit.value = creditId;
+            afficherInfoCredit(); // Afficher les infos du crédit
         }
     }
+    
+    // Réinitialiser le formulaire
+    const form = document.getElementById('formRemboursement');
+    if (form) form.reset();
+    
+    // Cacher l'avertissement montant
+    const avertissement = document.getElementById('avertissementMontant');
+    if (avertissement) avertissement.style.display = 'none';
     
     modal.style.display = 'flex';
 }
@@ -3457,6 +3478,113 @@ function ouvrirModalRemboursement(creditId = null) {
 function fermerModalRemboursement() {
     const modal = document.getElementById('modalRemboursement');
     if (modal) modal.style.display = 'none';
+    
+    // Réinitialiser le formulaire
+    const form = document.getElementById('formRemboursement');
+    if (form) form.reset();
+}
+
+/**
+ * Afficher les infos du crédit sélectionné
+ */
+function afficherInfoCredit() {
+    const creditId = document.getElementById('creditRemboursement')?.value;
+    if (!creditId) {
+        document.getElementById('infoCreditRemboursement').style.display = 'none';
+        return;
+    }
+    
+    const credit = creditsData.find(c => c.id == creditId);
+    if (credit) {
+        document.getElementById('montantRestant').textContent = formaterDevise(credit.montant_restant);
+        document.getElementById('infoCreditRemboursement').style.display = 'block';
+    }
+}
+
+/**
+ * Valider le montant remboursé
+ */
+function validerMontantRembours() {
+    const creditId = document.getElementById('creditRemboursement')?.value;
+    const montantSaisi = parseFloat(document.getElementById('montantRembourse')?.value || 0);
+    const avertissement = document.getElementById('avertissementMontant');
+    
+    if (!creditId || montantSaisi <= 0) {
+        avertissement.style.display = 'none';
+        return true;
+    }
+    
+    const credit = creditsData.find(c => c.id == creditId);
+    if (credit && montantSaisi > credit.montant_restant) {
+        avertissement.textContent = `⚠️ Attention: Le montant saisi (${formaterDevise(montantSaisi)}) dépasse le montant restant (${formaterDevise(credit.montant_restant)})`;
+        avertissement.style.display = 'block';
+        return false;
+    } else {
+        avertissement.style.display = 'none';
+        return true;
+    }
+}
+
+/**
+ * Enregistrer le remboursement
+ */
+async function enregistrerRemboursement(event) {
+    event.preventDefault();
+    console.log('💰 Enregistrement remboursement...');
+    
+    try {
+        // Récupérer les valeurs du formulaire
+        const creditId = document.getElementById('creditRemboursement')?.value;
+        const montant = parseFloat(document.getElementById('montantRembourse')?.value || 0);
+        const typeRemboursement = document.querySelector('input[name="typeRemboursement"]:checked')?.value || 'partiel';
+        const commentaire = document.getElementById('commentaireRemboursement')?.value || '';
+        
+        // Validation
+        if (!creditId) {
+            afficherNotification('Veuillez sélectionner un crédit', 'error');
+            return false;
+        }
+        
+        if (montant <= 0) {
+            afficherNotification('Veuillez entrer un montant valide', 'error');
+            return false;
+        }
+        
+        const credit = creditsData.find(c => c.id == creditId);
+        if (!credit) {
+            afficherNotification('Crédit non trouvé', 'error');
+            return false;
+        }
+        
+        if (montant > credit.montant_restant) {
+            afficherNotification('Le montant saisi dépasse le montant restant', 'error');
+            return false;
+        }
+        
+        console.log('   Données du remboursement:', {creditId, montant, typeRemboursement, commentaire});
+        
+        // Appeler l'API
+        const result = await enregistrerRemboursementAPI(creditId, montant, 'ESPECES');
+        
+        if (result) {
+            // Succès - fermer la modale et rafraîchir
+            fermerModalRemboursement();
+            
+            // Recharger les crédits
+            await afficherCredits();
+            
+            // Mettre à jour les statistiques
+            await mettreAJourDashboardCredits();
+            
+            console.log('✅ Remboursement enregistré avec succès');
+        }
+        
+        return false; // Empêcher la soumission par défaut
+    } catch (error) {
+        console.error('❌ Erreur enregistrement remboursement:', error);
+        afficherNotification('Erreur lors de l\'enregistrement du remboursement', 'error');
+        return false;
+    }
 }
 
 function voirDetailCredit(creditId) {
@@ -3506,6 +3634,9 @@ function appliquerFiltresCredits() {
 
 window.ouvrirModalRemboursement = ouvrirModalRemboursement;
 window.fermerModalRemboursement = fermerModalRemboursement;
+window.afficherInfoCredit = afficherInfoCredit;
+window.validerMontantRembours = validerMontantRembours;
+window.enregistrerRemboursement = enregistrerRemboursement;
 window.voirDetailCredit = voirDetailCredit;
 window.fermerModalDetailsCredit = fermerModalDetailsCredit;
 window.relancerClient = relancerClient;
