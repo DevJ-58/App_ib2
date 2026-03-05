@@ -2675,22 +2675,54 @@ function calculerRenduMonnaie() {
 
 function filtrerProduitsVente() {
     const terme = document.getElementById('rechercheVente')?.value.toLowerCase() || '';
-    const filtered = produitsData.filter(p => 
-        p.nom.toLowerCase().includes(terme) || 
+    const filtered = produitsData.filter(p =>
+        p.nom.toLowerCase().includes(terme) ||
         (p.code_barre && p.code_barre.includes(terme))
     );
-    
+
     const produitsRapides = document.getElementById('produitsRapides');
     if (produitsRapides) {
-        produitsRapides.innerHTML = filtered.map(p => `
-            <div class="btn-produit-rapide" onclick="ajouterAuPanier(${p.id})">
-                <i class="fa-solid fa-plus"></i>
-                <div>
-                    <strong>${p.nom}</strong>
-                    <span>${formaterDevise(p.prix_vente)}</span>
+        if (filtered.length === 0) {
+            produitsRapides.innerHTML = `
+                <div class="aucun-resultat">
+                    <i class="fa-solid fa-search"></i>
+                    <p>Aucun produit trouvé pour "${terme}"</p>
                 </div>
-            </div>
-        `).join('');
+            `;
+            return;
+        }
+
+        produitsRapides.innerHTML = filtered.slice(0, 12).map((produit, index) => {
+            const iconeProduit = getIconeProduit(produit.nom);
+            return `
+                <div class="carte-produit-rapide ${produit.stock <= 0 ? 'rupture-stock' : ''}" style="animation-delay: ${index * 0.05}s">
+                    <div class="carte-produit-header">
+                        <div class="icone-produit-rapide">
+                            <i class="${iconeProduit}"></i>
+                        </div>
+                        <div class="badge-stock-rapide ${produit.stock <= produit.seuil_alerte ? 'stock-faible' : 'stock-ok'}">
+                            ${produit.stock}
+                        </div>
+                    </div>
+                    <div class="carte-produit-body">
+                        <h4 class="nom-produit-rapide">${produit.nom}</h4>
+                        <div class="prix-produit-rapide">
+                            <span class="prix-principal">${formaterDevise(produit.prix_vente)}</span>
+                            <span class="prix-unite">FCFA</span>
+                        </div>
+                        <div class="categorie-produit-rapide">
+                            ${produit.categorie_nom || produit.categorie || 'Général'}
+                        </div>
+                    </div>
+                    <div class="carte-produit-footer">
+                        <button class="btn-ajouter-panier" onclick="ajouterAuPanier(${produit.id})" ${produit.stock <= 0 ? 'disabled' : ''}>
+                            <i class="fa-solid fa-plus"></i>
+                            ${produit.stock <= 0 ? 'Rupture' : 'Ajouter'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 }
 

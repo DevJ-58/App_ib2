@@ -1625,6 +1625,27 @@ table tbody tr:only-child td[colspan] {
     height: 100%;
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideInUp 0.6s ease-out forwards;
+}
+
+.carte-produit-rapide:nth-child(1) { animation-delay: 0.1s; }
+.carte-produit-rapide:nth-child(2) { animation-delay: 0.2s; }
+.carte-produit-rapide:nth-child(3) { animation-delay: 0.3s; }
+.carte-produit-rapide:nth-child(4) { animation-delay: 0.4s; }
+.carte-produit-rapide:nth-child(5) { animation-delay: 0.5s; }
+.carte-produit-rapide:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .carte-produit-rapide:hover {
@@ -1820,6 +1841,28 @@ table tbody tr:only-child td[colspan] {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 
+/* État de chargement */
+.carte-produit-rapide.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.carte-produit-rapide.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .grille-produits-rapides {
@@ -1840,6 +1883,31 @@ table tbody tr:only-child td[colspan] {
     .nom-produit-rapide {
         font-size: 0.9rem;
     }
+}
+
+/* Message aucun résultat */
+.aucun-resultat {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 1rem 0;
+}
+
+.aucun-resultat i {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.aucun-resultat p {
+    color: #495057;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 500;
 }
 
 /* Panier */
