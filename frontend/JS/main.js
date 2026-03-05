@@ -1095,6 +1095,56 @@ async function afficherAlertesStock() {
 }
 
 /**
+ * Retourne une icône appropriée basée sur le nom du produit
+ */
+function getIconeProduit(nomProduit) {
+    const nom = nomProduit.toLowerCase();
+
+    // Boissons
+    if (nom.includes('coca') || nom.includes('cola') || nom.includes('soda') || nom.includes('boisson')) {
+        return 'fa-solid fa-bottle-water';
+    }
+
+    // Pain et boulangerie
+    if (nom.includes('pain') || nom.includes('baguette') || nom.includes('croissant')) {
+        return 'fa-solid fa-bread-slice';
+    }
+
+    // Eau
+    if (nom.includes('eau') || nom.includes('minérale') || nom.includes('minérale')) {
+        return 'fa-solid fa-glass-water';
+    }
+
+    // Café
+    if (nom.includes('café') || nom.includes('nescafé') || nom.includes('expresso')) {
+        return 'fa-solid fa-mug-hot';
+    }
+
+    // Biscuits et snacks
+    if (nom.includes('biscuit') || nom.includes('cookie') || nom.includes('chips') || nom.includes('golden')) {
+        return 'fa-solid fa-cookie-bite';
+    }
+
+    // Produits laitiers
+    if (nom.includes('lait') || nom.includes('fromage') || nom.includes('yaourt')) {
+        return 'fa-solid fa-cow';
+    }
+
+    // Fruits et légumes
+    if (nom.includes('fruit') || nom.includes('légume') || nom.includes('banane') || nom.includes('orange')) {
+        return 'fa-solid fa-apple-whole';
+    }
+
+    // Viande
+    if (nom.includes('viande') || nom.includes('poulet') || nom.includes('boeuf')) {
+        return 'fa-solid fa-drumstick-bite';
+    }
+
+    // Par défaut
+    return 'fa-solid fa-box';
+}
+
+/**
  * Afficher les ventes
  */
 async function afficherVentes() {
@@ -1129,20 +1179,37 @@ async function afficherVentes() {
 
             produitsFiltres.forEach(produit => {
                 console.log('🎯 Produit à afficher:', {id: produit.id, nom: produit.nom, stock: produit.stock});
+
+                // Assigner une icône basée sur le nom du produit
+                const iconeProduit = getIconeProduit(produit.nom);
+
                 const carte = document.createElement('div');
-                carte.className = 'carte-produit-rapide';
+                carte.className = `carte-produit-rapide ${produit.stock <= 0 ? 'rupture-stock' : ''}`;
                 carte.innerHTML = `
-                    <div class="icone-produit-rapide">
-                        <i class="${produit.icone || 'fa-solid fa-box'}"></i>
+                    <div class="carte-produit-header">
+                        <div class="icone-produit-rapide">
+                            <i class="${iconeProduit}"></i>
+                        </div>
+                        <div class="badge-stock-rapide ${produit.stock <= produit.seuil_alerte ? 'stock-faible' : 'stock-ok'}">
+                            ${produit.stock}
+                        </div>
                     </div>
-                    <div class="info-produit-rapide">
-                        <h5>${produit.nom}</h5>
-                        <p class="prix-produit-rapide">${formaterDevise(produit.prix_vente)}</p>
-                        <p class="stock-produit-rapide">Stock: ${produit.stock} unités</p>
+                    <div class="carte-produit-body">
+                        <h4 class="nom-produit-rapide">${produit.nom}</h4>
+                        <div class="prix-produit-rapide">
+                            <span class="prix-principal">${formaterDevise(produit.prix_vente)}</span>
+                            <span class="prix-unite">FCFA</span>
+                        </div>
+                        <div class="categorie-produit-rapide">
+                            ${produit.categorie_nom || produit.categorie || 'Général'}
+                        </div>
                     </div>
-                    <button class="btn-ajouter-panier" onclick="ajouterAuPanier(${produit.id})">
-                        <i class="fa-solid fa-plus"></i> Ajouter
-                    </button>
+                    <div class="carte-produit-footer">
+                        <button class="btn-ajouter-panier" onclick="ajouterAuPanier(${produit.id})" ${produit.stock <= 0 ? 'disabled' : ''}>
+                            <i class="fa-solid fa-plus"></i>
+                            ${produit.stock <= 0 ? 'Rupture' : 'Ajouter'}
+                        </button>
+                    </div>
                 `;
                 zoneProduitsRapides.appendChild(carte);
             });

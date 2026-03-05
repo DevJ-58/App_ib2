@@ -1608,83 +1608,238 @@ table tbody tr:only-child td[colspan] {
     gap: var(--espacement-sm);
 }
 
-.grille-produits-rapides {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: var(--espacement-md);
-}
+/* ============================================
+   CARTES DE PRODUITS RAPIDES - DESIGN MODERNE
+   ============================================ */
 
-.produit-rapide {
-    position: relative;
+.carte-produit-rapide {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    padding: 0;
     overflow: hidden;
-    padding: var(--espacement-md);
-    border: 1px solid var(--couleur-bordure);
-    border-radius: var(--rayon-md);
-    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
     cursor: pointer;
-    transition: var(--transition-rapide);
-    will-change: transform;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-/* AMÉLIORATION: Animation du hover */
-.produit-rapide::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background-color: rgba(0, 123, 255, 0.1);
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
+.carte-produit-rapide:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+    border-color: #007bff;
 }
 
-.produit-rapide:hover::before {
-    width: 200%;
-    height: 200%;
+.carte-produit-rapide:active {
+    transform: translateY(-2px);
 }
 
-.produit-rapide:hover {
-    border-color: var(--couleur-primaire);
-    background-color: var(--couleur-fond);
-    transform: translateY(-5px);
-    box-shadow: var(--ombre-moyenne);
+/* Header de la carte */
+.carte-produit-header {
+    position: relative;
+    padding: 16px 16px 8px;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
 }
 
-.produit-rapide i {
-    font-size: 2rem;
-    color: var(--couleur-primaire);
-    margin-bottom: var(--espacement-sm);
-}
-
-.produit-rapide h5 {
-    font-size: 0.9rem;
-    margin-bottom: var(--espacement-xs);
-}
-
-.produit-rapide p {
-    font-size: 0.85rem;
-    color: var(--couleur-texte-clair);
-    font-weight: 600;
-}
-
-/* Icône des produits rapides (remplace l'image) */
 .icone-produit-rapide {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 60px;
-    background-color: var(--couleur-fond);
-    border-radius: var(--rayon-md);
-    margin: 0 auto var(--espacement-sm) auto;
-    border: 2px solid var(--couleur-bordure);
+    margin: 0 auto 8px;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
 }
 
 .icone-produit-rapide i {
-    font-size: 1.8rem;
-    color: var(--couleur-primaire);
+    font-size: 1.6rem;
+    color: white;
+}
+
+.carte-produit-rapide:hover .icone-produit-rapide {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
+
+.badge-stock-rapide {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.badge-stock-rapide.stock-ok {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.badge-stock-rapide.stock-faible {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Corps de la carte */
+.carte-produit-body {
+    padding: 0 16px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nom-produit-rapide {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-align: center;
+}
+
+.prix-produit-rapide {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.prix-principal {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.prix-unite {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.categorie-produit-rapide {
+    font-size: 0.7rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Footer de la carte */
+.carte-produit-footer {
+    padding: 12px 16px 16px;
+}
+
+.btn-ajouter-panier {
+    width: 100%;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-ajouter-panier:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-ajouter-panier:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-ajouter-panier:disabled {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+}
+
+.btn-ajouter-panier i {
+    font-size: 0.8rem;
+}
+
+/* Grille des produits rapides */
+.grille-produits-rapides {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* États spéciaux */
+.carte-produit-rapide.rupture-stock {
+    opacity: 0.6;
+    filter: grayscale(30%);
+}
+
+.carte-produit-rapide.rupture-stock .btn-ajouter-panier {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.carte-produit-rapide.rupture-stock .badge-stock-rapide {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .grille-produits-rapides {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .carte-produit-rapide {
+        border-radius: 12px;
+    }
+
+    .icone-produit-rapide {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
+
+    .nom-produit-rapide {
+        font-size: 0.9rem;
+    }
 }
 
 /* Panier */
