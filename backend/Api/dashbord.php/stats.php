@@ -22,7 +22,7 @@ try {
     // Statistiques des stocks
     $stockStats = $db->selectOne("
         SELECT
-            COALESCE(SUM(prix_achat * stock), 0) as total_value,
+            COALESCE(SUM(prix_vente * stock), 0) as total_value,
             COUNT(CASE WHEN stock <= seuil_alerte THEN 1 END) as low_stock_count
         FROM produits
         WHERE actif = 1
@@ -36,24 +36,39 @@ try {
         FROM credits
     ");
 
-    // Statistiques des ventes du jour
-    $today = date('Y-m-d');
-    $todayStats = $db->selectOne("
+    // Statistiques des crédits du mois en cours
+    $monthCreditsStats = $db->selectOne("
+        SELECT
+            COUNT(CASE WHEN statut = 'en_cours' THEN 1 END) as active_credits,
+            COALESCE(SUM(montant_total), 0) as total_amount
+        FROM credits
+        WHERE DATE_FORMAT(date_credit, '%Y-%m') = ?
+    ", [$currentMonth]);
+
+    // Statistiques des ventes du mois en cours
+    $currentMonth = date('Y-m');
+    $monthStats = $db->selectOne("
         SELECT
             COUNT(*) as sales_count,
             COALESCE(SUM(total), 0) as revenue
         FROM ventes
-        WHERE DATE(date_vente) = ?
-    ", [$today]);
+        WHERE DATE_FORMAT(date_vente, '%Y-%m') = ?
+    ", [$currentMonth]);
 
     $stats = [
         'total_products' => (int)$totalProducts,
         'total_sales' => (int)$totalSales,
         'total_revenue' => (float)$totalRevenue,
-        'total_stock_value' => (float)$stockStats['total_value'],
-        'low_stock_alerts' => (int)$stockStats['low_stock_count'],
-        'active_credits' => (int)$creditStats['active_credits'],
-        'total_credit_amount' => (float)$creditStats['total_amount'],
+        'stockValeurTotal' => (float)$stockStats['total_value'],
+        'stockNombreProduits' => (int)$totalProducts,
+        'stockAlertes' => (int)$stockStats['low_stock_count'],
+        'creditsTotalEncours' => (float)$monthCreditsStats['total_amount'], // Crédits du mois en cours
+        'creditsNombre' => (int)$monthCreditsStats['active_credits'], // Nombre de crédits actifs du mois
+        'creditsRecouvrement' => (float)$monthCreditsStats['total_amount'], // Total des crédits du mois àrecouvrer
+        'ventesTotalMois' => (float)$monthStats['revenue'], // Ventes du mois en cours
+        'ventesNombre' => (int)$monthStats['sales_count'], // Nombre de ventes du mois
+        'ventesParnier' => (int)($monthStats['sales_count'] > 0 ? round($monthStats['revenue'] / $monthStats['sales_count']) : 0), // Panier moyen du mois
+        'alertesNombre' => (int)$stockStats['low_stock_count'],
         'today_sales' => (int)$todayStats['sales_count'],
         'today_revenue' => (float)$todayStats['revenue']
     ];
