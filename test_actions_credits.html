@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Actions Crédits</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .credits-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .credits-table th,
+        .credits-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .credits-table th {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .credits-table tr:hover {
+            background: #f5f5f5;
+        }
+        .btn-action {
+            padding: 6px 12px;
+            margin: 0 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .btn-detail {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-detail:hover {
+            background: #138496;
+        }
+        .btn-rembourse {
+            background: #28a745;
+            color: white;
+        }
+        .btn-rembourse:hover {
+            background: #218838;
+        }
+        .message {
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Actions Crédits</h1>
+        
+        <div class="test-section">
+            <h3>📋 Guide de test</h3>
+            <div class="message info">
+                <strong>Actions disponibles:</strong>
+                <ul>
+                    <li><strong>👁️ Voir Détails</strong> - Ouvre une modale magnifique avec tous les détails du crédit et un bouton pour rembourser depuis la modale</li>
+                    <li><strong>💰 Rembourser</strong> - Ouvre directement la modale de remboursement préremp avec le crédit sélectionné</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Actions à tester</h3>
+            <p>Cliquez sur l'un des boutons pour tester les actions:</p>
+            <table class="credits-table">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Client</th>
+                        <th>Montant Total</th>
+                        <th>Montant Restant</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="creditsTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">Chargement des crédits...</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button onclick="chargerCredits()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                ⟳ Recharger
+            </button>
+            <button onclick="afficherConsole()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                🖥️ Ouvrir Console (F12)
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Logs de test</h3>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script src="frontend/JS/utils.js"></script>
+    <script src="frontend/JS/api-client.js"></script>
+    <script src="frontend/JS/credits-api.js"></script>
+    <script>
+        let creditsTestData = [];
+
+        async function chargerCredits() {
+            console.log('📋 Chargement des crédits pour test...');
+            ajouterLog('⏳ Chargement des crédits...');
+            
+            try {
+                const response = await fetch('/backend/Api/Credits/list.php?limit=10').then(r => r.json());
+                
+                if (response.success && response.data && response.data.length > 0) {
+                    creditsTestData = response.data;
+                    window.creditsData = creditsTestData;
+                    afficherTableCredits();
+                    ajouterLog('✅ Crédits chargés: ' + creditsTestData.length + ' crédit(s)', 'success');
+                } else {
+                    ajouterLog('❌ Aucun crédit trouvé', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                ajouterLog('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+
+        function afficherTableCredits() {
+            const tbody = document.getElementById('creditsTableBody');
+            
+            if (!creditsTestData || creditsTestData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Aucun crédit trouvé</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = creditsTestData.map(credit => `
+                <tr>
+                    <td><strong>${credit.credit_id || credit.id}</strong></td>
+                    <td>${credit.client_nom || 'N/A'}</td>
+                    <td>${credit.montant_total || 0} FCFA</td>
+                    <td><strong style="color: ${credit.montant_restant > 0 ? '#dc3545' : '#28a745'}">${credit.montant_restant || 0} FCFA</strong></td>
+                    <td>
+                        <button class="btn-action btn-detail" onclick="testVoirDetail('${credit.id}')">
+                            👁️ Détails
+                        </button>
+                        ${credit.montant_restant > 0 ? `
+                            <button class="btn-action btn-rembourse" onclick="testRembourser('${credit.id}')">
+                                💰 Rembourser
+                            </button>
+                        ` : '<span style="color: #999;">Saldé</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function testVoirDetail(creditId) {
+            console.log('👁️ Test voirDetailCredit:', creditId);
+            ajouterLog('👁️ Ouverture détails crédit ' + creditId);
+            
+            if (typeof window.voirDetailCredit === 'function') {
+                window.voirDetailCredit(creditId);
+            } else {
+                ajouterLog('❌ Fonction voirDetailCredit non trouvée', 'error');
+            }
+        }
+
+        function testRembourser(creditId) {
+            console.log('💰 Test rembourser:', creditId);
+            ajouterLog('💰 Ouverture remboursement crédit ' + creditId);
+            
+            if (typeof window.ouvrirModalRemboursement === 'function') {
+                window.ouvrirModalRemboursement(creditId);
+            } else {
+                ajouterLog('❌ Fonction ouvrirModalRemboursement non trouvée', 'error');
+            }
+        }
+
+        function ajouterLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.textContent = message;
+            logs.insertBefore(div, logs.firstChild);
+            
+            if (logs.children.length > 10) {
+                logs.removeChild(logs.lastChild);
+            }
+        }
+
+        function afficherConsole() {
+            console.log('🖥️ Console JavaScript disponible - Appuyez sur F12 pour l\'ouvrir');
+            ajouterLog('🖥️ Ouvrez la console avec F12 pour voir les logs détaillés', 'info');
+        }
+
+        // Charger les crédits au démarrage
+        window.addEventListener('load', () => {
+            console.log('✅ Page de test chargée');
+            ajouterLog('✅ Page chargée - Cliquez sur "Recharger" pour charger les crédits', 'success');
+            chargerCredits();
+        });
+    </script>
+</body>
+</html>

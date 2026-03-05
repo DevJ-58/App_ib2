@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modale Remboursement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .credits-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .credit-card {
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .credit-card:hover {
+            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+            border-color: #007bff;
+        }
+        .credit-card button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .credit-card button:hover {
+            background: #218838;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Modale Remboursement</h1>
+
+        <div class="test-section">
+            <h3>📋 État des crédits</h3>
+            <div id="creditsList" class="credits-list"></div>
+            <button onclick="chargerCreditsTest()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                ⟳ Recharger les crédits
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Tests manuels disponibles</h3>
+            <p>Cliquez sur le bouton "Rembourser" pour un crédit pour ouvrir la modale de remboursement.</p>
+            <div id="messages"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Console JavaScript</h3>
+            <p>Ouvrez la console (F12) pour voir les logs de débogage.</p>
+            <button onclick="testFonctions()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                🧪 Tester les fonctions
+            </button>
+            <button onclick="afficherCreditsData()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                📊 Afficher creditsData
+            </button>
+        </div>
+    </div>
+
+    <script src="frontend/JS/utils.js"></script>
+    <script src="frontend/JS/api-client.js"></script>
+    <script src="frontend/JS/credits-api.js"></script>
+    <script>
+        // Simule creditsData pour le test
+        let creditsTestData = [];
+
+        async function chargerCreditsTest() {
+            console.log('📋 Chargement des crédits pour test...');
+            try {
+                // Charger depuis l'API
+                const response = await fetch('/backend/Api/Credits/list.php?limit=10').then(r => r.json());
+                if (response.success && response.data) {
+                    creditsTestData = response.data;
+                    window.creditsData = creditsTestData;
+                    afficherListeCredits();
+                    ajouterMessageTest('✅ Crédits chargés avec succès', 'success');
+                } else {
+                    ajouterMessageTest('❌ Erreur chargement crédits: ' + (response.message || 'Erreur inconnue'), 'error');
+                }
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                ajouterMessageTest('❌ Erreur lors du chargement: ' + error.message, 'error');
+            }
+        }
+
+        function afficherListeCredits() {
+            const liste = document.getElementById('creditsList');
+            if (!creditsTestData || creditsTestData.length === 0) {
+                liste.innerHTML = '<p>Aucun crédit trouvé</p>';
+                return;
+            }
+
+            liste.innerHTML = creditsTestData.map(credit => `
+                <div class="credit-card">
+                    <h4>${credit.client_nom}</h4>
+                    <p>ID: ${credit.id}</p>
+                    <p>Total: ${credit.montant_total} FCFA</p>
+                    <p>Restant: <strong>${credit.montant_restant} FCFA</strong></p>
+                    <p>Statut: ${credit.statut}</p>
+                    <button onclick="window.ouvrirModalRemboursement('${credit.id}')">
+                        💰 Rembourser
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function ajouterMessageTest(msg, type = 'info') {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = msg;
+            messages.insertBefore(div, messages.firstChild);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        function testFonctions() {
+            console.log('🧪 Test des fonctions...');
+            console.log('   - typeof ouvrirModalRemboursement:', typeof window.ouvrirModalRemboursement);
+            console.log('   - typeof fermerModalRemboursement:', typeof window.fermerModalRemboursement);
+            console.log('   - typeof enregistrerRemboursement:', typeof window.enregistrerRemboursement);
+            console.log('   - typeof afficherInfoCredit:', typeof window.afficherInfoCredit);
+            console.log('   - typeof validerMontantRembours:', typeof window.validerMontantRembours);
+            console.log('   - typeof enregistrerRemboursementAPI:', typeof window.enregistrerRemboursementAPI);
+            
+            if (typeof window.ouvrirModalRemboursement === 'function') {
+                ajouterMessageTest('✅ Toutes les fonctions sont disponibles!', 'success');
+            } else {
+                ajouterMessageTest('❌ Des fonctions sont manquantes!', 'error');
+            }
+        }
+
+        function afficherCreditsData() {
+            console.log('📊 creditsData:', window.creditsData);
+            console.log('📊 creditsTestData:', creditsTestData);
+            if (window.creditsData && window.creditsData.length > 0) {
+                ajouterMessageTest('✅ creditsData contient ' + window.creditsData.length + ' crédit(s)', 'success');
+            } else {
+                ajouterMessageTest('⚠️ creditsData est vide ou non défini', 'info');
+            }
+        }
+
+        // Charger les crédits au démarrage
+        window.addEventListener('load', () => {
+            console.log('✅ Page de test chargée');
+            afficherCreditsData();
+        });
+    </script>
+</body>
+</html>
