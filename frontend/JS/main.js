@@ -2446,42 +2446,94 @@ function ajouterAuPanier(idProduit) {
     }
     
     // ✅ RESTRICTION: Vérifier que le produit n'est pas en rupture de stock
-    if (parseInt(produit.stock) <= 0) {
+    const stockDisponible = parseInt(produit.stock);
+    if (stockDisponible <= 0) {
         console.error('❌ Produit en rupture de stock:', produit.nom);
         afficherNotification(`${produit.nom} est en rupture de stock`, 'error');
         return;
     }
     
+    // ✅ RESTRICTION: Vérifier que la quantité ne dépasse pas le stock disponible
     const existant = panierItems.find(p => parseInt(p.id) === idToFind);
+    const nouvelleQuantite = existant ? existant.quantite + 1 : 1;
+    
+    if (nouvelleQuantite > stockDisponible) {
+        console.error('❌ Stock insuffisant:', {produit: produit.nom, demande: nouvelleQuantite, disponible: stockDisponible});
+        afficherNotification(`Stock insuffisant pour ${produit.nom}. Stock disponible: ${stockDisponible}, Demandé: ${nouvelleQuantite}`, 'error');
+        return;
+    }
+    
     if (existant) {
-        existant.quantite++;
+        existant.quantite = nouvelleQuantite;
     } else {
         panierItems.push({...produit, quantite: 1});
     }
     
     afficherPanier();
-    afficherNotification(`${produit.nom} ajouté au panier`, 'success');
+    afficherNotification(`${produit.nom} ajouté au panier (${nouvelleQuantite}/${stockDisponible})`, 'success');
 }
 
 function afficherPanier() {
     const listePanier = document.getElementById('listePanier');
     if (!listePanier) return;
     
+    // ✅ VALIDATION: Vérifier que tous les produits du panier sont toujours disponibles
+    const itemsASupprimer = [];
+    const itemsAAjuster = [];
+    
+    panierItems.forEach((item, idx) => {
+        // Chercher le produit actuel dans la base de données
+        const produitActuel = produitsData.find(p => parseInt(p.id) === parseInt(item.id));
+        
+        if (!produitActuel || parseInt(produitActuel.stock) <= 0) {
+            // Le produit est en rupture de stock
+            itemsASupprimer.push(idx);
+        } else if (item.quantite > parseInt(produitActuel.stock)) {
+            // La quantité demandée dépasse le stock
+            itemsAAjuster.push({idx, item, produit: produitActuel});
+        }
+    });
+    
+    // Supprimer les produits en rupture (dans l'ordre inverse pour ne pas perdre les indices)
+    itemsASupprimer.reverse().forEach(idx => {
+        const nom = panierItems[idx].nom;
+        panierItems.splice(idx, 1);
+        afficherNotification(`${nom} est en rupture de stock et a été retiré du panier`, 'warning');
+    });
+    
+    // Réduire les quantités si nécessaire
+    itemsAAjuster.forEach(({idx, item, produit}) => {
+        const oldQuantite = item.quantite;
+        item.quantite = parseInt(produit.stock);
+        afficherNotification(`${item.nom}: quantité réduite de ${oldQuantite} à ${item.quantite} (stock disponible)`, 'warning');
+    });
+    
     if (panierItems.length === 0) {
         listePanier.innerHTML = '<div class="panier-vide"><i class="fa-solid fa-cart-shopping"></i><p>Aucun produit dans le panier</p></div>';
     } else {
-        listePanier.innerHTML = panierItems.map((item, idx) => `
+        listePanier.innerHTML = panierItems.map((item, idx) => {
+            // Chercher le stock actuel
+            const produitActuel = produitsData.find(p => parseInt(p.id) === parseInt(item.id));
+            const stockDisponible = produitActuel ? parseInt(produitActuel.stock) : 0;
+            
+            return `
             <div class="item-panier">
                 <strong>${item.nom}</strong>
-                <div class="qte-controls">
-                    <button onclick="modifierQuantite(${idx}, -1)">-</button>
-                    <span>${item.quantite}</span>
-                    <button onclick="modifierQuantite(${idx}, 1)">+</button>
+                <div class="qte-stock-info">
+                    <span class="qte-demandee">Demandé: ${item.quantite}</span>
+                    <span class="qte-disponible">Disponible: ${stockDisponible}</span>
+                    ${item.quantite === stockDisponible ? '<span class="badge-alerte">⚠️ Dernier stock</span>' : ''}
                 </div>
-                <span>${formaterDevise(item.prix_vente * item.quantite)}</span>
+                <div class="qte-controls">
+                    <button onclick="modifierQuantite(${idx}, -1)">−</button>
+                    <span>${item.quantite}</span>
+                    <button onclick="modifierQuantite(${idx}, 1)" ${item.quantite >= stockDisponible ? 'disabled' : ''}>+</button>
+                </div>
+                <span class="item-total">${formaterDevise(item.prix_vente * item.quantite)}</span>
                 <button class="btn-supprimer" onclick="retirerDuPanier(${idx})"><i class="fa-solid fa-trash"></i></button>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
     const total = panierItems.reduce((s, p) => s + (p.prix_vente * p.quantite), 0);
@@ -2496,9 +2548,25 @@ function afficherPanier() {
 }
 
 function modifierQuantite(idx, delta) {
-    panierItems[idx].quantite += delta;
-    if (panierItems[idx].quantite <= 0) {
+    const item = panierItems[idx];
+    const nouvelleQuantite = item.quantite + delta;
+    
+    // ✅ RESTRICTION: Vérifier que la nouvelle quantité ne dépasse pas le stock
+    const stockDisponible = parseInt(item.stock);
+    
+    // Si on augmente la quantité, vérifier le stock
+    if (delta > 0 && nouvelleQuantite > stockDisponible) {
+        console.error('❌ Stock insuffisant:', {produit: item.nom, demande: nouvelleQuantite, disponible: stockDisponible});
+        afficherNotification(`Stock insuffisant pour ${item.nom}. Stock disponible: ${stockDisponible}`, 'error');
+        return;
+    }
+    
+    // Mettre à jour ou supprimer
+    if (nouvelleQuantite <= 0) {
         panierItems.splice(idx, 1);
+        afficherNotification(`${item.nom} retiré du panier`, 'info');
+    } else {
+        item.quantite = nouvelleQuantite;
     }
     afficherPanier();
 }
