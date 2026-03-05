@@ -21,9 +21,15 @@ try {
     // Récupérer le paramètre pour filtrer les actifs
     $actifOnly = isset($_GET['all']) && $_GET['all'] === 'true' ? false : true;
     
+    // ✅ Récupérer tous les produits (actifs et ayant du stock)
     $products = $product->getAll($actifOnly);
+    
+    // ✅ RESTRICTION: Exclure les produits en rupture de stock (stock <= 0)
+    $productsAvailable = array_filter($products, function($p) {
+        return intval($p['stock']) > 0;
+    });
 
-    Response::success($products, 'Produits récupérés', 200);
+    Response::success(array_values($productsAvailable), 'Produits disponibles récupérés', 200);
 
 } catch (\Exception $e) {
     error_log("Erreur API liste produits: " . $e->getMessage());
