@@ -3587,15 +3587,93 @@ async function enregistrerRemboursement(event) {
     }
 }
 
+/**
+ * Afficher les détails complets d'un crédit dans une modale
+ */
 function voirDetailCredit(creditId) {
+    console.log('📋 Affichage détails crédit:', creditId);
+    
     const credit = creditsData.find(c => c.id == creditId);
     if (!credit) {
         afficherNotification('Crédit non trouvé', 'error');
         return;
     }
-    afficherNotification(`Crédit de ${credit.client_nom}: ${formaterDevise(credit.montant_restant)} restant`, 'info');
+
+    try {
+        // Calculer les stats du crédit
+        const joursEcoulés = Math.floor((new Date() - new Date(credit.date_credit)) / (1000 * 60 * 60 * 24));
+        const tauxRecouvrement = credit.montant_total > 0 ? Math.round((credit.montant_paye / credit.montant_total) * 100) : 0;
+        const etat = credit.montant_restant <= 0 ? '✅ Saldé' : (joursEcoulés > 30 ? '⚠️ En retard' : '⏳ En cours');
+
+        // Remplir les détails
+        document.getElementById('detailReference').textContent = credit.credit_id || credit.id;
+        document.getElementById('detailClient').textContent = credit.client_nom || 'N/A';
+        document.getElementById('detailMontantTotal').textContent = formaterDevise(credit.montant_total);
+        document.getElementById('detailMontantPaye').textContent = formaterDevise(credit.montant_paye || 0);
+        document.getElementById('detailMontantRestant').textContent = formaterDevise(credit.montant_restant);
+        document.getElementById('detailStatut').innerHTML = `<span style="padding: 4px 8px; border-radius: 4px; background: ${credit.montant_restant <= 0 ? '#d4edda' : '#fff3cd'}; color: ${credit.montant_restant <= 0 ? '#155724' : '#856404'}">${etat}</span>`;
+        document.getElementById('detailDateCreation').textContent = formaterDate(credit.date_credit);
+
+        // Ajouter les infos supplémentaires
+        const conteneur = document.querySelector('.details-credit-container');
+        
+        // Ajouter info jours d'ancienneté et taux recouvrement si pas déjà présentes
+        let ligneTaux = conteneur.querySelector('[data-field="taux-recouvrement"]');
+        if (!ligneTaux) {
+            ligneTaux = document.createElement('div');
+            ligneTaux.className = 'detail-row';
+            ligneTaux.setAttribute('data-field', 'taux-recouvrement');
+            ligneTaux.innerHTML = `
+                <span class="detail-label">Taux recouvrement:</span>
+                <span class="detail-value">${tauxRecouvrement}%</span>
+            `;
+            conteneur.appendChild(ligneTaux);
+        }
+
+        let ligneJours = conteneur.querySelector('[data-field="jours-ecoulés"]');
+        if (!ligneJours) {
+            ligneJours = document.createElement('div');
+            ligneJours.className = 'detail-row';
+            ligneJours.setAttribute('data-field', 'jours-écoulés');
+            ligneJours.innerHTML = `
+                <span class="detail-label">Jours écoulés:</span>
+                <span class="detail-value" style="color: ${joursEcoulés > 30 ? '#e74c3c' : '#27ae60'}">${joursEcoulés} jours</span>
+            `;
+            conteneur.appendChild(ligneJours);
+        }
+
+        // Ajouter boutons d'action si pas déjà présents
+        const modalActions = document.querySelector('.modal-actions');
+        if (modalActions && !modalActions.querySelector('[data-action-detail]')) {
+            const btnRembourser = document.createElement('button');
+            btnRembourser.type = 'button';
+            btnRembourser.className = 'btn-action primaire';
+            btnRembourser.setAttribute('data-action-detail', 'rembourser');
+            btnRembourser.style.marginRight = '10px';
+            btnRembourser.innerHTML = '<i class="fa-solid fa-money-bill"></i> Rembourser';
+            btnRembourser.onclick = () => {
+                fermerModalDetailsCredit();
+                ouvrirModalRemboursement(creditId);
+            };
+            modalActions.insertBefore(btnRembourser, modalActions.firstChild);
+        }
+
+        // Afficher la modale
+        const modal = document.getElementById('modalDetailsCredit');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+
+        console.log('✅ Détails crédit affichés');
+    } catch (error) {
+        console.error('❌ Erreur affichage détails crédit:', error);
+        afficherNotification('Erreur lors de l\'affichage des détails', 'error');
+    }
 }
 
+/**
+ * Fermer la modale des détails crédit
+ */
 function fermerModalDetailsCredit() {
     const modal = document.getElementById('modalDetailsCredit');
     if (modal) modal.style.display = 'none';

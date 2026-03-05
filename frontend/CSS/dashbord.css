@@ -1023,18 +1023,27 @@ table tbody tr:only-child td[colspan] {
 
 /* Conteneur de détails du crédit */
 .details-credit-container {
-    background-color: var(--couleur-fond);
-    border-radius: 8px;
-    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 24px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 14px 0;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.detail-row:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 14px 12px;
+    margin: 0 -12px;
+    border-radius: 6px;
 }
 
 .detail-row:last-child {
@@ -1043,13 +1052,32 @@ table tbody tr:only-child td[colspan] {
 
 .detail-label {
     font-weight: 600;
-    color: var(--couleur-texte-clair);
-    min-width: 150px;
+    color: #495057;
+    min-width: 180px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-label i {
+    color: #007bff;
+    width: 20px;
+    text-align: center;
 }
 
 .detail-value {
-    color: var(--couleur-texte);
+    color: #2c3e50;
     text-align: right;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.detail-row[data-field="montant-restant"] .detail-value,
+.detail-row[data-field="montant-restant"] .detail-value {
+    color: #e74c3c;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 /* Styles pour les détails de produit */
@@ -2522,35 +2550,51 @@ table tbody tr:only-child td[colspan] {
     align-items: center;
     justify-content: space-between;
     padding: var(--espacement-lg);
-    border-bottom: 1px solid var(--couleur-bordure);
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 2px solid #e9ecef;
+    border-radius: var(--rayon-lg) var(--rayon-lg) 0 0;
 }
 
 .modal-header h2 {
     margin: 0;
     font-size: 1.4rem;
-    color: var(--couleur-texte);
+    color: #2c3e50;
     display: flex;
     align-items: center;
     gap: var(--espacement-sm);
+    font-weight: 700;
+}
+
+.modal-header h2 i {
+    color: #007bff;
+    font-size: 1.3rem;
 }
 
 .btn-fermer-modal {
     background: none;
     border: none;
     font-size: 1.5rem;
-    color: var(--couleur-texte-clair);
+    color: #6c757d;
     cursor: pointer;
     padding: var(--espacement-sm);
-    transition: var(--transition-rapide);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
 }
 
 .btn-fermer-modal:hover {
-    color: var(--couleur-danger);
+    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
     transform: rotate(90deg);
 }
 
 .modal-body {
     padding: var(--espacement-lg);
+    background: #ffffff;
 }
 
 .form-group {
@@ -2609,6 +2653,8 @@ table tbody tr:only-child td[colspan] {
     gap: var(--espacement-md);
     justify-content: flex-end;
     margin-top: var(--espacement-xl);
+    padding-top: var(--espacement-lg);
+    border-top: 1px solid #e9ecef;
 }
 
 .btn-scanner-inline {
